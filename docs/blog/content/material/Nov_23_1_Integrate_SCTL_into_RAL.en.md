@@ -135,7 +135,7 @@ Output
 
     rules:
     - !READWRITE_SPLITTING
-    dataSources:
+    dataSourceGroups:
     ds_0:
       writeDataSourceName: write_ds_0
       readDataSourceNames: 
@@ -189,7 +189,7 @@ Input command
 
 Output
 
-a. If sucessful, show "Query OK, 0 rows affected";
+a. If successful, show "Query OK, 0 rows affected";
 b. Re-execute `show readwrite_splitting hint status`; show the ource is changed into Write;
 c. Execute `preview select * from t_order`and see the queried SQL will go to the master database.
 

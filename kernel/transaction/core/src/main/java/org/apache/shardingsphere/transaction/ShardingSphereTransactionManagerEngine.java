@@ -17,51 +17,42 @@
 
 package org.apache.shardingsphere.transaction;
 
-import lombok.extern.slf4j.Slf4j;
-import org.apache.shardingsphere.infra.database.type.DatabaseType;
-import org.apache.shardingsphere.infra.util.exception.ShardingSpherePreconditions;
-import org.apache.shardingsphere.infra.util.spi.ShardingSphereServiceLoader;
+import org.apache.shardingsphere.database.connector.core.type.DatabaseType;
+import org.apache.shardingsphere.infra.exception.ShardingSpherePreconditions;
+import org.apache.shardingsphere.infra.spi.type.typed.TypedSPILoader;
 import org.apache.shardingsphere.transaction.api.TransactionType;
-import org.apache.shardingsphere.transaction.exception.TransactionManagerNotExistedException;
-import org.apache.shardingsphere.transaction.spi.ShardingSphereTransactionManager;
+import org.apache.shardingsphere.transaction.exception.TransactionManagerNotFoundException;
+import org.apache.shardingsphere.transaction.spi.ShardingSphereDistributedTransactionManager;
 
 import javax.sql.DataSource;
-import java.util.EnumMap;
 import java.util.Map;
-import java.util.Map.Entry;
 
 /**
  * ShardingSphere transaction manager engine.
  */
-@Slf4j
 public final class ShardingSphereTransactionManagerEngine {
     
-    private final Map<TransactionType, ShardingSphereTransactionManager> transactionManagers = new EnumMap<>(TransactionType.class);
+    private final TransactionType transactionType;
     
-    public ShardingSphereTransactionManagerEngine() {
-        loadTransactionManager();
-    }
+    private final ShardingSphereDistributedTransactionManager distributedTransactionManager;
     
-    private void loadTransactionManager() {
-        for (ShardingSphereTransactionManager each : ShardingSphereServiceLoader.getServiceInstances(ShardingSphereTransactionManager.class)) {
-            if (transactionManagers.containsKey(each.getTransactionType())) {
-                log.warn("Find more than one {} transaction manager implementation class, use `{}` now",
-                        each.getTransactionType(), transactionManagers.get(each.getTransactionType()).getClass().getName());
-                continue;
-            }
-            transactionManagers.put(each.getTransactionType(), each);
-        }
+    public ShardingSphereTransactionManagerEngine(final TransactionType transactionType) {
+        this.transactionType = transactionType;
+        distributedTransactionManager = TransactionType.LOCAL == transactionType ? null : TypedSPILoader.getService(ShardingSphereDistributedTransactionManager.class, transactionType.name());
     }
     
     /**
-     * Initialize transaction managers.
+     * Initialize transaction manager.
      *
      * @param databaseTypes database types
      * @param dataSourceMap data source map
      * @param providerType transaction manager provider type
      */
     public void init(final Map<String, DatabaseType> databaseTypes, final Map<String, DataSource> dataSourceMap, final String providerType) {
-        transactionManagers.forEach((key, value) -> value.init(databaseTypes, dataSourceMap, providerType));
+        if (TransactionType.LOCAL == transactionType) {
+            return;
+        }
+        distributedTransactionManager.init(databaseTypes, dataSourceMap, providerType);
     }
     
     /**
@@ -70,20 +61,20 @@ public final class ShardingSphereTransactionManagerEngine {
      * @param transactionType transaction type
      * @return transaction manager
      */
-    public ShardingSphereTransactionManager getTransactionManager(final TransactionType transactionType) {
-        ShardingSphereTransactionManager result = transactionManagers.get(transactionType);
+    public ShardingSphereDistributedTransactionManager getTransactionManager(final TransactionType transactionType) {
         if (TransactionType.LOCAL != transactionType) {
-            ShardingSpherePreconditions.checkNotNull(result, () -> new TransactionManagerNotExistedException(transactionType));
+            ShardingSpherePreconditions.checkNotNull(distributedTransactionManager, () -> new TransactionManagerNotFoundException(transactionType));
         }
-        return result;
+        return distributedTransactionManager;
     }
     
     /**
-     * Close transaction managers.
+     * Close transaction manager.
      */
     public void close() {
-        for (Entry<TransactionType, ShardingSphereTransactionManager> entry : transactionManagers.entrySet()) {
-            entry.getValue().close();
+        if (TransactionType.LOCAL == transactionType) {
+            return;
         }
+        distributedTransactionManager.close();
     }
 }

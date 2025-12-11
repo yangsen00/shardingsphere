@@ -18,8 +18,8 @@
 package org.apache.shardingsphere.proxy.frontend.state.impl;
 
 import io.netty.channel.ChannelHandlerContext;
-import org.apache.shardingsphere.db.protocol.packet.DatabasePacket;
-import org.apache.shardingsphere.proxy.frontend.exception.CircuitBreakException;
+import org.apache.shardingsphere.database.protocol.packet.DatabasePacket;
+import org.apache.shardingsphere.infra.exception.kernel.connection.CircuitBreakException;
 import org.apache.shardingsphere.proxy.backend.session.ConnectionSession;
 import org.apache.shardingsphere.proxy.frontend.spi.DatabaseProtocolFrontendEngine;
 import org.junit.jupiter.api.Test;
@@ -34,7 +34,6 @@ import static org.mockito.Mockito.when;
 
 class CircuitBreakProxyStateTest {
     
-    @SuppressWarnings({"rawtypes", "unchecked"})
     @Test
     void assertExecute() {
         ChannelHandlerContext channelHandlerContext = mock(ChannelHandlerContext.class);

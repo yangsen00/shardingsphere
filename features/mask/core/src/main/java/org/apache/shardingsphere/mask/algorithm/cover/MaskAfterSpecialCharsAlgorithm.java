@@ -18,7 +18,8 @@
 package org.apache.shardingsphere.mask.algorithm.cover;
 
 import com.google.common.base.Strings;
-import org.apache.shardingsphere.mask.algorithm.MaskAlgorithmPropsChecker;
+import org.apache.shardingsphere.infra.annotation.HighFrequencyInvocation;
+import org.apache.shardingsphere.mask.algorithm.MaskAlgorithmPropertiesChecker;
 import org.apache.shardingsphere.mask.spi.MaskAlgorithm;
 
 import java.util.Properties;
@@ -43,15 +44,16 @@ public final class MaskAfterSpecialCharsAlgorithm implements MaskAlgorithm<Objec
     }
     
     private String createSpecialChars(final Properties props) {
-        MaskAlgorithmPropsChecker.checkAtLeastOneCharConfig(props, SPECIAL_CHARS, getType());
+        MaskAlgorithmPropertiesChecker.checkAtLeastOneChar(props, SPECIAL_CHARS, this);
         return props.getProperty(SPECIAL_CHARS);
     }
     
     private Character createReplaceChar(final Properties props) {
-        MaskAlgorithmPropsChecker.checkSingleCharConfig(props, REPLACE_CHAR, getType());
+        MaskAlgorithmPropertiesChecker.checkSingleChar(props, REPLACE_CHAR, this);
         return props.getProperty(REPLACE_CHAR).charAt(0);
     }
     
+    @HighFrequencyInvocation
     @Override
     public String mask(final Object plainValue) {
         String result = null == plainValue ? null : String.valueOf(plainValue);

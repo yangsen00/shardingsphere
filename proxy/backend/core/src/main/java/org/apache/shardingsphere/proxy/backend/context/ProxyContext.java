@@ -17,20 +17,11 @@
 
 package org.apache.shardingsphere.proxy.backend.context;
 
-import com.google.common.base.Strings;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.apache.shardingsphere.dialect.exception.syntax.database.NoDatabaseSelectedException;
-import org.apache.shardingsphere.infra.metadata.database.ShardingSphereDatabase;
-import org.apache.shardingsphere.infra.state.instance.InstanceStateContext;
-import org.apache.shardingsphere.infra.util.exception.ShardingSpherePreconditions;
 import org.apache.shardingsphere.mode.manager.ContextManager;
 import org.apache.shardingsphere.proxy.backend.connector.jdbc.datasource.JDBCBackendDataSource;
-
-import java.util.Collection;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Proxy context.
@@ -61,44 +52,5 @@ public final class ProxyContext {
      */
     public static ProxyContext getInstance() {
         return INSTANCE;
-    }
-    
-    /**
-     * Check database exists.
-     *
-     * @param name database name
-     * @return database exists or not
-     */
-    public boolean databaseExists(final String name) {
-        return contextManager.getMetaDataContexts().getMetaData().containsDatabase(name);
-    }
-    
-    /**
-     * Get database.
-     *
-     * @param name database name
-     * @return got database
-     */
-    public ShardingSphereDatabase getDatabase(final String name) {
-        ShardingSpherePreconditions.checkState(!Strings.isNullOrEmpty(name) && contextManager.getMetaDataContexts().getMetaData().containsDatabase(name), NoDatabaseSelectedException::new);
-        return contextManager.getMetaDataContexts().getMetaData().getDatabase(name);
-    }
-    
-    /**
-     * Get all database names.
-     *
-     * @return all database names
-     */
-    public Collection<String> getAllDatabaseNames() {
-        return contextManager.getMetaDataContexts().getMetaData().getDatabases().values().stream().map(ShardingSphereDatabase::getName).collect(Collectors.toList());
-    }
-    
-    /**
-     * Get instance state context.
-     * 
-     * @return instance state context
-     */
-    public Optional<InstanceStateContext> getInstanceStateContext() {
-        return null == contextManager.getInstanceContext() ? Optional.empty() : Optional.ofNullable(contextManager.getInstanceContext().getInstance().getState());
     }
 }

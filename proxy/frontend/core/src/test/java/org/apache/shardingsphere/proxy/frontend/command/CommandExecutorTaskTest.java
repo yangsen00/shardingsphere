@@ -19,16 +19,14 @@ package org.apache.shardingsphere.proxy.frontend.command;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import org.apache.shardingsphere.db.protocol.constant.CommonConstants;
-import org.apache.shardingsphere.db.protocol.packet.CommandPacket;
-import org.apache.shardingsphere.db.protocol.packet.CommandPacketType;
-import org.apache.shardingsphere.db.protocol.packet.DatabasePacket;
-import org.apache.shardingsphere.db.protocol.payload.PacketPayload;
-import org.apache.shardingsphere.infra.instance.InstanceContext;
+import org.apache.shardingsphere.database.protocol.constant.CommonConstants;
+import org.apache.shardingsphere.database.protocol.packet.DatabasePacket;
+import org.apache.shardingsphere.database.protocol.packet.command.CommandPacket;
+import org.apache.shardingsphere.database.protocol.packet.command.CommandPacketType;
+import org.apache.shardingsphere.database.protocol.payload.PacketPayload;
 import org.apache.shardingsphere.infra.metadata.ShardingSphereMetaData;
 import org.apache.shardingsphere.mode.manager.ContextManager;
 import org.apache.shardingsphere.mode.metadata.MetaDataContexts;
-import org.apache.shardingsphere.metadata.persist.MetaDataPersistService;
 import org.apache.shardingsphere.proxy.backend.connector.ProxyDatabaseConnectionManager;
 import org.apache.shardingsphere.proxy.backend.context.ProxyContext;
 import org.apache.shardingsphere.proxy.backend.exception.BackendConnectionException;
@@ -36,8 +34,8 @@ import org.apache.shardingsphere.proxy.backend.session.ConnectionSession;
 import org.apache.shardingsphere.proxy.frontend.command.executor.CommandExecutor;
 import org.apache.shardingsphere.proxy.frontend.command.executor.QueryCommandExecutor;
 import org.apache.shardingsphere.proxy.frontend.spi.DatabaseProtocolFrontendEngine;
-import org.apache.shardingsphere.test.mock.AutoMockExtension;
-import org.apache.shardingsphere.test.mock.StaticMockSettings;
+import org.apache.shardingsphere.test.infra.framework.extension.mock.AutoMockExtension;
+import org.apache.shardingsphere.test.infra.framework.extension.mock.StaticMockSettings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -90,7 +88,6 @@ class CommandExecutorTaskTest {
     @Mock
     private CommandExecutor commandExecutor;
     
-    @SuppressWarnings("rawtypes")
     @Mock
     private DatabasePacket databasePacket;
     
@@ -98,8 +95,11 @@ class CommandExecutorTaskTest {
     void setup() {
         when(connectionSession.getDatabaseConnectionManager()).thenReturn(databaseConnectionManager);
         when(handlerContext.channel().attr(CommonConstants.CHARSET_ATTRIBUTE_KEY).get()).thenReturn(StandardCharsets.UTF_8);
-        when(ProxyContext.getInstance().getContextManager()).thenReturn(
-                new ContextManager(new MetaDataContexts(mock(MetaDataPersistService.class), new ShardingSphereMetaData()), mock(InstanceContext.class)));
+        MetaDataContexts metaDataContexts = mock(MetaDataContexts.class);
+        when(metaDataContexts.getMetaData()).thenReturn(new ShardingSphereMetaData());
+        ContextManager contextManager = mock(ContextManager.class);
+        when(contextManager.getMetaDataContexts()).thenReturn(metaDataContexts);
+        when(ProxyContext.getInstance().getContextManager()).thenReturn(contextManager);
     }
     
     @Test
@@ -115,7 +115,6 @@ class CommandExecutorTaskTest {
         verify(databaseConnectionManager).closeExecutionResources();
     }
     
-    @SuppressWarnings("unchecked")
     @Test
     void assertRunNeedFlushByTrue() throws SQLException, BackendConnectionException {
         when(queryCommandExecutor.execute()).thenReturn(Collections.singleton(databasePacket));
@@ -125,14 +124,12 @@ class CommandExecutorTaskTest {
         when(engine.getCodecEngine().createPacketPayload(message, StandardCharsets.UTF_8)).thenReturn(payload);
         CommandExecutorTask actual = new CommandExecutorTask(engine, connectionSession, handlerContext, message);
         actual.run();
-        verify(handlerContext).write(databasePacket);
         verify(handlerContext).flush();
         verify(engine.getCommandExecuteEngine()).writeQueryData(handlerContext, databaseConnectionManager, queryCommandExecutor, 1);
         verify(queryCommandExecutor).close();
         verify(databaseConnectionManager).closeExecutionResources();
     }
     
-    @SuppressWarnings("unchecked")
     @Test
     void assertRunByCommandExecutor() throws SQLException, BackendConnectionException {
         when(commandExecutor.execute()).thenReturn(Collections.singleton(databasePacket));
@@ -142,13 +139,11 @@ class CommandExecutorTaskTest {
         when(engine.getCodecEngine().createPacketPayload(message, StandardCharsets.UTF_8)).thenReturn(payload);
         CommandExecutorTask actual = new CommandExecutorTask(engine, connectionSession, handlerContext, message);
         actual.run();
-        verify(handlerContext).write(databasePacket);
         verify(handlerContext).flush();
         verify(commandExecutor).close();
         verify(databaseConnectionManager).closeExecutionResources();
     }
     
-    @SuppressWarnings("unchecked")
     @Test
     void assertRunWithException() throws BackendConnectionException, SQLException {
         RuntimeException mockException = new RuntimeException("mock");

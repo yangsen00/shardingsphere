@@ -19,27 +19,32 @@ package org.apache.shardingsphere.test.it.sql.parser.internal.asserts.statement;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.apache.shardingsphere.distsql.parser.statement.ral.RALStatement;
-import org.apache.shardingsphere.distsql.parser.statement.rdl.RDLStatement;
-import org.apache.shardingsphere.distsql.parser.statement.rql.RQLStatement;
-import org.apache.shardingsphere.distsql.parser.statement.rul.RULStatement;
-import org.apache.shardingsphere.sql.parser.sql.common.statement.SQLStatement;
-import org.apache.shardingsphere.sql.parser.sql.common.statement.dal.DALStatement;
-import org.apache.shardingsphere.sql.parser.sql.common.statement.dcl.DCLStatement;
-import org.apache.shardingsphere.sql.parser.sql.common.statement.ddl.DDLStatement;
-import org.apache.shardingsphere.sql.parser.sql.common.statement.dml.DMLStatement;
-import org.apache.shardingsphere.sql.parser.sql.common.statement.tcl.TCLStatement;
+import org.apache.shardingsphere.distsql.statement.type.ral.RALStatement;
+import org.apache.shardingsphere.distsql.statement.type.rdl.RDLStatement;
+import org.apache.shardingsphere.distsql.statement.type.rql.RQLStatement;
+import org.apache.shardingsphere.distsql.statement.type.rul.RULStatement;
+import org.apache.shardingsphere.sql.parser.statement.core.statement.SQLStatement;
+import org.apache.shardingsphere.sql.parser.statement.core.statement.type.dal.DALStatement;
+import org.apache.shardingsphere.sql.parser.statement.core.statement.type.dcl.DCLStatement;
+import org.apache.shardingsphere.sql.parser.statement.core.statement.type.ddl.DDLStatement;
+import org.apache.shardingsphere.sql.parser.statement.core.statement.type.dml.DMLStatement;
+import org.apache.shardingsphere.sql.parser.statement.core.statement.type.lcl.LCLStatement;
+import org.apache.shardingsphere.sql.parser.statement.core.statement.type.tcl.TCLStatement;
+import org.apache.shardingsphere.sql.parser.statement.oracle.ddl.function.OracleCreateFunctionStatement;
+import org.apache.shardingsphere.sql.parser.statement.oracle.ddl.procedure.OracleCreateProcedureStatement;
 import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.SQLCaseAssertContext;
 import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.segment.parameter.ParameterMarkerAssert;
 import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.statement.comment.CommentAssert;
 import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.statement.dal.DALStatementAssert;
 import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.statement.dcl.DCLStatementAssert;
 import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.statement.ddl.DDLStatementAssert;
+import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.statement.dml.DMLStatementAssert;
+import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.statement.lcl.LCLStatementAssert;
+import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.statement.plsql.PLSQLStatementAssert;
 import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.statement.ral.RALStatementAssert;
 import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.statement.rdl.RDLStatementAssert;
 import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.statement.rql.RQLStatementAssert;
 import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.statement.rul.RULStatementAssert;
-import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.statement.dml.DMLStatementAssert;
 import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.statement.tcl.TCLStatementAssert;
 import org.apache.shardingsphere.test.it.sql.parser.internal.cases.parser.jaxb.SQLParserTestCase;
 
@@ -57,6 +62,10 @@ public final class SQLStatementAssert {
      * @param expected expected parser result
      */
     public static void assertIs(final SQLCaseAssertContext assertContext, final SQLStatement actual, final SQLParserTestCase expected) {
+        if (actual instanceof OracleCreateProcedureStatement || actual instanceof OracleCreateFunctionStatement) {
+            PLSQLStatementAssert.assertIs(assertContext, actual, expected);
+            return;
+        }
         ParameterMarkerAssert.assertCount(assertContext, actual.getParameterCount(), expected.getParameters().size());
         CommentAssert.assertComment(assertContext, actual, expected);
         if (actual instanceof DMLStatement) {
@@ -65,6 +74,8 @@ public final class SQLStatementAssert {
             DDLStatementAssert.assertIs(assertContext, (DDLStatement) actual, expected);
         } else if (actual instanceof TCLStatement) {
             TCLStatementAssert.assertIs(assertContext, (TCLStatement) actual, expected);
+        } else if (actual instanceof LCLStatement) {
+            LCLStatementAssert.assertIs(assertContext, (LCLStatement) actual, expected);
         } else if (actual instanceof DCLStatement) {
             DCLStatementAssert.assertIs(assertContext, (DCLStatement) actual, expected);
         } else if (actual instanceof DALStatement) {

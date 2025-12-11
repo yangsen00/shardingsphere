@@ -18,11 +18,12 @@
 package org.apache.shardingsphere.infra.merge.result.impl.stream;
 
 import lombok.Setter;
+import org.apache.shardingsphere.infra.exception.ShardingSpherePreconditions;
 import org.apache.shardingsphere.infra.executor.sql.execute.result.query.QueryResult;
 import org.apache.shardingsphere.infra.merge.result.MergedResult;
-import org.apache.shardingsphere.infra.util.exception.ShardingSpherePreconditions;
 
 import java.io.InputStream;
+import java.io.Reader;
 import java.sql.SQLException;
 import java.util.Calendar;
 
@@ -49,7 +50,7 @@ public abstract class StreamMergedResult implements MergedResult {
     }
     
     @Override
-    public Object getCalendarValue(final int columnIndex, final Class<?> type, final Calendar calendar) throws SQLException {
+    public Object getCalendarValue(final int columnIndex, final Class<?> type, @SuppressWarnings("UseOfObsoleteDateTimeApi") final Calendar calendar) throws SQLException {
         Object result = getCurrentQueryResult().getCalendarValue(columnIndex, type, calendar);
         wasNull = getCurrentQueryResult().wasNull();
         return result;
@@ -58,6 +59,13 @@ public abstract class StreamMergedResult implements MergedResult {
     @Override
     public final InputStream getInputStream(final int columnIndex, final String type) throws SQLException {
         InputStream result = getCurrentQueryResult().getInputStream(columnIndex, type);
+        wasNull = getCurrentQueryResult().wasNull();
+        return result;
+    }
+    
+    @Override
+    public Reader getCharacterStream(final int columnIndex) throws SQLException {
+        Reader result = getCurrentQueryResult().getCharacterStream(columnIndex);
         wasNull = getCurrentQueryResult().wasNull();
         return result;
     }

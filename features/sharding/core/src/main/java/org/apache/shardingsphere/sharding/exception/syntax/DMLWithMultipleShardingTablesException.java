@@ -17,7 +17,7 @@
 
 package org.apache.shardingsphere.sharding.exception.syntax;
 
-import org.apache.shardingsphere.infra.util.exception.external.sql.sqlstate.XOpenSQLState;
+import org.apache.shardingsphere.infra.exception.external.sql.sqlstate.XOpenSQLState;
 import org.apache.shardingsphere.sharding.exception.ShardingSQLException;
 
 import java.util.Collection;
@@ -30,6 +30,6 @@ public final class DMLWithMultipleShardingTablesException extends ShardingSQLExc
     private static final long serialVersionUID = -7368310216924145478L;
     
     public DMLWithMultipleShardingTablesException(final Collection<String> tableNames) {
-        super(XOpenSQLState.FEATURE_NOT_SUPPORTED, 45, "Can not support DML operation with multiple tables `%s`.", tableNames.toString());
+        super(XOpenSQLState.FEATURE_NOT_SUPPORTED, 35, "Can not support DML operation with multiple tables '%s'.", tableNames);
     }
 }

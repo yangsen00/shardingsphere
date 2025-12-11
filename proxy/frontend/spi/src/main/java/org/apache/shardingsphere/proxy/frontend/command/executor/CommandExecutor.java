@@ -17,7 +17,7 @@
 
 package org.apache.shardingsphere.proxy.frontend.command.executor;
 
-import org.apache.shardingsphere.db.protocol.packet.DatabasePacket;
+import org.apache.shardingsphere.database.protocol.packet.DatabasePacket;
 
 import java.sql.SQLException;
 import java.util.Collection;
@@ -33,7 +33,7 @@ public interface CommandExecutor {
      * @return database packets to be sent
      * @throws SQLException SQL exception
      */
-    Collection<DatabasePacket<?>> execute() throws SQLException;
+    Collection<DatabasePacket> execute() throws SQLException;
     
     /**
      * Close command executor.

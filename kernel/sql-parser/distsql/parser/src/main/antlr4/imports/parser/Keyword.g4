@@ -39,10 +39,6 @@ SQL_PARSER
     : S Q L UL_ P A R S E R
     ;
 
-SQL_COMMENT_PARSE_ENABLE
-    : S Q L UL_ C O M M E N T UL_ P A R S E UL_ E N A B L E
-    ;
-
 PARSE_TREE_CACHE
     : P A R S E UL_ T R E E UL_ C A C H E
     ;
@@ -57,10 +53,6 @@ INITIAL_CAPACITY
 
 MAXIMUM_SIZE
     : M A X I M U M UL_ S I Z E
-    ;
-
-CONCURRENCY_LEVEL
-    : C O N C U R R E N C Y UL_ L E V E L
     ;
 
 TRUE

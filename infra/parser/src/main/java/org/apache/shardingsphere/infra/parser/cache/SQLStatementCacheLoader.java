@@ -18,11 +18,10 @@
 package org.apache.shardingsphere.infra.parser.cache;
 
 import com.github.benmanes.caffeine.cache.CacheLoader;
+import org.apache.shardingsphere.database.connector.core.type.DatabaseType;
 import org.apache.shardingsphere.infra.parser.sql.SQLStatementParserExecutor;
-import org.apache.shardingsphere.sql.parser.api.CacheOption;
-import org.apache.shardingsphere.sql.parser.sql.common.statement.SQLStatement;
-
-import javax.annotation.ParametersAreNonnullByDefault;
+import org.apache.shardingsphere.sql.parser.engine.api.CacheOption;
+import org.apache.shardingsphere.sql.parser.statement.core.statement.SQLStatement;
 
 /**
  * SQL statement cache loader.
@@ -31,11 +30,19 @@ public final class SQLStatementCacheLoader implements CacheLoader<String, SQLSta
     
     private final SQLStatementParserExecutor sqlStatementParserExecutor;
     
-    public SQLStatementCacheLoader(final String databaseType, final CacheOption parseTreeCacheOption, final boolean isParseComment) {
-        sqlStatementParserExecutor = new SQLStatementParserExecutor(databaseType, parseTreeCacheOption, isParseComment);
+    public SQLStatementCacheLoader(final DatabaseType databaseType, final CacheOption parseTreeCacheOption) {
+        sqlStatementParserExecutor = new SQLStatementParserExecutor(databaseType, parseTreeCacheOption);
     }
     
-    @ParametersAreNonnullByDefault
+    /**
+     * Update cache option.
+     *
+     * @param parseTreeCacheOption parse tree cache option
+     */
+    public void updateCacheOption(final CacheOption parseTreeCacheOption) {
+        sqlStatementParserExecutor.updateCacheOption(parseTreeCacheOption);
+    }
+    
     @Override
     public SQLStatement load(final String sql) {
         return sqlStatementParserExecutor.parse(sql);

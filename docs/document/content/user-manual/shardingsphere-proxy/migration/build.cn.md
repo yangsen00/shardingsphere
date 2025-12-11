@@ -16,7 +16,7 @@ weight = 1
 
 1. 获取 ShardingSphere-Proxy。详情请参见 [proxy 启动手册](/cn/user-manual/shardingsphere-proxy/startup/bin/)。
 
-2. 修改配置文件 `conf/server.yaml`，详情请参见[模式配置](/cn/user-manual/shardingsphere-jdbc/yaml-config/mode/)。
+2. 修改配置文件 `conf/global.yaml`，详情请参见[模式配置](/cn/user-manual/shardingsphere-jdbc/yaml-config/mode/)。
 
 目前 `mode` 必须是 `Cluster`，需要提前启动对应的注册中心。
 
@@ -37,14 +37,13 @@ mode:
 
 3. 引入 JDBC 驱动。
 
-proxy 已包含 PostgreSQL JDBC 驱动。
+proxy 已包含 PostgreSQL JDBC 和 openGauss JDBC 驱动。
 
 如果后端连接以下数据库，请下载相应 JDBC 驱动 jar 包，并将其放入 `${shardingsphere-proxy}/ext-lib` 目录。
 
-| 数据库       | JDBC 驱动                                                                                                                               | 参考                                                                                               |
-|-----------|---------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
-| MySQL     | [mysql-connector-java-5.1.49.jar]( https://repo1.maven.org/maven2/mysql/mysql-connector-java/5.1.49/mysql-connector-java-5.1.49.jar ) | [Connector/J Versions]( https://dev.mysql.com/doc/connector-j/5.1/en/connector-j-versions.html ) |
-| openGauss | [opengauss-jdbc-3.0.0.jar]( https://repo1.maven.org/maven2/org/opengauss/opengauss-jdbc/3.0.0/opengauss-jdbc-3.0.0.jar )              |                                                                                                  |
+| 数据库   | JDBC 驱动                                                                                          |
+|-------|--------------------------------------------------------------------------------------------------|
+| MySQL | [mysql-connector-j-8.3.0.jar](https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/8.3.0/) |
 
 如果是异构迁移，源端支持范围更广的数据库。JDBC 驱动处理方式同上。
 
@@ -73,11 +72,11 @@ SHOW MIGRATION RULE;
 默认配置如下：
 
 ```
-+--------------------------------------------------------------+--------------------------------------+------------------------------------------------------+
-| read                                                         | write                                | stream_channel                                       |
-+--------------------------------------------------------------+--------------------------------------+------------------------------------------------------+
-| {"workerThread":40,"batchSize":1000,"shardingSize":10000000} | {"workerThread":40,"batchSize":1000} | {"type":"MEMORY","props":{"block-queue-size":10000}} |
-+--------------------------------------------------------------+--------------------------------------+------------------------------------------------------+
++--------------------------------------------------------------+--------------------------------------+-------------------------------------------------------+
+| read                                                         | write                                | stream_channel                                        |
++--------------------------------------------------------------+--------------------------------------+-------------------------------------------------------+
+| {"workerThread":20,"batchSize":1000,"shardingSize":10000000} | {"workerThread":20,"batchSize":1000} | {"type":"MEMORY","props":{"block-queue-size":"2000"}} |
++--------------------------------------------------------------+--------------------------------------+-------------------------------------------------------+
 ```
 
 6.2. 修改配置（可选）。
@@ -89,17 +88,17 @@ SHOW MIGRATION RULE;
 ```sql
 ALTER MIGRATION RULE (
 READ(
-  WORKER_THREAD=40,
+  WORKER_THREAD=20,
   BATCH_SIZE=1000,
   SHARDING_SIZE=10000000,
   RATE_LIMITER (TYPE(NAME='QPS',PROPERTIES('qps'='500')))
 ),
 WRITE(
-  WORKER_THREAD=40,
+  WORKER_THREAD=20,
   BATCH_SIZE=1000,
   RATE_LIMITER (TYPE(NAME='TPS',PROPERTIES('tps'='2000')))
 ),
-STREAM_CHANNEL (TYPE(NAME='MEMORY',PROPERTIES('block-queue-size'='10000')))
+STREAM_CHANNEL (TYPE(NAME='MEMORY',PROPERTIES('block-queue-size'='2000')))
 );
 ```
 
@@ -108,7 +107,7 @@ STREAM_CHANNEL (TYPE(NAME='MEMORY',PROPERTIES('block-queue-size'='10000')))
 ```sql
 ALTER MIGRATION RULE (
 READ( -- 数据读取配置。如果不配置则部分参数默认生效。
-  WORKER_THREAD=40, -- 从源端摄取全量数据的线程池大小。如果不配置则使用默认值。
+  WORKER_THREAD=20, -- 从源端摄取全量数据的线程池大小。如果不配置则使用默认值。
   BATCH_SIZE=1000, -- 一次查询操作返回的最大记录数。如果不配置则使用默认值。
   SHARDING_SIZE=10000000, -- 全量数据分片大小。如果不配置则使用默认值。
   RATE_LIMITER ( -- 限流算法。如果不配置则不限流。
@@ -119,7 +118,7 @@ READ( -- 数据读取配置。如果不配置则部分参数默认生效。
   )))
 ),
 WRITE( -- 数据写入配置。如果不配置则部分参数默认生效。
-  WORKER_THREAD=40, -- 数据写入到目标端的线程池大小。如果不配置则使用默认值。
+  WORKER_THREAD=20, -- 数据写入到目标端的线程池大小。如果不配置则使用默认值。
   BATCH_SIZE=1000, -- 一次批量写入操作的最大记录数。如果不配置则使用默认值。
   RATE_LIMITER ( -- 限流算法。如果不配置则不限流。
   TYPE( -- 算法类型。可选项：TPS
@@ -132,40 +131,7 @@ STREAM_CHANNEL ( -- 数据通道，连接生产者和消费者，用于 read 和
 TYPE( -- 算法类型。可选项：MEMORY
 NAME='MEMORY',
 PROPERTIES( -- 算法属性
-'block-queue-size'='10000' -- 属性：阻塞队列大小
+'block-queue-size'='2000' -- 属性：阻塞队列大小
 )))
-);
-```
-
-DistSQL 示例：配置 `READ` 限流。
-
-```sql
-ALTER MIGRATION RULE (
-READ(
-  RATE_LIMITER (TYPE(NAME='QPS',PROPERTIES('qps'='500')))
-)
-);
-```
-
-配置读取数据限流，其它配置使用默认值。
-
-6.3. 恢复配置。
-
-如需恢复默认配置，也通过 ALTER 语句进行操作。
-
-```sql
-ALTER MIGRATION RULE (
-READ(
-  WORKER_THREAD=40,
-  BATCH_SIZE=1000,
-  SHARDING_SIZE=10000000,
-  RATE_LIMITER (TYPE(NAME='QPS',PROPERTIES('qps'='500')))
-),
-WRITE(
-  WORKER_THREAD=40,
-  BATCH_SIZE=1000,
-  RATE_LIMITER (TYPE(NAME='TPS',PROPERTIES('tps'='2000')))
-),
-STREAM_CHANNEL (TYPE(NAME='MEMORY',PROPERTIES('block-queue-size'='10000')))
 );
 ```

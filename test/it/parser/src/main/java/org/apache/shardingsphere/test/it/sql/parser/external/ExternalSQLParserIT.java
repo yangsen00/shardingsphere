@@ -18,31 +18,31 @@
 package org.apache.shardingsphere.test.it.sql.parser.external;
 
 import com.google.common.base.Preconditions;
-import lombok.SneakyThrows;
-import org.apache.shardingsphere.infra.util.exception.external.ShardingSphereExternalException;
-import org.apache.shardingsphere.infra.util.spi.type.typed.TypedSPILoader;
-import org.apache.shardingsphere.sql.parser.api.CacheOption;
-import org.apache.shardingsphere.sql.parser.api.SQLParserEngine;
-import org.apache.shardingsphere.sql.parser.api.SQLStatementVisitorEngine;
-import org.apache.shardingsphere.sql.parser.core.ParseASTNode;
+import org.apache.shardingsphere.infra.exception.external.ShardingSphereExternalException;
+import org.apache.shardingsphere.infra.spi.type.typed.TypedSPILoader;
+import org.apache.shardingsphere.sql.parser.engine.api.CacheOption;
+import org.apache.shardingsphere.sql.parser.engine.api.SQLParserEngine;
+import org.apache.shardingsphere.sql.parser.engine.api.SQLStatementVisitorEngine;
+import org.apache.shardingsphere.sql.parser.engine.core.ParseASTNode;
 import org.apache.shardingsphere.test.it.sql.parser.external.env.SQLParserExternalITEnvironment;
+import org.apache.shardingsphere.test.it.sql.parser.external.loader.ExternalTestParameterLoader;
+import org.apache.shardingsphere.test.it.sql.parser.external.loader.strategy.ExternalTestParameterLoadStrategy;
+import org.apache.shardingsphere.test.it.sql.parser.external.loader.strategy.type.GitHubTestParameterLoadStrategy;
+import org.apache.shardingsphere.test.it.sql.parser.external.loader.template.ExternalTestParameterLoadTemplate;
 import org.apache.shardingsphere.test.it.sql.parser.external.result.SQLParseResultReporter;
 import org.apache.shardingsphere.test.it.sql.parser.external.result.SQLParseResultReporterCreator;
-import org.apache.shardingsphere.test.loader.AbstractTestParameterLoader;
-import org.apache.shardingsphere.test.loader.ExternalCaseSettings;
-import org.apache.shardingsphere.test.loader.ExternalSQLParserTestParameter;
-import org.apache.shardingsphere.test.loader.strategy.TestParameterLoadStrategy;
-import org.apache.shardingsphere.test.loader.strategy.impl.GitHubTestParameterLoadStrategy;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.params.support.ParameterDeclarations;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.Collection;
 import java.util.stream.Stream;
 
 public abstract class ExternalSQLParserIT {
@@ -50,18 +50,20 @@ public abstract class ExternalSQLParserIT {
     @ParameterizedTest(name = "{0} ({1}) -> {2}")
     @EnabledIf("isEnabled")
     @ArgumentsSource(TestCaseArgumentsProvider.class)
+    @Execution(ExecutionMode.CONCURRENT)
     void assertParseSQL(final String sqlCaseId, final String databaseType, final String sql, final String reportType) throws IOException {
-        boolean isSuccess = true;
+        boolean isSuccess = false;
         try (
                 SQLParseResultReporter resultReporter = TypedSPILoader.getService(SQLParseResultReporterCreator.class, reportType)
                         .create(databaseType, SQLParserExternalITEnvironment.getInstance().getResultPath())) {
             try {
                 ParseASTNode parseASTNode = new SQLParserEngine(databaseType, new CacheOption(128, 1024L)).parse(sql, false);
-                new SQLStatementVisitorEngine(databaseType, true).visit(parseASTNode);
-            } catch (final ShardingSphereExternalException | ClassCastException | NullPointerException | IllegalArgumentException | IndexOutOfBoundsException ignore) {
-                isSuccess = false;
+                new SQLStatementVisitorEngine(databaseType).visit(parseASTNode);
+                isSuccess = true;
+            } catch (final ShardingSphereExternalException | ClassCastException | IllegalArgumentException | IndexOutOfBoundsException ignore) {
+            } finally {
+                resultReporter.printResult(sqlCaseId, databaseType, isSuccess, sql);
             }
-            resultReporter.printResult(sqlCaseId, databaseType, isSuccess, sql);
         }
     }
     
@@ -69,20 +71,22 @@ public abstract class ExternalSQLParserIT {
         return SQLParserExternalITEnvironment.getInstance().isSqlParserITEnabled();
     }
     
-    private static class TestCaseArgumentsProvider implements ArgumentsProvider {
+    private static final class TestCaseArgumentsProvider implements ArgumentsProvider {
         
         @Override
-        public Stream<? extends Arguments> provideArguments(final ExtensionContext extensionContext) {
-            ExternalCaseSettings settings = extensionContext.getRequiredTestClass().getAnnotation(ExternalCaseSettings.class);
+        public Stream<? extends Arguments> provideArguments(final ParameterDeclarations parameters, final ExtensionContext context) throws ReflectiveOperationException {
+            ExternalCaseSettings settings = context.getRequiredTestClass().getAnnotation(ExternalCaseSettings.class);
             Preconditions.checkNotNull(settings, "Annotation ExternalSQLParserITSettings is required.");
-            return getTestParameters(settings).stream().map(each -> Arguments.of(each.getSqlCaseId(), each.getDatabaseType(), each.getSql(), each.getReportType()));
+            return getTestParameters(settings).map(each -> Arguments.of(each.getSqlCaseId(), each.getDatabaseType(), each.getSql(), each.getReportType()));
         }
         
-        @SneakyThrows
-        private Collection<ExternalSQLParserTestParameter> getTestParameters(final ExternalCaseSettings settings) {
-            AbstractTestParameterLoader<ExternalSQLParserTestParameter> loader = settings.caseLoader().getConstructor(TestParameterLoadStrategy.class)
-                    .newInstance(new GitHubTestParameterLoadStrategy());
-            return loader.load(URI.create(settings.caseURL()), URI.create(settings.resultURL()), settings.value(), settings.reportType());
+        private Stream<ExternalSQLTestParameter> getTestParameters(final ExternalCaseSettings settings) throws ReflectiveOperationException {
+            ExternalTestParameterLoadStrategy loadStrategy = new GitHubTestParameterLoadStrategy();
+            URI sqlCaseURI = URI.create(settings.caseURL());
+            URI resultURI = URI.create(settings.resultURL());
+            ExternalTestParameterLoadTemplate loadTemplate = settings.template().getConstructor().newInstance();
+            ExternalTestParameterLoader loader = new ExternalTestParameterLoader(loadStrategy, loadTemplate);
+            return loader.load(sqlCaseURI, resultURI, settings.value(), settings.reportType());
         }
     }
 }

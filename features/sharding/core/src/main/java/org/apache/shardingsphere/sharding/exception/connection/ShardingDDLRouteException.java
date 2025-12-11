@@ -17,7 +17,7 @@
 
 package org.apache.shardingsphere.sharding.exception.connection;
 
-import org.apache.shardingsphere.infra.util.exception.external.sql.sqlstate.XOpenSQLState;
+import org.apache.shardingsphere.infra.exception.external.sql.sqlstate.XOpenSQLState;
 import org.apache.shardingsphere.sharding.exception.ShardingSQLException;
 
 import java.util.Collection;
@@ -30,6 +30,6 @@ public final class ShardingDDLRouteException extends ShardingSQLException {
     private static final long serialVersionUID = 1611718269096645289L;
     
     public ShardingDDLRouteException(final String operation, final String objectType, final Collection<String> objectNames) {
-        super(XOpenSQLState.GENERAL_ERROR, 60, "`%s %s` can not route correctly for %s `%s`.", operation, objectType, objectType, objectNames.toString());
+        super(XOpenSQLState.GENERAL_ERROR, 40, "'%s %s' can not route correctly for %s '%s'.", operation, objectType, objectType, objectNames);
     }
 }

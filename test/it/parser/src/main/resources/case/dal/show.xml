@@ -23,7 +23,7 @@
 
     <show-index sql-case-id="show_index_with_indexes_with_table_and_database">
         <table name="t_order" start-index="18" stop-index="24" />
-        <schema name="sharding_db" start-index="26" stop-index="41" />
+        <database name="sharding_db" start-index="26" stop-index="41" />
     </show-index>
 
     <show-index sql-case-id="show_index_with_keys_with_database_and_table">
@@ -34,12 +34,12 @@
 
     <show-index sql-case-id="show_index_with_table_back_quotes">
         <table name="t_order" start-delimiter="`" end-delimiter="`" start-index="18" stop-index="26" />
-        <schema name="sharding_db" start-index="28" stop-index="43" />
+        <database name="sharding_db" start-index="28" stop-index="43" />
     </show-index>
 
     <show-index sql-case-id="show_index_with_database_back_quotes">
         <table name="t_order" start-index="18" stop-index="24" />
-        <schema name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="26" stop-index="43" />
+        <database name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="26" stop-index="43" />
     </show-index>
 
     <show-index sql-case-id="show_index_with_back_quotes">
@@ -60,7 +60,7 @@
 
     <show-columns sql-case-id="show_columns_with_schema">
         <table name="t_order" start-delimiter="`" end-delimiter="`" start-index="18" stop-index="26" />
-        <schema name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="33" stop-index="45" />
+        <database name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="33" stop-index="45" />
     </show-columns>
 
     <show-columns sql-case-id="show_columns_with_like_pattern">
@@ -102,7 +102,7 @@
 
     <show-columns sql-case-id="show_columns_by_fields_with_schema">
         <table name="t_order" start-delimiter="`" end-delimiter="`" start-index="17" stop-index="25" />
-        <schema name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="32" stop-index="44" />
+        <database name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="32" stop-index="44" />
     </show-columns>
 
     <show-columns sql-case-id="show_columns_by_fields_with_like_pattern">
@@ -306,19 +306,19 @@
 
     <show-open-tables sql-case-id="show_open_tables_from_schema">
         <from start-index="17" stop-index="34">
-            <schema name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="22" stop-index="34" />
+            <database name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="22" stop-index="34" />
         </from>
     </show-open-tables>
 
     <show-open-tables sql-case-id="show_open_tables_in_schema">
         <from start-index="17" stop-index="32">
-            <schema name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="20" stop-index="32" />
+            <database name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="20" stop-index="32" />
         </from>
     </show-open-tables>
 
     <show-open-tables sql-case-id="show_open_tables_with_like_pattern">
         <from start-index="17" stop-index="34">
-            <schema name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="22" stop-index="34" />
+            <database name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="22" stop-index="34" />
         </from>
         <filter start-index="36" stop-index="51">
             <like pattern="t_order_%" start-delimiter="'" end-delimiter="'" start-index="36" stop-index="51" />
@@ -327,7 +327,7 @@
 
     <show-open-tables sql-case-id="show_open_tables_with_where_expr" parameters="'t_order'">
         <from start-index="17" stop-index="34">
-            <schema name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="22" stop-index="34" />
+            <database name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="22" stop-index="34" />
         </from>
         <filter start-index="36" stop-index="52" literal-start-index="36" literal-stop-index="60">
             <where start-index="36" stop-index="52" literal-start-index="36" literal-stop-index="60">
@@ -349,7 +349,7 @@
 
     <show-open-tables sql-case-id="show_open_tables_with_where_expr_no_parameter">
         <from start-index="17" stop-index="34">
-            <schema name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="22" stop-index="34" />
+            <database name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="22" stop-index="34" />
         </from>
         <filter start-index="36" stop-index="60">
             <where start-index="36" stop-index="60">
@@ -372,13 +372,13 @@
 
     <show-triggers sql-case-id="show_triggers_from_schema">
         <from start-index="14" stop-index="31">
-            <schema name="sharding_db" start-index="19" stop-index="31" start-delimiter="`" end-delimiter="`" />
+            <database name="sharding_db" start-index="19" stop-index="31" start-delimiter="`" end-delimiter="`" />
         </from>
     </show-triggers>
 
     <show-triggers sql-case-id="show_triggers_in_schema">
         <from start-index="14" stop-index="29">
-            <schema name="sharding_db" start-index="17" stop-index="29" start-delimiter="`" end-delimiter="`" />
+            <database name="sharding_db" start-index="17" stop-index="29" start-delimiter="`" end-delimiter="`" />
         </from>
     </show-triggers>
 
@@ -390,7 +390,7 @@
 
     <show-triggers sql-case-id="show_triggers_with_like_pattern">
         <from start-index="14" stop-index="31">
-            <schema name="sharding_db" start-index="19" stop-index="31" start-delimiter="`" end-delimiter="`" />
+            <database name="sharding_db" start-index="19" stop-index="31" start-delimiter="`" end-delimiter="`" />
         </from>
         <filter start-index="33" stop-index="43">
             <like pattern="sys%" start-index="33" stop-index="43" start-delimiter="'" end-delimiter="'" />
@@ -399,7 +399,7 @@
 
     <show-triggers sql-case-id="show_triggers_with_where_expr" parameters="'t_order'">
         <from start-index="14" stop-index="31">
-            <schema name="sharding_db" start-index="19" stop-index="31" start-delimiter="`" end-delimiter="`" />
+            <database name="sharding_db" start-index="19" stop-index="31" start-delimiter="`" end-delimiter="`" />
         </from>
         <filter start-index="33" stop-index="49" literal-start-index="33" literal-stop-index="57">
             <where start-index="33" stop-index="49" literal-start-index="33" literal-stop-index="57">
@@ -421,7 +421,7 @@
 
     <show-triggers sql-case-id="show_triggers_with_where_expr_no_parameter">
         <from start-index="14" stop-index="31">
-            <schema name="sharding_db" start-index="19" stop-index="31" start-delimiter="`" end-delimiter="`" />
+            <database name="sharding_db" start-index="19" stop-index="31" start-delimiter="`" end-delimiter="`" />
         </from>
         <filter start-index="33" stop-index="57">
             <where start-index="33" stop-index="57">
@@ -444,19 +444,19 @@
 
     <show-table-status sql-case-id="show_table_status_from_schema">
         <from start-index="18" stop-index="35">
-            <schema name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="23" stop-index="35" />
+            <database name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="23" stop-index="35" />
         </from>
     </show-table-status>
 
     <show-table-status sql-case-id="show_table_status_in_schema">
         <from start-index="18" stop-index="33">
-            <schema name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="21" stop-index="33" />
+            <database name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="21" stop-index="33" />
         </from>
     </show-table-status>
 
     <show-table-status sql-case-id="show_table_status_with_like_pattern">
         <from start-index="18" stop-index="35">
-            <schema name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="23" stop-index="35" />
+            <database name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="23" stop-index="35" />
         </from>
         <filter start-index="37" stop-index="52">
             <like pattern="t_order_%" start-delimiter="'" end-delimiter="'" start-index="37" stop-index="52" />
@@ -465,7 +465,7 @@
 
     <show-table-status sql-case-id="show_table_status_with_where_expr" parameters="'t_order'">
         <from start-index="18" stop-index="35">
-            <schema name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="23" stop-index="35" />
+            <database name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="23" stop-index="35" />
         </from>
         <filter start-index="37" stop-index="52" literal-start-index="37" literal-stop-index="60">
             <where start-index="37" stop-index="52" literal-start-index="37" literal-stop-index="60">
@@ -487,7 +487,7 @@
 
     <show-table-status sql-case-id="show_table_status_with_where_expr_no_parameter">
         <from start-index="18" stop-index="35">
-            <schema name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="23" stop-index="35" />
+            <database name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="23" stop-index="35" />
         </from>
         <filter start-index="37" stop-index="60">
             <where start-index="37" stop-index="60">
@@ -558,13 +558,13 @@
 
     <show-events sql-case-id="show_events_from_schema">
         <from start-index="12" stop-index="29">
-            <schema name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="17" stop-index="29" />
+            <database name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="17" stop-index="29" />
         </from>
     </show-events>
 
     <show-events sql-case-id="show_events_in_schema">
         <from start-index="12" stop-index="27">
-            <schema name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="15" stop-index="27" />
+            <database name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="15" stop-index="27" />
         </from>
     </show-events>
 
@@ -576,7 +576,7 @@
 
     <show-events sql-case-id="show_events_with_like_pattern">
         <from start-index="12" stop-index="29">
-            <schema name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="17" stop-index="29" />
+            <database name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="17" stop-index="29" />
         </from>
         <filter start-index="31" stop-index="47">
             <like pattern="sharding_%" start-delimiter="'" end-delimiter="'" start-index="31" stop-index="47" />
@@ -585,7 +585,7 @@
 
     <show-events sql-case-id="show_events_with_where_expr" parameters="'sharding_db'">
         <from start-index="12" stop-index="29">
-            <schema name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="17" stop-index="29" />
+            <database name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="17" stop-index="29" />
         </from>
         <filter start-index="31" stop-index="42" literal-start-index="31" literal-stop-index="54">
             <where start-index="31" stop-index="42" literal-start-index="31" literal-stop-index="54">
@@ -607,7 +607,7 @@
 
     <show-events sql-case-id="show_events_with_where_expr_no_parameter">
         <from start-index="12" stop-index="29">
-            <schema name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="17" stop-index="29" />
+            <database name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="17" stop-index="29" />
         </from>
         <filter start-index="31" stop-index="54">
             <where start-index="31" stop-index="54">
@@ -632,20 +632,20 @@
 
     <show-tables sql-case-id="show_tables_from_schema">
         <from start-index="12" stop-index="29">
-            <schema name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="17" stop-index="29" />
+            <database name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="17" stop-index="29" />
         </from>
     </show-tables>
 
     <show-tables sql-case-id="show_tables_in_schema">
         <from start-index="12" stop-index="27">
-            <schema name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="15" stop-index="27" />
+            <database name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="15" stop-index="27" />
         </from>
     </show-tables>
 
 
     <show-tables sql-case-id="show_tables_with_like_pattern">
         <from start-index="12" stop-index="29">
-            <schema name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="17" stop-index="29" />
+            <database name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="17" stop-index="29" />
         </from>
         <filter start-index="31" stop-index="46">
             <like pattern="t_order_%" start-delimiter="'" end-delimiter="'" start-index="31" stop-index="46" />
@@ -654,7 +654,7 @@
 
     <show-tables sql-case-id="show_tables_with_where_expr" parameters="'BASE TABLE'">
         <from start-index="26" stop-index="43">
-            <schema name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="31" stop-index="43" />
+            <database name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="31" stop-index="43" />
         </from>
         <filter start-index="45" stop-index="66" literal-start-index="45" literal-stop-index="77">
             <where start-index="45" stop-index="66" literal-start-index="45" literal-stop-index="77">
@@ -676,7 +676,7 @@
 
     <show-tables sql-case-id="show_tables_with_where_expr_no_parameter">
         <from start-index="26" stop-index="43">
-            <schema name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="31" stop-index="43" />
+            <database name="sharding_db" start-delimiter="`" end-delimiter="`" start-index="31" stop-index="43" />
         </from>
         <filter start-index="45" stop-index="77">
             <where start-index="45" stop-index="77">
@@ -867,4 +867,235 @@
     <show sql-case-id="show_warnings_limit" />
     <show sql-case-id="show_warnings_count" />
     <show sql-case-id="show_search_path" name="search_path" />
+    <show sql-case-id="show_errors" />
+    <show sql-case-id="show_parameter_smtp_out_server" />
+
+    <show-databases sql-case-id="show_databases_basic" />
+
+    <show-databases sql-case-id="show_schemas_basic" />
+
+    <show-databases sql-case-id="show_databases_with_like_wildcard">
+        <filter start-index="15" stop-index="25">
+            <like pattern="emp*" start-delimiter="'" end-delimiter="'" start-index="15" stop-index="25" />
+        </filter>
+    </show-databases>
+
+    <show-databases sql-case-id="show_schemas_with_like_sql_wildcard">
+        <filter start-index="13" stop-index="28">
+            <like pattern="emplo_ees" start-delimiter="'" end-delimiter="'" start-index="13" stop-index="28" />
+        </filter>
+    </show-databases>
+
+    <show-databases sql-case-id="show_databases_with_like_exact_match">
+        <filter start-index="15" stop-index="30">
+            <like pattern="employees" start-delimiter="'" end-delimiter="'" start-index="15" stop-index="30" />
+        </filter>
+    </show-databases>
+
+    <show sql-case-id="show_connectors" />
+
+    <show-tables sql-case-id="show_tables_basic" />
+
+    <show-tables sql-case-id="show_tables_in_database">
+        <from start-index="15" stop-index="22">
+            <database name="sales_db" start-index="15" stop-index="22" />
+        </from>
+    </show-tables>
+
+    <show-tables sql-case-id="show_tables_with_wildcard">
+        <filter start-index="12" stop-index="20">
+            <like pattern="order_*" start-delimiter="'" end-delimiter="'" start-index="12" stop-index="20" />
+        </filter>
+    </show-tables>
+
+    <show-tables sql-case-id="show_tables_in_db_with_wildcard">
+        <from start-index="15" stop-index="22">
+            <database name="sales_db" start-index="15" stop-index="22" />
+        </from>
+        <filter start-index="24" stop-index="32">
+            <like pattern="order_*" start-delimiter="'" end-delimiter="'" start-index="24" stop-index="32" />
+        </filter>
+    </show-tables>
+
+    <show sql-case-id="show_views_basic" />
+    <show sql-case-id="show_views_with_like_wildcard" />
+    <show sql-case-id="show_views_from_database" />
+    <show sql-case-id="show_views_in_database" />
+    <show sql-case-id="show_views_in_db_with_like" />
+    <show sql-case-id="show_views_from_db_with_like" />
+    <show sql-case-id="show_materialized_views_basic" />
+    <show sql-case-id="show_materialized_views_with_like" />
+    <show sql-case-id="show_materialized_views_in_database" />
+    <show sql-case-id="show_materialized_views_from_database" />
+    <show sql-case-id="show_materialized_views_in_db_with_like" />
+    <show sql-case-id="show_materialized_views_from_db_with_like" />
+    <show sql-case-id="show_partitions_basic" />
+    <show sql-case-id="show_partitions_with_db" />
+    <show sql-case-id="show_partitions_with_partition_spec" />
+    <show sql-case-id="show_partitions_with_where" />
+    <show sql-case-id="show_partitions_with_order_by" />
+    <show sql-case-id="show_partitions_with_limit" />
+    <show sql-case-id="show_partitions_all_options" />
+    <show sql-case-id="show_table_extended_basic" />
+    <show sql-case-id="show_table_extended_in_database" />
+    <show sql-case-id="show_table_extended_from_database" />
+    <show sql-case-id="show_table_extended_with_partition" />
+    <show sql-case-id="show_table_extended_all_options_in" />
+    <show sql-case-id="show_table_extended_all_options_from" />
+    <show sql-case-id="show_tblproperties_basic" />
+    <show sql-case-id="show_tblproperties_with_key" />
+
+    <show-create-table sql-case-id="show_create_table_basic">
+        <table name="orders" start-index="18" stop-index="23" />
+    </show-create-table>
+
+    <show-create-table sql-case-id="show_create_table_with_db">
+        <table name="orders" start-index="18" stop-index="32">
+            <owner name="sales_db" start-index="18" stop-index="25" />
+        </table>
+    </show-create-table>
+
+    <show-create-table sql-case-id="show_create_table_view">
+        <table name="user_view" start-index="18" stop-index="26" />
+    </show-create-table>
+
+    <show-create-table sql-case-id="show_create_view_with_db">
+        <table name="user_view" start-index="18" stop-index="39">
+            <owner name="analytics_db" start-index="18" stop-index="29" />
+        </table>
+    </show-create-table>
+
+    <show-index sql-case-id="show_indexes_basic">
+        <table name="orders" start-index="16" stop-index="21" />
+    </show-index>
+
+    <show-index sql-case-id="show_index_basic">
+        <table name="products" start-index="14" stop-index="21" />
+    </show-index>
+
+    <show-index sql-case-id="show_indexes_with_db_from">
+        <table name="user_logs" start-index="16" stop-index="24" />
+        <database name="analytics_db" start-index="26" stop-index="42" />
+    </show-index>
+
+    <show-index sql-case-id="show_indexes_with_db_in">
+        <table name="inventory" start-index="16" stop-index="24" />
+        <database name="warehouse_db" start-index="26" stop-index="40" />
+    </show-index>
+
+    <show-index sql-case-id="show_formatted_indexes">
+        <table name="sales" start-index="26" stop-index="30" />
+    </show-index>
+
+    <show-index sql-case-id="show_formatted_indexes_with_db">
+        <table name="orders" start-index="26" stop-index="31" />
+        <database name="sales_db" start-index="33" stop-index="45" />
+    </show-index>
+
+    <show-index sql-case-id="show_formatted_indexes_with_db_in">
+        <table name="orders" start-index="26" stop-index="31" />
+        <database name="sales_db" start-index="33" stop-index="43" />
+    </show-index>
+
+    <show-index sql-case-id="show_index_with_db_from">
+        <table name="user_logs" start-index="14" stop-index="22" />
+        <database name="analytics_db" start-index="24" stop-index="40" />
+    </show-index>
+
+    <show-index sql-case-id="show_index_with_db_in">
+        <table name="inventory" start-index="14" stop-index="22" />
+        <database name="warehouse_db" start-index="24" stop-index="38" />
+    </show-index>
+
+    <show-index sql-case-id="show_formatted_index">
+        <table name="sales" start-index="24" stop-index="28" />
+    </show-index>
+
+    <show-index sql-case-id="show_formatted_index_with_db">
+        <table name="orders" start-index="24" stop-index="29" />
+        <database name="sales_db" start-index="31" stop-index="43" />
+    </show-index>
+
+    <show-index sql-case-id="show_formatted_index_with_db_in">
+        <table name="orders" start-index="24" stop-index="29" />
+        <database name="sales_db" start-index="31" stop-index="41" />
+    </show-index>
+
+    <show-columns sql-case-id="show_columns_basic_from">
+        <table name="users" start-index="18" stop-index="22" />
+    </show-columns>
+
+    <show-columns sql-case-id="show_columns_basic_in">
+        <table name="products" start-index="16" stop-index="23" />
+    </show-columns>
+
+    <show-columns sql-case-id="show_columns_with_like">
+        <table name="orders" start-index="18" stop-index="23" />
+        <filter start-index="25" stop-index="37">
+            <like pattern="user_*" start-delimiter="'" end-delimiter="'" start-index="25" stop-index="37" />
+        </filter>
+    </show-columns>
+
+    <show-columns sql-case-id="show_columns_with_db_from">
+        <table name="logs" start-index="18" stop-index="21" />
+        <database name="analytics_db" start-index="28" stop-index="39" />
+    </show-columns>
+
+    <show-columns sql-case-id="show_columns_with_db_from_in">
+        <table name="logs" start-index="18" stop-index="21" />
+        <database name="analytics_db" start-index="26" stop-index="37" />
+    </show-columns>
+
+    <show-columns sql-case-id="show_columns_with_like_in">
+        <table name="orders" start-index="16" stop-index="21" />
+        <filter start-index="23" stop-index="35">
+            <like pattern="user_*" start-delimiter="'" end-delimiter="'" start-index="23" stop-index="35" />
+        </filter>
+    </show-columns>
+
+    <show-columns sql-case-id="show_columns_with_db_in_from">
+        <table name="logs" start-index="16" stop-index="19" />
+        <database name="analytics_db" start-index="26" stop-index="37" />
+    </show-columns>
+
+    <show-columns sql-case-id="show_columns_with_db_in_in">
+        <table name="sales" start-index="16" stop-index="20" />
+        <database name="commerce_db" start-index="25" stop-index="35" />
+    </show-columns>
+
+    <show-columns sql-case-id="show_columns_db_like_from">
+        <table name="inventory" start-index="18" stop-index="26" />
+        <database name="warehouse_db" start-index="33" stop-index="44" />
+        <filter start-index="46" stop-index="68">
+            <like pattern="stock_*|quantity" start-delimiter="'" end-delimiter="'" start-index="46" stop-index="68" />
+        </filter>
+    </show-columns>
+
+    <show sql-case-id="show_functions_basic" />
+    <show sql-case-id="show_functions_with_like" />
+    <show sql-case-id="show_role_grant_basic" />
+    <show sql-case-id="show_grant_basic" />
+    <show sql-case-id="show_current_roles" />
+    <show sql-case-id="show_roles_basic" />
+    <show sql-case-id="show_principals_basic" />
+    <show sql-case-id="show_locks_basic" />
+    <show sql-case-id="show_locks_extended" />
+    <show sql-case-id="show_locks_partition" />
+    <show sql-case-id="show_locks_partition_extended" />
+    <show sql-case-id="show_locks_database" />
+    <show sql-case-id="show_locks_schema" />
+    <show sql-case-id="show_conf" />
+    <show sql-case-id="show_transactions" />
+    <show sql-case-id="show_compactions_basic" />
+    <show sql-case-id="show_compactions_with_database" />
+    <show sql-case-id="show_compactions_with_schema" />
+    <show sql-case-id="show_compactions_with_table" />
+    <show sql-case-id="show_compactions_with_partition" />
+    <show sql-case-id="show_compactions_with_type" />
+    <show sql-case-id="show_compactions_with_pool" />
+    <show sql-case-id="show_compactions_with_state" />
+    <show sql-case-id="show_compactions_with_order" />
+    <show sql-case-id="show_compactions_with_limit" />
+    <show sql-case-id="show_compactions_with_compaction_ID" />
+    <show sql-case-id="show_compactions_all_options" />
 </sql-parser-test-cases>

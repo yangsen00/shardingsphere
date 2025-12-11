@@ -17,7 +17,7 @@
 
 package org.apache.shardingsphere.proxy.frontend.command.executor;
 
-import org.apache.shardingsphere.db.protocol.packet.DatabasePacket;
+import org.apache.shardingsphere.database.protocol.packet.DatabasePacket;
 
 import java.sql.SQLException;
 
@@ -47,5 +47,5 @@ public interface QueryCommandExecutor extends CommandExecutor {
      * @return database packet of query row
      * @throws SQLException SQL exception
      */
-    DatabasePacket<?> getQueryRowPacket() throws SQLException;
+    DatabasePacket getQueryRowPacket() throws SQLException;
 }

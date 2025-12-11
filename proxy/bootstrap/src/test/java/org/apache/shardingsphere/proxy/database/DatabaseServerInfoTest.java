@@ -17,7 +17,7 @@
 
 package org.apache.shardingsphere.proxy.database;
 
-import org.apache.shardingsphere.proxy.exception.DatabaseServerLoadingServerException;
+import org.apache.shardingsphere.proxy.exception.DatabaseServerLoadingException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
@@ -43,7 +43,7 @@ class DatabaseServerInfoTest {
     @Test
     void assertNewInstanceFailure() throws SQLException {
         when(dataSource.getConnection()).thenThrow(SQLException.class);
-        assertThrows(DatabaseServerLoadingServerException.class, () -> new DatabaseServerInfo(dataSource));
+        assertThrows(DatabaseServerLoadingException.class, () -> new DatabaseServerInfo(dataSource));
     }
     
     @Test
@@ -52,6 +52,6 @@ class DatabaseServerInfoTest {
         when(databaseMetaData.getDatabaseProductName()).thenReturn("fixtureDB");
         when(databaseMetaData.getDatabaseProductVersion()).thenReturn("1.0.0");
         when(dataSource.getConnection().getMetaData()).thenReturn(databaseMetaData);
-        assertThat(new DatabaseServerInfo(dataSource).toString(), is("Database name is `fixtureDB`, version is `1.0.0`"));
+        assertThat(new DatabaseServerInfo(dataSource).toString(), is("Database type is `fixtureDB`, version is `1.0.0`"));
     }
 }

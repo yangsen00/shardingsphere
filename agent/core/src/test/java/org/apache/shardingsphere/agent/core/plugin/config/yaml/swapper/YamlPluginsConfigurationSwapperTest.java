@@ -25,12 +25,14 @@ import org.apache.shardingsphere.agent.core.yaml.AgentYamlEngine;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -81,16 +83,18 @@ class YamlPluginsConfigurationSwapperTest {
     
     @Test
     void assertSwapWithFile() throws IOException {
-        YamlAgentConfiguration yamlAgentConfig = AgentYamlEngine.unmarshalYamlAgentConfiguration(new FileInputStream(new File(getResourceURL(), CONFIG_PATH)));
-        Map<String, PluginConfiguration> actual = YamlPluginsConfigurationSwapper.swap(yamlAgentConfig);
-        assertThat(actual.size(), is(3));
-        assertLogFixturePluginConfiguration(actual.get("log_fixture"));
-        assertMetricsPluginConfiguration(actual.get("metrics_fixture"));
-        assertTracingPluginConfiguration(actual.get("tracing_fixture"));
+        try (InputStream inputStream = Files.newInputStream(new File(getResourceURL(), CONFIG_PATH).toPath())) {
+            YamlAgentConfiguration yamlAgentConfig = AgentYamlEngine.unmarshalYamlAgentConfiguration(inputStream);
+            Map<String, PluginConfiguration> actual = YamlPluginsConfigurationSwapper.swap(yamlAgentConfig);
+            assertThat(actual.size(), is(3));
+            assertLogFixturePluginConfiguration(actual.get("log_fixture"));
+            assertMetricsPluginConfiguration(actual.get("metrics_fixture"));
+            assertTracingPluginConfiguration(actual.get("tracing_fixture"));
+        }
     }
     
     private String getResourceURL() throws UnsupportedEncodingException {
-        return URLDecoder.decode(YamlPluginsConfigurationSwapper.class.getClassLoader().getResource("").getFile(), "UTF8");
+        return URLDecoder.decode(Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResource("")).getFile(), "UTF8");
     }
     
     private void assertLogFixturePluginConfiguration(final PluginConfiguration actual) {
@@ -98,7 +102,7 @@ class YamlPluginsConfigurationSwapperTest {
         assertNull(actual.getPassword());
         assertThat(actual.getPort(), is(8080));
         assertThat(actual.getProps().size(), is(1));
-        assertThat(actual.getProps().get("key"), is("value"));
+        assertThat(actual.getProps().getProperty("key"), is("value"));
     }
     
     private void assertMetricsPluginConfiguration(final PluginConfiguration actual) {
@@ -106,7 +110,7 @@ class YamlPluginsConfigurationSwapperTest {
         assertThat(actual.getPassword(), is("random"));
         assertThat(actual.getPort(), is(8081));
         assertThat(actual.getProps().size(), is(1));
-        assertThat(actual.getProps().get("key"), is("value"));
+        assertThat(actual.getProps().getProperty("key"), is("value"));
     }
     
     private void assertTracingPluginConfiguration(final PluginConfiguration actual) {
@@ -114,12 +118,12 @@ class YamlPluginsConfigurationSwapperTest {
         assertThat(actual.getPassword(), is("random"));
         assertThat(actual.getPort(), is(8082));
         assertThat(actual.getProps().size(), is(1));
-        assertThat(actual.getProps().get("key"), is("value"));
+        assertThat(actual.getProps().getProperty("key"), is("value"));
     }
     
     private Properties createProperties() {
         Properties result = new Properties();
-        result.put("key", "value");
+        result.setProperty("key", "value");
         return result;
     }
     

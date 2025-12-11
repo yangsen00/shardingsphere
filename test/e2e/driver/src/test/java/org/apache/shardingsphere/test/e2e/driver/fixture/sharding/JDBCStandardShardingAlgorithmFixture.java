@@ -17,24 +17,14 @@
 
 package org.apache.shardingsphere.test.e2e.driver.fixture.sharding;
 
-import lombok.Getter;
 import org.apache.shardingsphere.sharding.api.sharding.standard.PreciseShardingValue;
 import org.apache.shardingsphere.sharding.api.sharding.standard.RangeShardingValue;
 import org.apache.shardingsphere.sharding.api.sharding.standard.StandardShardingAlgorithm;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Properties;
 
-@Getter
 public final class JDBCStandardShardingAlgorithmFixture implements StandardShardingAlgorithm<Integer> {
-    
-    private Properties props;
-    
-    @Override
-    public void init(final Properties props) {
-        this.props = props;
-    }
     
     @Override
     public String doSharding(final Collection<String> availableTargetNames, final PreciseShardingValue<Integer> shardingValue) {
@@ -48,7 +38,7 @@ public final class JDBCStandardShardingAlgorithmFixture implements StandardShard
     
     @Override
     public Collection<String> doSharding(final Collection<String> availableTargetNames, final RangeShardingValue<Integer> shardingValue) {
-        Collection<String> result = new HashSet<>(2);
+        Collection<String> result = new HashSet<>(2, 1F);
         for (int i = shardingValue.getValueRange().lowerEndpoint(); i <= shardingValue.getValueRange().upperEndpoint(); i++) {
             for (String each : availableTargetNames) {
                 if (each.endsWith(String.valueOf(i % 2))) {

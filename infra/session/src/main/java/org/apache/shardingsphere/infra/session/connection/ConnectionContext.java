@@ -21,12 +21,13 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.apache.shardingsphere.infra.metadata.user.Grantee;
 import org.apache.shardingsphere.infra.session.connection.cursor.CursorConnectionContext;
 import org.apache.shardingsphere.infra.session.connection.datasource.UsedDataSourceProvider;
 import org.apache.shardingsphere.infra.session.connection.transaction.TransactionConnectionContext;
 
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.Optional;
 
 /**
@@ -34,20 +35,23 @@ import java.util.Optional;
  */
 @RequiredArgsConstructor
 @Getter
+@Setter
 public final class ConnectionContext implements AutoCloseable {
+    
+    @Getter(AccessLevel.NONE)
+    private final UsedDataSourceProvider usedDataSourceProvider;
+    
+    private final Grantee grantee;
     
     private final CursorConnectionContext cursorContext = new CursorConnectionContext();
     
     private final TransactionConnectionContext transactionContext = new TransactionConnectionContext();
     
-    @Getter(AccessLevel.NONE)
-    private final UsedDataSourceProvider usedDataSourceProvider;
+    @Setter(AccessLevel.NONE)
+    private String currentDatabaseName;
     
-    @Setter
-    private String trafficInstanceId;
-    
-    public ConnectionContext() {
-        this(Collections::emptySet);
+    public ConnectionContext(final UsedDataSourceProvider usedDataSourceProvider) {
+        this(usedDataSourceProvider, null);
     }
     
     /**
@@ -56,36 +60,50 @@ public final class ConnectionContext implements AutoCloseable {
      * @return used data source names
      */
     public Collection<String> getUsedDataSourceNames() {
-        return usedDataSourceProvider.getNames();
-    }
-    
-    /**
-     * Get traffic instance ID.
-     *
-     * @return traffic instance ID
-     */
-    public Optional<String> getTrafficInstanceId() {
-        return Optional.ofNullable(trafficInstanceId);
+        Collection<String> result = new HashSet<>(usedDataSourceProvider.getNames().size(), 1F);
+        for (String each : usedDataSourceProvider.getNames()) {
+            result.add(each.contains(".") ? each.split("\\.")[1] : each);
+        }
+        return result;
     }
     
     /**
      * Clear cursor connection context.
      */
-    public void clearCursorConnectionContext() {
+    public void clearCursorContext() {
         cursorContext.close();
     }
     
     /**
      * Clear transaction connection context.
      */
-    public void clearTransactionConnectionContext() {
+    public void clearTransactionContext() {
         transactionContext.close();
+    }
+    
+    /**
+     * Set current database name.
+     *
+     * @param currentDatabaseName current database name
+     */
+    public void setCurrentDatabaseName(final String currentDatabaseName) {
+        if (null != currentDatabaseName && !currentDatabaseName.equals(this.currentDatabaseName)) {
+            this.currentDatabaseName = currentDatabaseName;
+        }
+    }
+    
+    /**
+     * Get current database name.
+     *
+     * @return current database name
+     */
+    public Optional<String> getCurrentDatabaseName() {
+        return Optional.ofNullable(currentDatabaseName);
     }
     
     @Override
     public void close() {
-        trafficInstanceId = null;
-        clearCursorConnectionContext();
-        clearTransactionConnectionContext();
+        clearCursorContext();
+        clearTransactionContext();
     }
 }

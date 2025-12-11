@@ -16,7 +16,7 @@ For systems running on a single database that urgently need to securely and simp
 
 1. Get ShardingSphere-Proxy. Please refer to [proxy startup guide](/en/user-manual/shardingsphere-proxy/startup/bin/) for details.
 
-2. Modify the configuration file `conf/server.yaml`. Please refer to [mode configuration](/en/user-manual/shardingsphere-jdbc/yaml-config/mode/) for details.
+2. Modify the configuration file `conf/global.yaml`. Please refer to [mode configuration](/en/user-manual/shardingsphere-jdbc/yaml-config/mode/) for details.
 
 Currently, `mode` must be `Cluster`, and the corresponding registry must be started in advance.
 
@@ -37,14 +37,13 @@ mode:
 
 3. Introduce JDBC driver.
 
-Proxy has included JDBC driver of PostgreSQL.
+Proxy has included JDBC driver of PostgreSQL and openGauss.
 
 If the backend is connected to the following databases, download the corresponding JDBC driver jar package and put it into the `${shardingsphere-proxy}/ext-lib` directory.
 
-| Database  | JDBC Driver                                                                                                                           | Reference                                                                                        |
-|-----------|---------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
-| MySQL     | [mysql-connector-java-5.1.49.jar]( https://repo1.maven.org/maven2/mysql/mysql-connector-java/5.1.49/mysql-connector-java-5.1.49.jar ) | [Connector/J Versions]( https://dev.mysql.com/doc/connector-j/5.1/en/connector-j-versions.html ) |
-| openGauss | [opengauss-jdbc-3.0.0.jar]( https://repo1.maven.org/maven2/org/opengauss/opengauss-jdbc/3.0.0/opengauss-jdbc-3.0.0.jar )              |                                                                                                  |
+| Database | JDBC Driver                                                                                          |
+|----------|------------------------------------------------------------------------------------------------------|
+| MySQL    | [mysql-connector-j-8.3.0.jar](https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/8.3.0/) |
 
 If you are migrating to a heterogeneous database, then you could use more types of database. Introduce JDBC driver as above too.
 
@@ -73,11 +72,11 @@ SHOW MIGRATION RULE;
 The default configuration is as follows.
 
 ```
-+--------------------------------------------------------------+--------------------------------------+------------------------------------------------------+
-| read                                                         | write                                | stream_channel                                       |
-+--------------------------------------------------------------+--------------------------------------+------------------------------------------------------+
-| {"workerThread":40,"batchSize":1000,"shardingSize":10000000} | {"workerThread":40,"batchSize":1000} | {"type":"MEMORY","props":{"block-queue-size":10000}} |
-+--------------------------------------------------------------+--------------------------------------+------------------------------------------------------+
++--------------------------------------------------------------+--------------------------------------+-------------------------------------------------------+
+| read                                                         | write                                | stream_channel                                        |
++--------------------------------------------------------------+--------------------------------------+-------------------------------------------------------+
+| {"workerThread":20,"batchSize":1000,"shardingSize":10000000} | {"workerThread":20,"batchSize":1000} | {"type":"MEMORY","props":{"block-queue-size":"2000"}} |
++--------------------------------------------------------------+--------------------------------------+-------------------------------------------------------+
 ```
 
 6.2. Alter configuration (Optional).
@@ -89,17 +88,17 @@ A completely configured DistSQL is as follows.
 ```sql
 ALTER MIGRATION RULE (
 READ(
-  WORKER_THREAD=40,
+  WORKER_THREAD=20,
   BATCH_SIZE=1000,
   SHARDING_SIZE=10000000,
   RATE_LIMITER (TYPE(NAME='QPS',PROPERTIES('qps'='500')))
 ),
 WRITE(
-  WORKER_THREAD=40,
+  WORKER_THREAD=20,
   BATCH_SIZE=1000,
   RATE_LIMITER (TYPE(NAME='TPS',PROPERTIES('tps'='2000')))
 ),
-STREAM_CHANNEL (TYPE(NAME='MEMORY',PROPERTIES('block-queue-size'='10000')))
+STREAM_CHANNEL (TYPE(NAME='MEMORY',PROPERTIES('block-queue-size'='2000')))
 );
 ```
 
@@ -108,7 +107,7 @@ Configuration item description:
 ```sql
 ALTER MIGRATION RULE (
 READ( -- Data reading configuration. If it is not configured, part of the parameters will take effect by default.
-  WORKER_THREAD=40, -- Obtain the thread pool size of all the data from the source side. If it is not configured, the default value is used.
+  WORKER_THREAD=20, -- Obtain the thread pool size of all the data from the source side. If it is not configured, the default value is used.
   BATCH_SIZE=1000, -- The maximum number of records returned by a query operation. If it is not configured, the default value is used.
   SHARDING_SIZE=10000000, -- Sharding size of all the data. If it is not configured, the default value is used.
   RATE_LIMITER ( -- Traffic limit algorithm. If it is not configured, traffic is not limited.
@@ -119,7 +118,7 @@ READ( -- Data reading configuration. If it is not configured, part of the parame
   )))
 ),
 WRITE( -- Data writing configuration. If it is not configured, part of the parameters will take effect by default.
-  WORKER_THREAD=40, -- The size of the thread pool on which data is written into the target side. If it is not configured, the default value is used.
+  WORKER_THREAD=20, -- The size of the thread pool on which data is written into the target side. If it is not configured, the default value is used.
   BATCH_SIZE=1000, -- The maximum number of records for a batch write operation. If it is not configured, the default value is used.
   RATE_LIMITER ( -- Traffic limit algorithm. If it is not configured, traffic is not limited.
   TYPE( -- Algorithm type. Option: TPS
@@ -132,40 +131,7 @@ STREAM_CHANNEL ( -- Data channel. It connects producers and consumers, used for 
 TYPE( -- Algorithm type. Option: MEMORY
 NAME='MEMORY',
 PROPERTIES( -- Algorithm property
-'block-queue-size'='10000' -- Property: blocking queue size.
+'block-queue-size'='2000' -- Property: blocking queue size.
 )))
-);
-```
-
-DistSQL sample: configure `READ` for traffic limit.
-
-```sql
-ALTER MIGRATION RULE (
-READ(
-  RATE_LIMITER (TYPE(NAME='QPS',PROPERTIES('qps'='500')))
-)
-);
-```
-
-Configure data reading for traffic limit. Other configurations use default values.
-
-6.3. Restore configuration.
-
-To restore the default configuration, also through the `ALTER` statement.
-
-```sql
-ALTER MIGRATION RULE (
-READ(
-  WORKER_THREAD=40,
-  BATCH_SIZE=1000,
-  SHARDING_SIZE=10000000,
-  RATE_LIMITER (TYPE(NAME='QPS',PROPERTIES('qps'='500')))
-),
-WRITE(
-  WORKER_THREAD=40,
-  BATCH_SIZE=1000,
-  RATE_LIMITER (TYPE(NAME='TPS',PROPERTIES('tps'='2000')))
-),
-STREAM_CHANNEL (TYPE(NAME='MEMORY',PROPERTIES('block-queue-size'='10000')))
 );
 ```

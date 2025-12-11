@@ -12,7 +12,6 @@ pom.xml.versionsBackup
 
 # maven plugin ignore
 release.properties
-cobertura.ser
 *.gpg
 
 # eclipse ignore
@@ -24,6 +23,7 @@ cobertura.ser
 # idea ignore
 .idea/
 !/.idea/icon.png
+!/.idea/vcs.xml
 *.ipr
 *.iml
 *.iws
@@ -40,7 +40,6 @@ logs/
 *.diff
 *.patch
 *.tmp
-.hugo_build.lock
 
 # system ignore
 .DS_Store
@@ -49,3 +48,13 @@ Thumbs.db
 # antlr ignore
 gen/
 *.tokens
+
+# profiler ignore
+.profiler/
+
+# hugo ignore
+blog/public/
+community/public/
+document/public/
+.hugo_build.lock
+*.html-e

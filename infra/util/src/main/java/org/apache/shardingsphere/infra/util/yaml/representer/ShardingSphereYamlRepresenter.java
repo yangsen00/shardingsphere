@@ -17,7 +17,8 @@
 
 package org.apache.shardingsphere.infra.util.yaml.representer;
 
-import org.apache.shardingsphere.infra.util.spi.ShardingSphereServiceLoader;
+import org.apache.shardingsphere.infra.spi.ShardingSphereServiceLoader;
+import org.apache.shardingsphere.infra.spi.type.typed.TypedSPILoader;
 import org.apache.shardingsphere.infra.util.yaml.representer.processor.DefaultYamlTupleProcessor;
 import org.apache.shardingsphere.infra.util.yaml.representer.processor.ShardingSphereYamlTupleProcessor;
 import org.apache.shardingsphere.infra.util.yaml.shortcuts.ShardingSphereYamlShortcuts;
@@ -39,7 +40,8 @@ import java.util.Map.Entry;
  */
 public final class ShardingSphereYamlRepresenter extends Representer {
     
-    public ShardingSphereYamlRepresenter() {
+    public ShardingSphereYamlRepresenter(final DumperOptions dumperOptions) {
+        super(dumperOptions);
         Map<String, Class<?>> yamlShortcuts = new HashMap<>();
         ShardingSphereServiceLoader.getServiceInstances(ShardingSphereYamlShortcuts.class).stream().map(ShardingSphereYamlShortcuts::getYamlShortcuts).forEach(yamlShortcuts::putAll);
         yamlShortcuts.forEach((key, value) -> addClassTag(value, new Tag(key)));
@@ -48,18 +50,14 @@ public final class ShardingSphereYamlRepresenter extends Representer {
     @Override
     protected NodeTuple representJavaBeanProperty(final Object javaBean, final Property property, final Object propertyValue, final Tag customTag) {
         NodeTuple nodeTuple = super.representJavaBeanProperty(javaBean, property, propertyValue, customTag);
-        for (ShardingSphereYamlTupleProcessor each : ShardingSphereServiceLoader.getServiceInstances(ShardingSphereYamlTupleProcessor.class)) {
-            if (property.getName().equals(each.getTupleName())) {
-                return each.process(nodeTuple);
-            }
-        }
-        return new DefaultYamlTupleProcessor().process(nodeTuple);
+        return TypedSPILoader.findService(ShardingSphereYamlTupleProcessor.class, property.getName())
+                .map(processor -> processor.process(nodeTuple)).orElseGet(() -> new DefaultYamlTupleProcessor().process(nodeTuple));
     }
     
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
     protected Node representMapping(final Tag tag, final Map<?, ?> mapping, final DumperOptions.FlowStyle flowStyle) {
-        Map skippedEmptyValuesMapping = new LinkedHashMap<>(mapping.size(), 1);
+        Map skippedEmptyValuesMapping = new LinkedHashMap<>(mapping.size(), 1F);
         for (Entry<?, ?> entry : mapping.entrySet()) {
             if (entry.getValue() instanceof Collection && ((Collection) entry.getValue()).isEmpty()) {
                 continue;

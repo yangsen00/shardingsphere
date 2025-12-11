@@ -42,7 +42,6 @@ import org.mockito.Mock;
 import org.mockito.internal.configuration.plugins.Plugins;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.plugins.MemberAccessor;
 import org.mockito.quality.Strictness;
 
 import java.nio.charset.StandardCharsets;
@@ -54,9 +53,9 @@ import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.isA;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
@@ -83,9 +82,11 @@ class EtcdRepositoryTest {
     @Mock
     private Lease lease;
     
+    @SuppressWarnings("rawtypes")
     @Mock
     private CompletableFuture getFuture;
     
+    @SuppressWarnings("rawtypes")
     @Mock
     private CompletableFuture leaseFuture;
     
@@ -95,6 +96,7 @@ class EtcdRepositoryTest {
     @Mock
     private GetResponse getResponse;
     
+    @SuppressWarnings("rawtypes")
     @Mock
     private CompletableFuture putFuture;
     
@@ -107,19 +109,17 @@ class EtcdRepositoryTest {
     @SneakyThrows(ReflectiveOperationException.class)
     private void setClient() {
         mockClient();
-        MemberAccessor accessor = Plugins.getMemberAccessor();
-        accessor.set(repository.getClass().getDeclaredField("client"), repository, client);
+        Plugins.getMemberAccessor().set(EtcdRepository.class.getDeclaredField("client"), repository, client);
     }
     
     @SneakyThrows(ReflectiveOperationException.class)
     private void setProperties() {
-        MemberAccessor accessor = Plugins.getMemberAccessor();
-        accessor.set(repository.getClass().getDeclaredField("etcdProps"), repository, new EtcdProperties(new Properties()));
+        Plugins.getMemberAccessor().set(EtcdRepository.class.getDeclaredField("etcdProps"), repository, new EtcdProperties(new Properties()));
     }
     
     @SuppressWarnings("unchecked")
     @SneakyThrows({InterruptedException.class, ExecutionException.class})
-    private Client mockClient() {
+    private void mockClient() {
         when(client.getKVClient()).thenReturn(kv);
         when(kv.get(any(ByteSequence.class))).thenReturn(getFuture);
         when(kv.get(any(ByteSequence.class), any(GetOption.class))).thenReturn(getFuture);
@@ -131,12 +131,11 @@ class EtcdRepositoryTest {
         when(leaseFuture.get()).thenReturn(leaseGrantResponse);
         when(leaseGrantResponse.getID()).thenReturn(123L);
         when(client.getWatchClient()).thenReturn(watch);
-        return client;
     }
     
     @Test
     void assertGetKey() {
-        repository.getDirectly("key");
+        repository.query("key");
         verify(kv).get(ByteSequence.from("key", StandardCharsets.UTF_8));
         verify(getResponse).getKvs();
     }
@@ -226,11 +225,11 @@ class EtcdRepositoryTest {
     void assertGetKeyWhenThrowInterruptedException() throws ExecutionException, InterruptedException {
         doThrow(InterruptedException.class).when(getFuture).get();
         try {
-            repository.getDirectly("key");
+            repository.query("key");
             // CHECKSTYLE:OFF
         } catch (final Exception ex) {
             // CHECKSTYLE:ON
-            assertThat(ex, instanceOf(InterruptedException.class));
+            assertThat(ex, isA(InterruptedException.class));
         }
     }
     
@@ -238,11 +237,11 @@ class EtcdRepositoryTest {
     void assertGetKeyWhenThrowExecutionException() throws ExecutionException, InterruptedException {
         doThrow(ExecutionException.class).when(getFuture).get();
         try {
-            repository.getDirectly("key");
+            repository.query("key");
             // CHECKSTYLE:OFF
         } catch (final Exception ex) {
             // CHECKSTYLE:ON
-            assertThat(ex, instanceOf(ExecutionException.class));
+            assertThat(ex, isA(ExecutionException.class));
         }
     }
     
@@ -254,7 +253,7 @@ class EtcdRepositoryTest {
             // CHECKSTYLE:OFF
         } catch (final Exception ex) {
             // CHECKSTYLE:ON
-            assertThat(ex, instanceOf(InterruptedException.class));
+            assertThat(ex, isA(InterruptedException.class));
         }
     }
     
@@ -266,7 +265,7 @@ class EtcdRepositoryTest {
             // CHECKSTYLE:OFF
         } catch (final Exception ex) {
             // CHECKSTYLE:ON
-            assertThat(ex, instanceOf(ExecutionException.class));
+            assertThat(ex, isA(ExecutionException.class));
         }
     }
     
@@ -279,8 +278,7 @@ class EtcdRepositoryTest {
                 .setValue(ByteString.copyFromUtf8("value1")).build();
         KeyValue keyValue = new KeyValue(keyValue1, ByteSequence.EMPTY);
         events.add(new WatchEvent(keyValue, mock(KeyValue.class), eventType));
-        MemberAccessor accessor = Plugins.getMemberAccessor();
-        accessor.set(result.getClass().getDeclaredField("events"), result, events);
+        Plugins.getMemberAccessor().set(WatchResponse.class.getDeclaredField("events"), result, events);
         return result;
     }
 }

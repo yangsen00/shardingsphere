@@ -17,18 +17,17 @@
 
 package org.apache.shardingsphere.parser.distsql.parser.core;
 
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.apache.shardingsphere.distsql.parser.autogen.SQLParserDistSQLStatementBaseVisitor;
 import org.apache.shardingsphere.distsql.parser.autogen.SQLParserDistSQLStatementParser.AlterSQLParserRuleContext;
 import org.apache.shardingsphere.distsql.parser.autogen.SQLParserDistSQLStatementParser.CacheOptionContext;
 import org.apache.shardingsphere.distsql.parser.autogen.SQLParserDistSQLStatementParser.ShowSQLParserRuleContext;
 import org.apache.shardingsphere.distsql.parser.autogen.SQLParserDistSQLStatementParser.SqlParserRuleDefinitionContext;
-import org.apache.shardingsphere.parser.distsql.parser.segment.CacheOptionSegment;
-import org.apache.shardingsphere.parser.distsql.parser.statement.queryable.ShowSQLParserRuleStatement;
-import org.apache.shardingsphere.parser.distsql.parser.statement.updatable.AlterSQLParserRuleStatement;
+import org.apache.shardingsphere.parser.distsql.segment.CacheOptionSegment;
+import org.apache.shardingsphere.parser.distsql.statement.queryable.ShowSQLParserRuleStatement;
+import org.apache.shardingsphere.parser.distsql.statement.updatable.AlterSQLParserRuleStatement;
 import org.apache.shardingsphere.sql.parser.api.ASTNode;
 import org.apache.shardingsphere.sql.parser.api.visitor.SQLVisitor;
-import org.apache.shardingsphere.sql.parser.sql.common.value.identifier.IdentifierValue;
+import org.apache.shardingsphere.sql.parser.statement.core.util.IdentifierValueUtils;
 
 /**
  * SQL statement visitor for SQL parser DistSQL.
@@ -42,25 +41,20 @@ public final class SQLParserDistSQLStatementVisitor extends SQLParserDistSQLStat
     
     @Override
     public ASTNode visitAlterSQLParserRule(final AlterSQLParserRuleContext ctx) {
-        return super.visit(ctx.sqlParserRuleDefinition());
+        return visit(ctx.sqlParserRuleDefinition());
     }
     
     @Override
     public ASTNode visitSqlParserRuleDefinition(final SqlParserRuleDefinitionContext ctx) {
-        Boolean sqlCommentParseEnable = null == ctx.sqlCommentParseEnable() ? null : Boolean.parseBoolean(getIdentifierValue(ctx.sqlCommentParseEnable()));
-        CacheOptionSegment parseTreeCache = null == ctx.parseTreeCache() ? null : visitCacheOption(ctx.parseTreeCache().cacheOption());
-        CacheOptionSegment sqlStatementCache = null == ctx.sqlStatementCache() ? null : visitCacheOption(ctx.sqlStatementCache().cacheOption());
-        return new AlterSQLParserRuleStatement(sqlCommentParseEnable, parseTreeCache, sqlStatementCache);
+        CacheOptionSegment parseTreeCache = null == ctx.parseTreeCacheDefinition() ? null : visitCacheOption(ctx.parseTreeCacheDefinition().cacheOption());
+        CacheOptionSegment sqlStatementCache = null == ctx.sqlStatementCacheDefinition() ? null : visitCacheOption(ctx.sqlStatementCacheDefinition().cacheOption());
+        return new AlterSQLParserRuleStatement(parseTreeCache, sqlStatementCache);
     }
     
     @Override
     public CacheOptionSegment visitCacheOption(final CacheOptionContext ctx) {
         return new CacheOptionSegment(
-                null == ctx.initialCapacity() ? null : Integer.parseInt(getIdentifierValue(ctx.initialCapacity())),
-                null == ctx.maximumSize() ? null : Long.parseLong(getIdentifierValue(ctx.maximumSize())));
-    }
-    
-    private String getIdentifierValue(final ParseTree context) {
-        return null == context ? null : new IdentifierValue(context.getText()).getValue();
+                null == ctx.initialCapacity() ? null : Integer.parseInt(IdentifierValueUtils.getValue(ctx.initialCapacity())),
+                null == ctx.maximumSize() ? null : Long.parseLong(IdentifierValueUtils.getValue(ctx.maximumSize())));
     }
 }

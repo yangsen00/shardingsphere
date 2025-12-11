@@ -19,55 +19,40 @@ package org.apache.shardingsphere.infra.executor.sql.process.lock;
 
 import lombok.SneakyThrows;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Process operation lock.
  */
 public final class ProcessOperationLock {
     
-    private static final long TIMEOUT_MILLS = 5000L;
+    private static final long TIMEOUT_MILLIS = 5000L;
     
-    private final Lock lock = new ReentrantLock();
+    private final CountDownLatch latch;
     
-    private final Condition condition = lock.newCondition();
-    
-    /**
-     * Lock.
-     */
-    public void lock() {
-        lock.lock();
+    public ProcessOperationLock(final int latchCount) {
+        latch = new CountDownLatch(latchCount);
     }
     
     /**
-     * Unlock.
-     */
-    public void unlock() {
-        lock.unlock();
-    }
-    
-    /**
-     * Await.
-     * 
+     * Await default time.
+     *
+     * @param releaseStrategy release strategy
      * @return boolean
      */
     @SneakyThrows(InterruptedException.class)
-    public boolean awaitDefaultTime() {
-        return condition.await(TIMEOUT_MILLS, TimeUnit.MILLISECONDS);
+    public boolean awaitDefaultTime(final ProcessOperationLockReleaseStrategy releaseStrategy) {
+        if (releaseStrategy.isReadyToRelease()) {
+            return true;
+        }
+        return latch.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
     }
     
     /**
      * Notify.
      */
     public void doNotify() {
-        lock.lock();
-        try {
-            condition.signalAll();
-        } finally {
-            lock.unlock();
-        }
+        latch.countDown();
     }
 }

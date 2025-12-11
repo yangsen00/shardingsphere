@@ -19,7 +19,8 @@ package org.apache.shardingsphere.infra.config.props;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.apache.shardingsphere.infra.util.props.TypedPropertyKey;
+import org.apache.shardingsphere.database.connector.core.type.DatabaseType;
+import org.apache.shardingsphere.infra.props.TypedPropertyKey;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,11 +32,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Getter
 public enum ConfigurationPropertyKey implements TypedPropertyKey {
-    
-    /**
-     * The system log level.
-     */
-    SYSTEM_LOG_LEVEL("system-log-level", LoggerLevel.INFO.name(), LoggerLevel.class, false),
     
     /**
      * Whether show SQL in log.
@@ -63,14 +59,14 @@ public enum ConfigurationPropertyKey implements TypedPropertyKey {
     CHECK_TABLE_METADATA_ENABLED("check-table-metadata-enabled", String.valueOf(Boolean.FALSE), boolean.class, false),
     
     /**
-     * SQL federation type.
+     * Load table metadata batch size.
      */
-    SQL_FEDERATION_TYPE("sql-federation-type", "NONE", String.class, false),
+    LOAD_TABLE_METADATA_BATCH_SIZE("load-table-metadata-batch-size", String.valueOf(1000), int.class, false),
     
     /**
-     * Frontend database protocol type for ShardingSphere-Proxy.
+     * Frontend database protocol for ShardingSphere-Proxy.
      */
-    PROXY_FRONTEND_DATABASE_PROTOCOL_TYPE("proxy-frontend-database-protocol-type", "", String.class, false),
+    PROXY_FRONTEND_DATABASE_PROTOCOL_TYPE("proxy-frontend-database-protocol-type", null, DatabaseType.class, false),
     
     /**
      * Flush threshold for every record from databases for ShardingSphere-Proxy.
@@ -126,7 +122,17 @@ public enum ConfigurationPropertyKey implements TypedPropertyKey {
     /**
      * Agent plugins enabled.
      */
-    AGENT_PLUGINS_ENABLED("agent-plugins-enabled", String.valueOf(Boolean.TRUE), boolean.class, false);
+    AGENT_PLUGINS_ENABLED("agent-plugins-enabled", String.valueOf(Boolean.TRUE), boolean.class, false),
+    
+    /**
+     * Persist schemas to repository.
+     */
+    PERSIST_SCHEMAS_TO_REPOSITORY_ENABLED("persist-schemas-to-repository-enabled", String.valueOf(Boolean.TRUE), boolean.class, true),
+    
+    /**
+     * Maximum size of Groovy inline expression parsing cache.
+     */
+    GROOVY_INLINE_EXPRESSION_PARSING_CACHE_MAX_SIZE("groovy-inline-expression-parsing-cache-max-size", "1000", long.class, false);
     
     private final String key;
     

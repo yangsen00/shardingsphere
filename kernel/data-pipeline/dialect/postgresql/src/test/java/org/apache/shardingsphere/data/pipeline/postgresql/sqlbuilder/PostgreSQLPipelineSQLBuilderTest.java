@@ -17,10 +17,15 @@
 
 package org.apache.shardingsphere.data.pipeline.postgresql.sqlbuilder;
 
-import org.apache.shardingsphere.data.pipeline.api.ingest.record.Column;
-import org.apache.shardingsphere.data.pipeline.api.ingest.record.DataRecord;
-import org.apache.shardingsphere.data.pipeline.postgresql.ingest.wal.WALPosition;
-import org.apache.shardingsphere.data.pipeline.postgresql.ingest.wal.decode.PostgreSQLLogSequenceNumber;
+import org.apache.shardingsphere.data.pipeline.core.constant.PipelineSQLOperationType;
+import org.apache.shardingsphere.data.pipeline.core.ingest.record.DataRecord;
+import org.apache.shardingsphere.data.pipeline.core.ingest.record.NormalColumn;
+import org.apache.shardingsphere.data.pipeline.core.sqlbuilder.dialect.DialectPipelineSQLBuilder;
+import org.apache.shardingsphere.data.pipeline.postgresql.ingest.incremental.wal.WALPosition;
+import org.apache.shardingsphere.data.pipeline.postgresql.ingest.incremental.wal.decode.PostgreSQLLogSequenceNumber;
+import org.apache.shardingsphere.database.connector.core.spi.DatabaseTypedSPILoader;
+import org.apache.shardingsphere.database.connector.core.type.DatabaseType;
+import org.apache.shardingsphere.infra.spi.type.typed.TypedSPILoader;
 import org.junit.jupiter.api.Test;
 import org.postgresql.replication.LogSequenceNumber;
 
@@ -28,42 +33,70 @@ import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PostgreSQLPipelineSQLBuilderTest {
     
-    private final PostgreSQLPipelineSQLBuilder sqlBuilder = new PostgreSQLPipelineSQLBuilder();
+    private final DialectPipelineSQLBuilder sqlBuilder = DatabaseTypedSPILoader.getService(DialectPipelineSQLBuilder.class, TypedSPILoader.getService(DatabaseType.class, "PostgreSQL"));
     
     @Test
-    void assertBuildInsertSQL() {
-        String actual = sqlBuilder.buildInsertSQL("schema1", mockDataRecord());
-        assertThat(actual, is("INSERT INTO schema1.t_order(order_id,user_id,status) VALUES(?,?,?) ON CONFLICT (order_id)"
-                + " DO UPDATE SET user_id=EXCLUDED.user_id,status=EXCLUDED.status"));
+    void assertBuildCreateSchemaSQL() {
+        Optional<String> actual = sqlBuilder.buildCreateSchemaSQL("foo_schema");
+        assertTrue(actual.isPresent());
+        assertThat(actual.get(), is("CREATE SCHEMA IF NOT EXISTS foo_schema"));
     }
     
-    private DataRecord mockDataRecord() {
-        DataRecord result = new DataRecord(new WALPosition(new PostgreSQLLogSequenceNumber(LogSequenceNumber.valueOf(100L))), 2);
-        result.setTableName("t_order");
-        result.addColumn(new Column("order_id", 1, true, true));
-        result.addColumn(new Column("user_id", 2, true, false));
-        result.addColumn(new Column("status", "ok", true, false));
+    @Test
+    void assertBuildInsertSQLOnDuplicateClauseWithEmptyUniqueKey() {
+        Optional<String> actual = sqlBuilder.buildInsertOnDuplicateClause(
+                new DataRecord(PipelineSQLOperationType.INSERT, "foo_tbl", new WALPosition(new PostgreSQLLogSequenceNumber(LogSequenceNumber.valueOf(100L))), 2));
+        assertFalse(actual.isPresent());
+    }
+    
+    @Test
+    void assertBuildInsertSQLOnDuplicateClause() {
+        Optional<String> actual = sqlBuilder.buildInsertOnDuplicateClause(createDataRecord());
+        assertTrue(actual.isPresent());
+        assertThat(actual.get(), is("ON CONFLICT (\"order_id\") DO UPDATE SET \"user_id\"=EXCLUDED.\"user_id\",\"status\"=EXCLUDED.\"status\""));
+    }
+    
+    private DataRecord createDataRecord() {
+        DataRecord result = new DataRecord(PipelineSQLOperationType.INSERT, "foo_tbl", new WALPosition(new PostgreSQLLogSequenceNumber(LogSequenceNumber.valueOf(100L))), 2);
+        result.addColumn(new NormalColumn("order_id", 1, true, true));
+        result.addColumn(new NormalColumn("user_id", 2, true, false));
+        result.addColumn(new NormalColumn("status", "ok", true, false));
         return result;
     }
     
     @Test
-    void assertQuoteKeyword() {
-        String schemaName = "all";
-        Optional<String> actualCreateSchemaSql = sqlBuilder.buildCreateSchemaSQL(schemaName);
-        assertTrue(actualCreateSchemaSql.isPresent());
-        assertThat(actualCreateSchemaSql.get(), is(String.format("CREATE SCHEMA IF NOT EXISTS %s", sqlBuilder.quote(schemaName))));
-        String actualDropSQL = sqlBuilder.buildDropSQL(schemaName, "ALL");
-        String expectedDropSQL = String.format("DROP TABLE IF EXISTS %s", String.join(".", sqlBuilder.quote(schemaName), sqlBuilder.quote("ALL")));
-        assertThat(actualDropSQL, is(expectedDropSQL));
+    void assertBuildCheckEmptyTableSQL() {
+        assertThat(sqlBuilder.buildCheckEmptyTableSQL("foo_tbl"), is("SELECT * FROM foo_tbl LIMIT 1"));
     }
     
     @Test
-    void assertBuilderDropSQLWithoutKeyword() {
-        String actualDropSQL = sqlBuilder.buildDropSQL("test_normal", "t_order");
-        assertThat(actualDropSQL, is("DROP TABLE IF EXISTS test_normal.t_order"));
+    void assertBuildEstimatedCountSQL() {
+        Optional<String> actual = sqlBuilder.buildEstimatedCountSQL("foo_catalog", "foo_tbl");
+        assertTrue(actual.isPresent());
+        assertThat(actual.get(), is("SELECT reltuples::integer FROM pg_class WHERE oid='foo_tbl'::regclass::oid;"));
+    }
+    
+    @Test
+    void assertBuildCRC32SQL() {
+        Optional<String> actual = sqlBuilder.buildCRC32SQL("foo_tbl", "foo_col");
+        assertTrue(actual.isPresent());
+        assertThat(actual.get(), is("SELECT pg_catalog.pg_checksum_table('foo_tbl', true)"));
+    }
+    
+    @Test
+    void assertBuildQueryCurrentPositionSQL() {
+        Optional<String> actual = sqlBuilder.buildQueryCurrentPositionSQL();
+        assertTrue(actual.isPresent());
+        assertThat(actual.get(), is("SELECT * FROM pg_current_wal_lsn()"));
+    }
+    
+    @Test
+    void assertWrapWithPageQuery() {
+        assertThat(sqlBuilder.wrapWithPageQuery("SELECT * FROM foo_tbl"), is("SELECT * FROM foo_tbl LIMIT ?"));
     }
 }

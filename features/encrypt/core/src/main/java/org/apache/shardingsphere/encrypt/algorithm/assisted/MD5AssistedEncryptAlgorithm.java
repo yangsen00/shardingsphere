@@ -17,29 +17,51 @@
 
 package org.apache.shardingsphere.encrypt.algorithm.assisted;
 
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.shardingsphere.encrypt.api.context.EncryptContext;
-import org.apache.shardingsphere.encrypt.api.encrypt.assisted.AssistedEncryptAlgorithm;
+import lombok.Getter;
+import org.apache.shardingsphere.encrypt.spi.EncryptAlgorithm;
+import org.apache.shardingsphere.encrypt.spi.EncryptAlgorithmMetaData;
+import org.apache.shardingsphere.infra.algorithm.core.config.AlgorithmConfiguration;
+import org.apache.shardingsphere.infra.algorithm.core.context.AlgorithmSQLContext;
+import org.apache.shardingsphere.infra.algorithm.messagedigest.spi.MessageDigestAlgorithm;
+import org.apache.shardingsphere.infra.spi.type.typed.TypedSPILoader;
+import org.apache.shardingsphere.infra.util.props.PropertiesBuilder;
+import org.apache.shardingsphere.infra.util.props.PropertiesBuilder.Property;
 
 import java.util.Properties;
 
 /**
  * MD5 assisted encrypt algorithm.
  */
-public final class MD5AssistedEncryptAlgorithm implements AssistedEncryptAlgorithm<Object, String> {
+public final class MD5AssistedEncryptAlgorithm implements EncryptAlgorithm {
     
     private static final String SALT_KEY = "salt";
     
-    private String salt;
+    @Getter
+    private final EncryptAlgorithmMetaData metaData = new EncryptAlgorithmMetaData(false, true, false);
+    
+    private Properties props;
+    
+    private MessageDigestAlgorithm digestAlgorithm;
     
     @Override
     public void init(final Properties props) {
-        this.salt = props.getProperty(SALT_KEY, "");
+        this.props = props;
+        digestAlgorithm = TypedSPILoader.getService(MessageDigestAlgorithm.class, getType(), props);
     }
     
     @Override
-    public String encrypt(final Object plainValue, final EncryptContext encryptContext) {
-        return null == plainValue ? null : DigestUtils.md5Hex(plainValue + salt);
+    public String encrypt(final Object plainValue, final AlgorithmSQLContext algorithmSQLContext) {
+        return digestAlgorithm.digest(plainValue);
+    }
+    
+    @Override
+    public Object decrypt(final Object cipherValue, final AlgorithmSQLContext algorithmSQLContext) {
+        throw new UnsupportedOperationException(String.format("Algorithm `%s` is unsupported to decrypt", getType()));
+    }
+    
+    @Override
+    public AlgorithmConfiguration toConfiguration() {
+        return new AlgorithmConfiguration(getType(), PropertiesBuilder.build(new Property(SALT_KEY, props.getProperty(SALT_KEY, ""))));
     }
     
     @Override

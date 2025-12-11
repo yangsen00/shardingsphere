@@ -18,7 +18,7 @@
 package org.apache.shardingsphere.encrypt.exception.metadata;
 
 import org.apache.shardingsphere.encrypt.exception.EncryptSQLException;
-import org.apache.shardingsphere.infra.util.exception.external.sql.sqlstate.XOpenSQLState;
+import org.apache.shardingsphere.infra.exception.external.sql.sqlstate.XOpenSQLState;
 
 /**
  * Encrypt column alter exception.
@@ -28,6 +28,6 @@ public final class EncryptColumnAlterException extends EncryptSQLException {
     private static final long serialVersionUID = -8920381230872401155L;
     
     public EncryptColumnAlterException(final String table, final String alteredColumn, final String previousColumn) {
-        super(XOpenSQLState.CHECK_OPTION_VIOLATION, 2, "Altered column `%s` must use same encrypt algorithm with previous column `%s` in table `%s`.", alteredColumn, previousColumn, table);
+        super(XOpenSQLState.CHECK_OPTION_VIOLATION, 10, "Altered column '%s' must use same encrypt algorithm with previous column '%s' in table '%s'.", alteredColumn, previousColumn, table);
     }
 }

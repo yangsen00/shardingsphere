@@ -24,10 +24,9 @@ mode:
     props:
       namespace: test
       server-lists: localhost:3181
-      retryIntervalMilliseconds: 500
-      timeToLiveSeconds: 60
-      maxRetries: 3
-      operationTimeoutMilliseconds: 500
+
+props:
+  system-schema-metadata-assembly-enabled: false
 
 dataSources:
   ds_0:
@@ -38,20 +37,30 @@ dataSources:
 
 rules:
 - !SHARDING
-  defaultDatabaseStrategy:
-    standard:
-      shardingAlgorithmName: default_db_inline
-      shardingColumn: user_id
+#  defaultDatabaseStrategy:
+#    standard:
+#      shardingAlgorithmName: default_db_inline
+#      shardingColumn: user_id
   tables:
     t_order:
       actualDataNodes: ds_0.t_order
       keyGenerateStrategy:
         column: order_id
         keyGeneratorName: snowflake
+#      tableStrategy:
+#        standard:
+#          shardingAlgorithmName: t_order_tbl_inline
+#          shardingColumn: order_id
+    t_order_item:
+      actualDataNodes: ds_${0..1}.t_order_item_${0..1}
       tableStrategy:
         standard:
-          shardingAlgorithmName: t_order_tbl_inline
           shardingColumn: order_id
+          shardingAlgorithmName: t_order_item_inline
+      keyGenerateStrategy:
+        column: order_id
+        keyGeneratorName: snowflake
+
   shardingAlgorithms:
     default_db_inline:
       type: INLINE
@@ -61,6 +70,11 @@ rules:
       type: INLINE
       props:
         algorithm-expression: t_order
+    t_order_item_inline:
+      type: INLINE
+      props:
+        algorithm-expression: t_order_item_${order_id % 2}
+
   keyGenerators:
     snowflake:
       type: SNOWFLAKE

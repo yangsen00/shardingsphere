@@ -18,17 +18,17 @@
 package org.apache.shardingsphere.sharding.merge.dql.orderby;
 
 import lombok.Getter;
-import org.apache.shardingsphere.infra.binder.segment.select.orderby.OrderByItem;
-import org.apache.shardingsphere.infra.binder.statement.dml.SelectStatementContext;
+import org.apache.shardingsphere.infra.binder.context.segment.select.orderby.OrderByItem;
+import org.apache.shardingsphere.infra.binder.context.statement.type.dml.SelectStatementContext;
+import org.apache.shardingsphere.infra.exception.ShardingSpherePreconditions;
 import org.apache.shardingsphere.infra.executor.sql.execute.result.query.QueryResult;
 import org.apache.shardingsphere.infra.metadata.database.schema.model.ShardingSphereSchema;
 import org.apache.shardingsphere.infra.metadata.database.schema.model.ShardingSphereTable;
-import org.apache.shardingsphere.infra.util.exception.ShardingSpherePreconditions;
 import org.apache.shardingsphere.sharding.exception.data.NotImplementComparableValueException;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.dml.order.item.ColumnOrderByItemSegment;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.dml.order.item.IndexOrderByItemSegment;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.dml.order.item.OrderByItemSegment;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.generic.table.SimpleTableSegment;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.dml.order.item.ColumnOrderByItemSegment;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.dml.order.item.IndexOrderByItemSegment;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.dml.order.item.OrderByItemSegment;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.generic.table.SimpleTableSegment;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -69,7 +69,7 @@ public final class OrderByValue implements Comparable<OrderByValue> {
     }
     
     private boolean getOrderValuesCaseSensitiveFromTables(final ShardingSphereSchema schema, final OrderByItem eachOrderByItem) throws SQLException {
-        for (SimpleTableSegment each : selectStatementContext.getAllTables()) {
+        for (SimpleTableSegment each : selectStatementContext.getTablesContext().getSimpleTables()) {
             String tableName = each.getTableName().getIdentifier().getValue();
             ShardingSphereTable table = schema.getTable(tableName);
             OrderByItemSegment orderByItemSegment = eachOrderByItem.getSegment();
@@ -118,7 +118,7 @@ public final class OrderByValue implements Comparable<OrderByValue> {
         int i = 0;
         for (OrderByItem each : orderByItems) {
             int result = CompareUtils.compareTo(orderValues.get(i), orderByValue.orderValues.get(i), each.getSegment().getOrderDirection(),
-                    each.getSegment().getNullsOrderType(selectStatementContext.getDatabaseType().getType()), orderValuesCaseSensitive.get(i));
+                    each.getSegment().getNullsOrderType(selectStatementContext.getSqlStatement().getDatabaseType()), orderValuesCaseSensitive.get(i));
             if (0 != result) {
                 return result;
             }

@@ -44,6 +44,7 @@
     <alter-user sql-case-id="alter_user_expire_with_options" />
     <alter-user sql-case-id="alter_user_grant_proxy" />
     <alter-user sql-case-id="alter_user_grant_proxy_with_option" />
+    <alter-user sql-case-id="alter_user_default_role" />
     <alter-user sql-case-id="alter_user_revoke_proxy" />
     <alter-user sql-case-id="alter_user_proxys" />
     <alter-user sql-case-id="alter_user_with_password_postgresql" />
@@ -68,4 +69,5 @@
     <alter-user sql-case-id="alter_azure_ad_user_without_login" />
     <alter-user sql-case-id="alter_user_alias_to_existing_azure_id" />
     <alter-user sql-case-id="alter_user_identified_with_single_quoted" />
+    <alter-user sql-case-id="alter_user_with_factor" />
 </sql-parser-test-cases>

@@ -18,15 +18,16 @@
 package org.apache.shardingsphere.data.pipeline.core.metadata.node.event.handler.impl;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.shardingsphere.data.pipeline.core.job.PipelineJobIdUtils;
+import org.apache.shardingsphere.data.pipeline.core.job.id.PipelineJobIdUtils;
 import org.apache.shardingsphere.data.pipeline.core.metadata.node.PipelineMetaDataNode;
-import org.apache.shardingsphere.data.pipeline.core.metadata.node.config.processor.ChangedJobConfigurationProcessor;
+import org.apache.shardingsphere.data.pipeline.core.metadata.node.config.processor.JobConfigurationChangedProcessEngine;
+import org.apache.shardingsphere.data.pipeline.core.metadata.node.config.processor.JobConfigurationChangedProcessor;
 import org.apache.shardingsphere.data.pipeline.core.metadata.node.event.handler.PipelineMetaDataChangedEventHandler;
 import org.apache.shardingsphere.elasticjob.api.JobConfiguration;
 import org.apache.shardingsphere.elasticjob.infra.pojo.JobConfigurationPOJO;
-import org.apache.shardingsphere.infra.util.spi.type.typed.TypedSPILoader;
+import org.apache.shardingsphere.infra.spi.type.typed.TypedSPILoader;
 import org.apache.shardingsphere.infra.util.yaml.YamlEngine;
-import org.apache.shardingsphere.mode.repository.cluster.listener.DataChangedEvent;
+import org.apache.shardingsphere.mode.event.DataChangedEvent;
 
 import java.util.regex.Pattern;
 
@@ -41,19 +42,20 @@ public final class ConfigMetaDataChangedEventHandler implements PipelineMetaData
         return PipelineMetaDataNode.CONFIG_PATTERN;
     }
     
+    @SuppressWarnings("unchecked")
     @Override
     public void handle(final String jobId, final DataChangedEvent event) {
         JobConfiguration jobConfig;
         try {
             jobConfig = YamlEngine.unmarshal(event.getValue(), JobConfigurationPOJO.class, true).toJobConfiguration();
             // CHECKSTYLE:OFF
-        } catch (final Exception ex) {
+        } catch (final RuntimeException ex) {
             // CHECKSTYLE:ON
             log.error("unmarshal job configuration pojo failed.", ex);
             return;
         }
         log.info("{} job configuration: {}, disabled={}", event.getType(), event.getKey(), jobConfig.isDisabled());
-        TypedSPILoader.findService(ChangedJobConfigurationProcessor.class, PipelineJobIdUtils.parseJobType(jobConfig.getJobName()).getTypeName())
-                .ifPresent(optional -> optional.process(event.getType(), jobConfig));
+        String jobType = PipelineJobIdUtils.parseJobType(jobConfig.getJobName()).getType();
+        TypedSPILoader.findService(JobConfigurationChangedProcessor.class, jobType).ifPresent(optional -> new JobConfigurationChangedProcessEngine().process(event.getType(), jobConfig, optional));
     }
 }

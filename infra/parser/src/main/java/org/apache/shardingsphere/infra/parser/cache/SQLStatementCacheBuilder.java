@@ -21,8 +21,9 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.apache.shardingsphere.sql.parser.api.CacheOption;
-import org.apache.shardingsphere.sql.parser.sql.common.statement.SQLStatement;
+import org.apache.shardingsphere.database.connector.core.type.DatabaseType;
+import org.apache.shardingsphere.sql.parser.engine.api.CacheOption;
+import org.apache.shardingsphere.sql.parser.statement.core.statement.SQLStatement;
 
 /**
  * SQL statement cache builder.
@@ -35,13 +36,14 @@ public final class SQLStatementCacheBuilder {
      *
      * @param sqlStatementCacheOption SQL statement cache option
      * @param parseTreeCacheOption parse tree cache option
-     * @param isParseComment is parse comment
      * @param databaseType database type
      * @return built SQL statement cache
      */
-    public static LoadingCache<String, SQLStatement> build(final String databaseType,
-                                                           final CacheOption sqlStatementCacheOption, final CacheOption parseTreeCacheOption, final boolean isParseComment) {
-        return Caffeine.newBuilder().softValues().initialCapacity(sqlStatementCacheOption.getInitialCapacity()).maximumSize(sqlStatementCacheOption.getMaximumSize())
-                .build(new SQLStatementCacheLoader(databaseType, parseTreeCacheOption, isParseComment));
+    public static CacheManager<String, SQLStatement> build(final DatabaseType databaseType, final CacheOption sqlStatementCacheOption,
+                                                           final CacheOption parseTreeCacheOption) {
+        SQLStatementCacheLoader sqlStatementCacheLoader = new SQLStatementCacheLoader(databaseType, parseTreeCacheOption);
+        LoadingCache<String, SQLStatement> loadingCache =
+                Caffeine.newBuilder().softValues().initialCapacity(sqlStatementCacheOption.getInitialCapacity()).maximumSize(sqlStatementCacheOption.getMaximumSize()).build(sqlStatementCacheLoader);
+        return new CacheManager<>(loadingCache, sqlStatementCacheLoader);
     }
 }

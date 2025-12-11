@@ -18,9 +18,10 @@
 package org.apache.shardingsphere.mask.algorithm.cover;
 
 import com.google.common.base.Strings;
-import org.apache.shardingsphere.infra.util.exception.ShardingSpherePreconditions;
-import org.apache.shardingsphere.mask.algorithm.MaskAlgorithmPropsChecker;
-import org.apache.shardingsphere.mask.exception.algorithm.MaskAlgorithmInitializationException;
+import org.apache.shardingsphere.infra.algorithm.core.exception.AlgorithmInitializationException;
+import org.apache.shardingsphere.infra.annotation.HighFrequencyInvocation;
+import org.apache.shardingsphere.infra.exception.ShardingSpherePreconditions;
+import org.apache.shardingsphere.mask.algorithm.MaskAlgorithmPropertiesChecker;
 import org.apache.shardingsphere.mask.spi.MaskAlgorithm;
 
 import java.util.Properties;
@@ -47,24 +48,25 @@ public final class MaskFromXToYMaskAlgorithm implements MaskAlgorithm<Object, St
         fromX = createFromX(props);
         toY = createToY(props);
         replaceChar = createReplaceChar(props);
-        ShardingSpherePreconditions.checkState(fromX <= toY, () -> new MaskAlgorithmInitializationException(getType(), "fromX must be less than or equal to toY"));
+        ShardingSpherePreconditions.checkState(fromX <= toY, () -> new AlgorithmInitializationException(this, "fromX must be less than or equal to toY"));
     }
     
     private Integer createFromX(final Properties props) {
-        MaskAlgorithmPropsChecker.checkIntegerTypeConfig(props, FROM_X, getType());
+        MaskAlgorithmPropertiesChecker.checkPositiveInteger(props, FROM_X, this);
         return Integer.parseInt(props.getProperty(FROM_X));
     }
     
     private Integer createToY(final Properties props) {
-        MaskAlgorithmPropsChecker.checkIntegerTypeConfig(props, TO_Y, getType());
+        MaskAlgorithmPropertiesChecker.checkPositiveInteger(props, TO_Y, this);
         return Integer.parseInt(props.getProperty(TO_Y));
     }
     
     private Character createReplaceChar(final Properties props) {
-        MaskAlgorithmPropsChecker.checkSingleCharConfig(props, REPLACE_CHAR, getType());
+        MaskAlgorithmPropertiesChecker.checkSingleChar(props, REPLACE_CHAR, this);
         return props.getProperty(REPLACE_CHAR).charAt(0);
     }
     
+    @HighFrequencyInvocation
     @Override
     public String mask(final Object plainValue) {
         String result = null == plainValue ? null : String.valueOf(plainValue);

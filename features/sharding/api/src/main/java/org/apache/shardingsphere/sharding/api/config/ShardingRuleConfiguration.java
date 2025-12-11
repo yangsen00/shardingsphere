@@ -17,9 +17,10 @@
 
 package org.apache.shardingsphere.sharding.api.config;
 
+import com.cedarsoftware.util.CaseInsensitiveSet;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.shardingsphere.infra.config.algorithm.AlgorithmConfiguration;
+import org.apache.shardingsphere.infra.algorithm.core.config.AlgorithmConfiguration;
 import org.apache.shardingsphere.infra.config.rule.function.DistributedRuleConfiguration;
 import org.apache.shardingsphere.infra.config.rule.scope.DatabaseRuleConfiguration;
 import org.apache.shardingsphere.sharding.api.config.cache.ShardingCacheConfiguration;
@@ -34,6 +35,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Sharding rule configuration.
@@ -47,8 +49,6 @@ public final class ShardingRuleConfiguration implements DatabaseRuleConfiguratio
     private Collection<ShardingAutoTableRuleConfiguration> autoTables = new LinkedList<>();
     
     private Collection<ShardingTableReferenceRuleConfiguration> bindingTableGroups = new LinkedList<>();
-    
-    private Collection<String> broadcastTables = new LinkedList<>();
     
     private ShardingStrategyConfiguration defaultDatabaseShardingStrategy;
     
@@ -67,4 +67,9 @@ public final class ShardingRuleConfiguration implements DatabaseRuleConfiguratio
     private Map<String, AlgorithmConfiguration> auditors = new LinkedHashMap<>();
     
     private ShardingCacheConfiguration shardingCache;
+    
+    @Override
+    public Collection<String> getLogicTableNames() {
+        return new CaseInsensitiveSet<>(tables.stream().map(ShardingTableRuleConfiguration::getLogicTable).collect(Collectors.toList()));
+    }
 }

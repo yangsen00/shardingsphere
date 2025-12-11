@@ -44,6 +44,7 @@
     <sql-case id="alter_user_expire_with_options" value="ALTER USER user1 PASSWORD EXPIRE ACCOUNT LOCK" db-types="Oracle" />
     <sql-case id="alter_user_grant_proxy" value="ALTER USER user1 GRANT CONNECT THROUGH user2" db-types="Oracle" />
     <sql-case id="alter_user_grant_proxy_with_option" value="ALTER USER user1 GRANT CONNECT THROUGH user2 WITH ROLE role1" db-types="Oracle" />
+    <sql-case id="alter_user_default_role" value="ALTER USER johndoe DEFAULT ROLE clerk_role" db-types="Oracle" />
     <sql-case id="alter_user_revoke_proxy" value="ALTER USER user1 REVOKE CONNECT THROUGH user2" db-types="Oracle" />
     <sql-case id="alter_user_proxys" value="ALTER USER user1 GRANT CONNECT THROUGH user2 REVOKE CONNECT THROUGH user3" db-types="Oracle" />
     <sql-case id="alter_user_with_password_postgresql" value="ALTER USER user1 WITH ENCRYPTED PASSWORD 'password'" db-types="PostgreSQL,openGauss" />
@@ -68,4 +69,5 @@
     <sql-case id="alter_azure_ad_user_without_login" value="ALTER USER [westus/joe] FROM EXTERNAL PROVIDER" db-types="SQLServer" />
     <sql-case id="alter_user_alias_to_existing_azure_id" value="ALTER USER [westus/joe] WITH LOGIN = joe@westus.com, name= joe_alias" db-types="SQLServer" />
     <sql-case id="alter_user_identified_with_single_quoted" value="ALTER USER tu1@localhost IDENTIFIED WITH 'sha256_password' REQUIRE CIPHER &quot;DHE-RSA-AES256-SHA&quot;" db-types="MySQL" />
+    <sql-case id="alter_user_with_factor" value="ALTER USER 'alice'@'localhost' MODIFY 2 FACTOR IDENTIFIED WITH authentication_fido" db-types="MySQL" />
 </sql-cases>

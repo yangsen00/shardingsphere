@@ -17,7 +17,9 @@
 
 package org.apache.shardingsphere.mask.algorithm.hash;
 
-import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.shardingsphere.infra.algorithm.messagedigest.spi.MessageDigestAlgorithm;
+import org.apache.shardingsphere.infra.annotation.HighFrequencyInvocation;
+import org.apache.shardingsphere.infra.spi.type.typed.TypedSPILoader;
 import org.apache.shardingsphere.mask.spi.MaskAlgorithm;
 
 import java.util.Properties;
@@ -27,18 +29,17 @@ import java.util.Properties;
  */
 public final class MD5MaskAlgorithm implements MaskAlgorithm<Object, String> {
     
-    private static final String SALT_KEY = "salt";
-    
-    private String salt;
+    private MessageDigestAlgorithm digestAlgorithm;
     
     @Override
     public void init(final Properties props) {
-        salt = props.getProperty(SALT_KEY, "");
+        digestAlgorithm = TypedSPILoader.getService(MessageDigestAlgorithm.class, getType(), props);
     }
     
+    @HighFrequencyInvocation
     @Override
     public String mask(final Object plainValue) {
-        return null == plainValue ? null : DigestUtils.md5Hex(plainValue + salt);
+        return digestAlgorithm.digest(plainValue);
     }
     
     @Override

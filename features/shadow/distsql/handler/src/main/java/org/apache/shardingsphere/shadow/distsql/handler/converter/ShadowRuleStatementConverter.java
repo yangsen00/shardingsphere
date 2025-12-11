@@ -19,13 +19,13 @@ package org.apache.shardingsphere.shadow.distsql.handler.converter;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.apache.shardingsphere.infra.config.algorithm.AlgorithmConfiguration;
-import org.apache.shardingsphere.shadow.api.config.ShadowRuleConfiguration;
-import org.apache.shardingsphere.shadow.api.config.datasource.ShadowDataSourceConfiguration;
-import org.apache.shardingsphere.shadow.api.config.table.ShadowTableConfiguration;
+import org.apache.shardingsphere.infra.algorithm.core.config.AlgorithmConfiguration;
+import org.apache.shardingsphere.shadow.config.ShadowRuleConfiguration;
+import org.apache.shardingsphere.shadow.config.datasource.ShadowDataSourceConfiguration;
+import org.apache.shardingsphere.shadow.config.table.ShadowTableConfiguration;
 import org.apache.shardingsphere.shadow.distsql.handler.supporter.ShadowRuleStatementSupporter;
-import org.apache.shardingsphere.shadow.distsql.parser.segment.ShadowAlgorithmSegment;
-import org.apache.shardingsphere.shadow.distsql.parser.segment.ShadowRuleSegment;
+import org.apache.shardingsphere.shadow.distsql.segment.ShadowAlgorithmSegment;
+import org.apache.shardingsphere.shadow.distsql.segment.ShadowRuleSegment;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,14 +60,14 @@ public final class ShadowRuleStatementConverter {
         Map<String, ShadowTableConfiguration> result = new HashMap<>();
         segments.forEach(each -> {
             Map<String, ShadowTableConfiguration> currentRuleTableConfig = each.getShadowTableRules().entrySet().stream()
-                    .collect(Collectors.toMap(Entry::getKey, entry -> buildShadowTableConfiguration(each.getRuleName(), entry), ShadowRuleStatementSupporter::mergeConfiguration));
+                    .collect(Collectors.toMap(Entry::getKey, entry -> buildShadowTableConfiguration(each.getRuleName(), entry.getValue()), ShadowRuleStatementSupporter::mergeConfiguration));
             currentRuleTableConfig.forEach((key, value) -> result.merge(key, value, ShadowRuleStatementSupporter::mergeConfiguration));
         });
         return result;
     }
     
-    private static ShadowTableConfiguration buildShadowTableConfiguration(final String ruleName, final Entry<String, Collection<ShadowAlgorithmSegment>> entry) {
-        return new ShadowTableConfiguration(new ArrayList<>(Collections.singleton(ruleName)), entry.getValue().stream().map(ShadowAlgorithmSegment::getAlgorithmName).collect(Collectors.toList()));
+    private static ShadowTableConfiguration buildShadowTableConfiguration(final String ruleName, final Collection<ShadowAlgorithmSegment> algorithmSegments) {
+        return new ShadowTableConfiguration(new ArrayList<>(Collections.singleton(ruleName)), algorithmSegments.stream().map(ShadowAlgorithmSegment::getAlgorithmName).collect(Collectors.toList()));
     }
     
     private static Collection<ShadowDataSourceConfiguration> getDataSource(final Collection<ShadowRuleSegment> segments) {

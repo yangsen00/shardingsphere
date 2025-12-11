@@ -9,7 +9,7 @@ weight = 2
 
 ### 测试
 
-SQL 改写测试用例位于 `sharding-core/sharding-core-rewrite` 下的 test 中。SQL 改写的测试主要依赖如下几个部分：
+SQL 改写测试用例位于 `test/it/rewriter` 下的 test 中。SQL 改写的测试主要依赖如下几个部分：
 
   - 测试引擎
   - 环境配置
@@ -23,7 +23,7 @@ SQL 改写测试用例位于 `sharding-core/sharding-core-rewrite` 下的 test �
 dataSources:
   db: !!com.zaxxer.hikari.HikariDataSource
     driverClassName: org.h2.Driver
-    jdbcUrl: jdbc:h2:mem:db;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false;MODE=MYSQL
+    standardJdbcUrl: jdbc:h2:mem:db;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false;MODE=MYSQL
     username: sa
     password:
 

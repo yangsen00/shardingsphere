@@ -30,9 +30,9 @@ ShardingSphere-Proxy is available at:
 
 2. Rule configuration.
 
-Edit `%SHARDINGSPHERE_PROXY_HOME%/conf/server.yaml`.
+Edit `%SHARDINGSPHERE_PROXY_HOME%/conf/global.yaml`.
 
-Edit `%SHARDINGSPHERE_PROXY_HOME%/conf/config-xxx.yaml`.
+Edit `%SHARDINGSPHERE_PROXY_HOME%/conf/database-xxx.yaml`.
 
 > %SHARDINGSPHERE_PROXY_HOME% is the proxy extract path. for example: `/opt/shardingsphere-proxy-bin/`
 
@@ -59,14 +59,6 @@ The default port is `3307`, while the default profile directory is `%SHARDINGSPH
 ```bash
 sh %SHARDINGSPHERE_PROXY_HOME%/bin/start.sh ${proxy_port} ${proxy_conf_directory}
 ```
-
-* Force start
-
-```bash
-sh %SHARDINGSPHERE_PROXY_HOME%/bin/start.sh -f
-```
-
-Use the `-f` parameter to force start the Proxy. This parameter will ignore the abnormal data source during startup and start the Proxy forcibly. After the Proxy is started, you can remove the abnormal data source by DistSQL.
 
 5. Use ShardingSphere-Proxy.
 

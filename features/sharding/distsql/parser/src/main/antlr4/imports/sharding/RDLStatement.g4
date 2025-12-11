@@ -43,14 +43,6 @@ dropShardingTableReferenceRule
     : DROP SHARDING TABLE REFERENCE RULE ifExists? ruleName (COMMA_ ruleName)*
     ;
 
-createBroadcastTableRule
-    : CREATE BROADCAST TABLE RULE ifNotExists? tableName (COMMA_ tableName)*
-    ;
-
-dropBroadcastTableRule
-    : DROP BROADCAST TABLE RULE ifExists? tableName (COMMA_ tableName)*
-    ;
-
 dropShardingAlgorithm
     : DROP SHARDING ALGORITHM ifExists? shardingAlgorithmName (COMMA_ shardingAlgorithmName)*
     ;
@@ -97,22 +89,6 @@ auditorDefinition
 
 auditorName
     : IDENTIFIER_
-    ;
-
-storageUnits
-    : STORAGE_UNITS LP_ storageUnit (COMMA_ storageUnit)* RP_
-    ;
-
-storageUnit
-    : IDENTIFIER_ | STRING_
-    ;
-
-dataNodes
-    : DATANODES LP_ dataNode (COMMA_ dataNode)* RP_
-    ;
-
-dataNode
-    : STRING_
     ;
 
 autoShardingColumnDefinition
@@ -167,10 +143,6 @@ auditAllowHintDisable
     : TRUE | FALSE
     ;
 
-columnName
-    : IDENTIFIER_
-    ;
-
 tableReferenceRuleDefinition
     : ruleName LP_ tableName (COMMA_ tableName)* RP_
     ;
@@ -184,12 +156,4 @@ buildInStrategyType
     | COMPLEX
     | HINT
     | NONE
-    ;
-
-ifExists
-    : IF EXISTS
-    ;
-
-ifNotExists
-    : IF NOT EXISTS
     ;

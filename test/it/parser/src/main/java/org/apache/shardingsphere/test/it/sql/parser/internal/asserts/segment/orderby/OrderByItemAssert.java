@@ -19,12 +19,13 @@ package org.apache.shardingsphere.test.it.sql.parser.internal.asserts.segment.or
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.dml.order.item.ColumnOrderByItemSegment;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.dml.order.item.ExpressionOrderByItemSegment;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.dml.order.item.IndexOrderByItemSegment;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.dml.order.item.OrderByItemSegment;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.dml.order.item.ColumnOrderByItemSegment;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.dml.order.item.ExpressionOrderByItemSegment;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.dml.order.item.IndexOrderByItemSegment;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.dml.order.item.OrderByItemSegment;
 import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.SQLCaseAssertContext;
 import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.segment.SQLSegmentAssert;
+import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.segment.bound.ColumnBoundAssert;
 import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.segment.expression.ExpressionAssert;
 import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.segment.identifier.IdentifierValueAssert;
 import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.segment.owner.OwnerAssert;
@@ -53,11 +54,16 @@ public final class OrderByItemAssert {
      * @param assertContext assert context
      * @param actual actual order by segments
      * @param expected expected order by
-     * @param type type of assertion, should be Order by or Group by
+     * @param type type of assertion, should be order by or group by
      */
-    public static void assertIs(final SQLCaseAssertContext assertContext,
-                                final Collection<OrderByItemSegment> actual, final ExpectedOrderByClause expected, final String type) {
+    public static void assertIs(final SQLCaseAssertContext assertContext, final Collection<OrderByItemSegment> actual, final ExpectedOrderByClause expected, final String type) {
         assertThat(assertContext.getText(String.format("%s items size assertion error: ", type)), actual.size(), is(expected.getItemSize()));
+        assertColumnOrderByItems(assertContext, actual, expected, type);
+        assertIndexOrderByItems(assertContext, actual, expected, type);
+        assertExpressionOrderByItems(assertContext, actual, expected, type);
+    }
+    
+    private static void assertColumnOrderByItems(final SQLCaseAssertContext assertContext, final Collection<OrderByItemSegment> actual, final ExpectedOrderByClause expected, final String type) {
         int count = 0;
         for (OrderByItemSegment each : actual) {
             if (each instanceof ColumnOrderByItemSegment) {
@@ -66,7 +72,10 @@ public final class OrderByItemAssert {
                 count++;
             }
         }
-        count = 0;
+    }
+    
+    private static void assertIndexOrderByItems(final SQLCaseAssertContext assertContext, final Collection<OrderByItemSegment> actual, final ExpectedOrderByClause expected, final String type) {
+        int count = 0;
         for (OrderByItemSegment each : actual) {
             if (each instanceof IndexOrderByItemSegment) {
                 assertOrderInfo(assertContext, each, expected.getIndexItems().get(count), type);
@@ -74,7 +83,10 @@ public final class OrderByItemAssert {
                 count++;
             }
         }
-        count = 0;
+    }
+    
+    private static void assertExpressionOrderByItems(final SQLCaseAssertContext assertContext, final Collection<OrderByItemSegment> actual, final ExpectedOrderByClause expected, final String type) {
+        int count = 0;
         for (OrderByItemSegment each : actual) {
             if (each instanceof ExpressionOrderByItemSegment) {
                 assertOrderInfo(assertContext, each, expected.getExpressionItems().get(count), type);
@@ -95,6 +107,7 @@ public final class OrderByItemAssert {
     private static void assertColumnOrderByItem(final SQLCaseAssertContext assertContext,
                                                 final ColumnOrderByItemSegment actual, final ExpectedColumnOrderByItem expected, final String type) {
         IdentifierValueAssert.assertIs(assertContext, actual.getColumn().getIdentifier(), expected, String.format("%s item", type));
+        ColumnBoundAssert.assertIs(assertContext, actual.getColumn().getColumnBoundInfo(), expected.getColumnBound());
         if (null == expected.getOwner()) {
             assertFalse(actual.getColumn().getOwner().isPresent(), assertContext.getText("Actual owner should not exist."));
         } else {

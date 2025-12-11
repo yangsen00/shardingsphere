@@ -17,30 +17,32 @@
 
 package org.apache.shardingsphere.proxy.frontend.protocol;
 
+import org.apache.shardingsphere.database.connector.core.type.DatabaseType;
+import org.apache.shardingsphere.infra.config.mode.ModeConfiguration;
 import org.apache.shardingsphere.infra.config.props.ConfigurationProperties;
 import org.apache.shardingsphere.infra.config.props.ConfigurationPropertyKey;
-import org.apache.shardingsphere.infra.database.type.DatabaseType;
-import org.apache.shardingsphere.infra.database.type.dialect.MySQLDatabaseType;
-import org.apache.shardingsphere.infra.instance.InstanceContext;
+import org.apache.shardingsphere.infra.instance.ComputeNodeInstanceContext;
 import org.apache.shardingsphere.infra.metadata.ShardingSphereMetaData;
 import org.apache.shardingsphere.infra.metadata.database.ShardingSphereDatabase;
-import org.apache.shardingsphere.infra.metadata.database.rule.ShardingSphereRuleMetaData;
+import org.apache.shardingsphere.infra.metadata.statistics.ShardingSphereStatistics;
+import org.apache.shardingsphere.infra.metadata.statistics.builder.ShardingSphereStatisticsFactory;
+import org.apache.shardingsphere.infra.spi.type.typed.TypedSPILoader;
+import org.apache.shardingsphere.infra.util.props.PropertiesBuilder;
+import org.apache.shardingsphere.infra.util.props.PropertiesBuilder.Property;
 import org.apache.shardingsphere.mode.manager.ContextManager;
 import org.apache.shardingsphere.mode.metadata.MetaDataContexts;
-import org.apache.shardingsphere.metadata.persist.MetaDataPersistService;
 import org.apache.shardingsphere.proxy.backend.context.ProxyContext;
-import org.apache.shardingsphere.test.mock.AutoMockExtension;
-import org.apache.shardingsphere.test.mock.StaticMockSettings;
-import org.apache.shardingsphere.test.util.PropertiesBuilder;
-import org.apache.shardingsphere.test.util.PropertiesBuilder.Property;
+import org.apache.shardingsphere.test.infra.framework.extension.mock.AutoMockExtension;
+import org.apache.shardingsphere.test.infra.framework.extension.mock.StaticMockSettings;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Properties;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -48,43 +50,43 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(AutoMockExtension.class)
 @StaticMockSettings(ProxyContext.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class FrontDatabaseProtocolTypeFactoryTest {
     
     @Test
     void assertGetDatabaseTypeWhenThrowShardingSphereConfigurationException() {
-        ContextManager contextManager = mockContextManager(Collections.emptyMap(), new Properties());
+        ContextManager contextManager = mockContextManager(Collections.emptyList(), new Properties());
         when(ProxyContext.getInstance().getContextManager()).thenReturn(contextManager);
-        assertThat(FrontDatabaseProtocolTypeFactory.getDatabaseType().getType(), is("MySQL"));
+        assertThat(FrontDatabaseProtocolTypeFactory.getDatabaseType().getType(), is("FIXTURE"));
     }
     
     @Test
     void assertGetDatabaseTypeInstanceOfMySQLDatabaseTypeFromMetaDataContextsSchemaName() {
-        ContextManager contextManager = mockContextManager(mockDatabases(), new Properties());
+        ContextManager contextManager = mockContextManager(Collections.singleton(mockDatabase()), new Properties());
         when(ProxyContext.getInstance().getContextManager()).thenReturn(contextManager);
-        DatabaseType databaseType = FrontDatabaseProtocolTypeFactory.getDatabaseType();
-        assertThat(databaseType, instanceOf(DatabaseType.class));
-        assertThat(databaseType.getType(), is("MySQL"));
+        assertThat(FrontDatabaseProtocolTypeFactory.getDatabaseType().getType(), is("FIXTURE"));
     }
     
     @Test
-    void assertGetDatabaseTypeOfPostgreSQLDatabaseTypeFromMetaDataContextsProps() {
-        ContextManager contextManager = mockContextManager(mockDatabases(),
-                PropertiesBuilder.build(new Property(ConfigurationPropertyKey.PROXY_FRONTEND_DATABASE_PROTOCOL_TYPE.getKey(), "PostgreSQL")));
+    void assertGetDatabaseTypeFromMetaDataContextsProps() {
+        ContextManager contextManager = mockContextManager(Collections.singleton(mockDatabase()),
+                PropertiesBuilder.build(new Property(ConfigurationPropertyKey.PROXY_FRONTEND_DATABASE_PROTOCOL_TYPE.getKey(), "FIXTURE")));
         when(ProxyContext.getInstance().getContextManager()).thenReturn(contextManager);
-        DatabaseType databaseType = FrontDatabaseProtocolTypeFactory.getDatabaseType();
-        assertThat(databaseType, instanceOf(DatabaseType.class));
-        assertThat(databaseType.getType(), is("PostgreSQL"));
+        assertThat(FrontDatabaseProtocolTypeFactory.getDatabaseType().getType(), is("FIXTURE"));
     }
     
-    private Map<String, ShardingSphereDatabase> mockDatabases() {
-        ShardingSphereDatabase database = mock(ShardingSphereDatabase.class);
-        when(database.getProtocolType()).thenReturn(new MySQLDatabaseType());
-        return Collections.singletonMap("foo_db", database);
+    private ShardingSphereDatabase mockDatabase() {
+        ShardingSphereDatabase result = mock(ShardingSphereDatabase.class);
+        when(result.getName()).thenReturn("foo_db");
+        when(result.getProtocolType()).thenReturn(TypedSPILoader.getService(DatabaseType.class, "MySQL"));
+        return result;
     }
     
-    private ContextManager mockContextManager(final Map<String, ShardingSphereDatabase> databases, final Properties props) {
-        MetaDataContexts metaDataContexts = new MetaDataContexts(
-                mock(MetaDataPersistService.class), new ShardingSphereMetaData(databases, mock(ShardingSphereRuleMetaData.class), new ConfigurationProperties(props)));
-        return new ContextManager(metaDataContexts, mock(InstanceContext.class));
+    private ContextManager mockContextManager(final Collection<ShardingSphereDatabase> databases, final Properties props) {
+        ShardingSphereMetaData metaData = new ShardingSphereMetaData(databases, mock(), mock(), new ConfigurationProperties(props));
+        MetaDataContexts metaDataContexts = new MetaDataContexts(metaData, ShardingSphereStatisticsFactory.create(metaData, new ShardingSphereStatistics()));
+        ComputeNodeInstanceContext computeNodeInstanceContext = mock(ComputeNodeInstanceContext.class);
+        when(computeNodeInstanceContext.getModeConfiguration()).thenReturn(mock(ModeConfiguration.class));
+        return new ContextManager(metaDataContexts, computeNodeInstanceContext, mock(), mock());
     }
 }

@@ -17,14 +17,14 @@
 
 package org.apache.shardingsphere.readwritesplitting.route;
 
-import lombok.RequiredArgsConstructor;
-import org.apache.shardingsphere.infra.binder.statement.SQLStatementContext;
+import org.apache.shardingsphere.infra.binder.context.statement.SQLStatementContext;
+import org.apache.shardingsphere.infra.hint.HintValueContext;
 import org.apache.shardingsphere.infra.session.connection.ConnectionContext;
 import org.apache.shardingsphere.readwritesplitting.route.qualified.QualifiedReadwriteSplittingDataSourceRouter;
 import org.apache.shardingsphere.readwritesplitting.route.qualified.type.QualifiedReadwriteSplittingPrimaryDataSourceRouter;
-import org.apache.shardingsphere.readwritesplitting.route.standard.StandardReadwriteSplittingDataSourceRouter;
 import org.apache.shardingsphere.readwritesplitting.route.qualified.type.QualifiedReadwriteSplittingTransactionalDataSourceRouter;
-import org.apache.shardingsphere.readwritesplitting.rule.ReadwriteSplittingDataSourceRule;
+import org.apache.shardingsphere.readwritesplitting.route.standard.StandardReadwriteSplittingDataSourceRouter;
+import org.apache.shardingsphere.readwritesplitting.rule.ReadwriteSplittingDataSourceGroupRule;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -32,29 +32,30 @@ import java.util.Collection;
 /**
  * Data source router for readwrite-splitting.
  */
-@RequiredArgsConstructor
 public final class ReadwriteSplittingDataSourceRouter {
     
-    private final ReadwriteSplittingDataSourceRule rule;
+    private final ReadwriteSplittingDataSourceGroupRule rule;
     
-    private final ConnectionContext connectionContext;
+    private final Collection<QualifiedReadwriteSplittingDataSourceRouter> qualifiedRouters;
+    
+    public ReadwriteSplittingDataSourceRouter(final ReadwriteSplittingDataSourceGroupRule rule, final ConnectionContext connectionContext) {
+        this.rule = rule;
+        qualifiedRouters = Arrays.asList(new QualifiedReadwriteSplittingPrimaryDataSourceRouter(), new QualifiedReadwriteSplittingTransactionalDataSourceRouter(connectionContext));
+    }
     
     /**
      * Route.
-     * 
+     *
      * @param sqlStatementContext SQL statement context
-     * @return data source name
+     * @param hintValueContext hint value context
+     * @return routed data source name
      */
-    public String route(final SQLStatementContext<?> sqlStatementContext) {
-        for (QualifiedReadwriteSplittingDataSourceRouter each : getQualifiedRouters(connectionContext)) {
-            if (each.isQualified(sqlStatementContext, rule)) {
+    public String route(final SQLStatementContext sqlStatementContext, final HintValueContext hintValueContext) {
+        for (QualifiedReadwriteSplittingDataSourceRouter each : qualifiedRouters) {
+            if (each.isQualified(sqlStatementContext, rule, hintValueContext)) {
                 return each.route(rule);
             }
         }
         return new StandardReadwriteSplittingDataSourceRouter().route(rule);
-    }
-    
-    private Collection<QualifiedReadwriteSplittingDataSourceRouter> getQualifiedRouters(final ConnectionContext connectionContext) {
-        return Arrays.asList(new QualifiedReadwriteSplittingPrimaryDataSourceRouter(), new QualifiedReadwriteSplittingTransactionalDataSourceRouter(connectionContext));
     }
 }

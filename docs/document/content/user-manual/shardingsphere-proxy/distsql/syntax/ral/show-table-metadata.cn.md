@@ -1,6 +1,6 @@
 +++
 title = "SHOW TABLE METADATA"
-weight = 7
+weight = 11
 +++
 
 ### 描述

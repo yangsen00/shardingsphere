@@ -18,7 +18,7 @@
 package org.apache.shardingsphere.encrypt.exception.metadata;
 
 import org.apache.shardingsphere.encrypt.exception.EncryptSQLException;
-import org.apache.shardingsphere.infra.util.exception.external.sql.sqlstate.XOpenSQLState;
+import org.apache.shardingsphere.infra.exception.external.sql.sqlstate.XOpenSQLState;
 
 /**
  * Encrypt table not found exception.
@@ -28,6 +28,6 @@ public final class EncryptTableNotFoundException extends EncryptSQLException {
     private static final long serialVersionUID = 8909641495852822938L;
     
     public EncryptTableNotFoundException(final String tableName) {
-        super(XOpenSQLState.CHECK_OPTION_VIOLATION, 9, "Can not find encrypt table: `%s`.", tableName);
+        super(XOpenSQLState.NOT_FOUND, 1, "Can not find encrypt table '%s'.", tableName);
     }
 }

@@ -22,7 +22,7 @@ import org.apache.shardingsphere.agent.plugin.metrics.core.collector.type.GaugeM
 import org.apache.shardingsphere.agent.plugin.metrics.core.config.MetricCollectorType;
 import org.apache.shardingsphere.agent.plugin.metrics.core.config.MetricConfiguration;
 import org.apache.shardingsphere.agent.plugin.metrics.core.exporter.MetricsExporter;
-import org.apache.shardingsphere.infra.autogen.version.ShardingSphereVersion;
+import org.apache.shardingsphere.infra.version.ShardingSphereVersion;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -40,7 +40,7 @@ public final class BuildInfoExporter implements MetricsExporter {
     public Optional<GaugeMetricFamilyMetricsCollector> export(final String pluginType) {
         GaugeMetricFamilyMetricsCollector result = MetricsCollectorRegistry.get(config, pluginType);
         result.cleanMetrics();
-        result.addMetric(Arrays.asList("ShardingSphere", ShardingSphereVersion.VERSION), 1d);
+        result.addMetric(Arrays.asList("ShardingSphere", ShardingSphereVersion.VERSION), 1D);
         return Optional.of(result);
     }
 }

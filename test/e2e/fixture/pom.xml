@@ -16,13 +16,12 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.apache.shardingsphere</groupId>
         <artifactId>shardingsphere-test-e2e</artifactId>
-        <version>5.3.3-SNAPSHOT</version>
+        <version>5.5.3-SNAPSHOT</version>
     </parent>
     <artifactId>shardingsphere-test-e2e-fixture</artifactId>
     <name>${project.artifactId}</name>
@@ -30,10 +29,6 @@
     <properties>
         <maven.deploy.skip>true</maven.deploy.skip>
         <dockerfile.skip.build>true</dockerfile.skip.build>
-        <narayana.version>5.12.4.Final</narayana.version>
-        <jboss-transaction-spi.version>7.6.0.Final</jboss-transaction-spi.version>
-        <jboss-logging.version>3.2.1.Final</jboss-logging.version>
-        <btm.version>2.1.3</btm.version>
     </properties>
     
     <dependencies>
@@ -49,8 +44,75 @@
         </dependency>
         <dependency>
             <groupId>org.apache.shardingsphere</groupId>
-            <artifactId>shardingsphere-jdbc-core</artifactId>
+            <artifactId>shardingsphere-jdbc</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.apache.shardingsphere</groupId>
+            <artifactId>shardingsphere-proxy-dialect-postgresql</artifactId>
+            <version>${project.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.shardingsphere</groupId>
+            <artifactId>shardingsphere-proxy-dialect-mysql</artifactId>
+            <version>${project.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.shardingsphere</groupId>
+            <artifactId>shardingsphere-proxy-dialect-oracle</artifactId>
+            <version>${project.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.shardingsphere</groupId>
+            <artifactId>shardingsphere-proxy-dialect-sqlserver</artifactId>
+            <version>${project.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.shardingsphere</groupId>
+            <artifactId>shardingsphere-proxy-dialect-opengauss</artifactId>
+            <version>${project.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.shardingsphere</groupId>
+            <artifactId>shardingsphere-standalone-mode-repository-memory</artifactId>
+            <version>${project.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.shardingsphere</groupId>
+            <artifactId>shardingsphere-standalone-mode-repository-jdbc</artifactId>
+            <version>${project.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.shardingsphere</groupId>
+            <artifactId>shardingsphere-cluster-mode-repository-zookeeper</artifactId>
+            <version>${project.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.shardingsphere</groupId>
+            <artifactId>shardingsphere-sharding-mysql</artifactId>
+            <version>${project.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.shardingsphere</groupId>
+            <artifactId>shardingsphere-data-pipeline-feature-sharding</artifactId>
+            <version>${project.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.shardingsphere</groupId>
+            <artifactId>shardingsphere-encrypt-core</artifactId>
+            <version>${project.version}</version>
+            <scope>runtime</scope>
         </dependency>
         
         <dependency>
@@ -59,8 +121,8 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -79,49 +141,19 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
             <groupId>org.apache.shardingsphere</groupId>
             <artifactId>shardingsphere-transaction-xa-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.shardingsphere</groupId>
-            <artifactId>shardingsphere-transaction-xa-narayana</artifactId>
+            <artifactId>shardingsphere-transaction-xa-atomikos</artifactId>
             <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.narayana.jta</groupId>
-            <artifactId>jta</artifactId>
-            <version>${narayana.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.narayana.jts</groupId>
-            <artifactId>narayana-jts-integration</artifactId>
-            <version>${narayana.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss</groupId>
-            <artifactId>jboss-transaction-spi</artifactId>
-            <version>${jboss-transaction-spi.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.logging</groupId>
-            <artifactId>jboss-logging</artifactId>
-            <version>${jboss-logging.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.shardingsphere</groupId>
-            <artifactId>shardingsphere-transaction-xa-bitronix</artifactId>
+            <artifactId>shardingsphere-transaction-xa-narayana</artifactId>
             <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.codehaus.btm</groupId>
-            <artifactId>btm</artifactId>
-            <version>${btm.version}</version>
         </dependency>
     </dependencies>
     
@@ -142,10 +174,60 @@
     
     <profiles>
         <profile>
-            <id>it.env.docker</id>
+            <id>e2e.env.docker</id>
             <properties>
-                <it.cluster.env.type>DOCKER</it.cluster.env.type>
+                <e2e.run.type>DOCKER</e2e.run.type>
             </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.shardingsphere</groupId>
+                    <artifactId>shardingsphere-proxy-dialect-postgresql</artifactId>
+                    <version>${project.version}</version>
+                    <scope>runtime</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.shardingsphere</groupId>
+                    <artifactId>shardingsphere-proxy-dialect-mysql</artifactId>
+                    <version>${project.version}</version>
+                    <scope>runtime</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.shardingsphere</groupId>
+                    <artifactId>shardingsphere-proxy-dialect-oracle</artifactId>
+                    <version>${project.version}</version>
+                    <scope>runtime</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.shardingsphere</groupId>
+                    <artifactId>shardingsphere-proxy-dialect-sqlserver</artifactId>
+                    <version>${project.version}</version>
+                    <scope>runtime</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.shardingsphere</groupId>
+                    <artifactId>shardingsphere-proxy-dialect-opengauss</artifactId>
+                    <version>${project.version}</version>
+                    <scope>runtime</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.shardingsphere</groupId>
+                    <artifactId>shardingsphere-standalone-mode-repository-memory</artifactId>
+                    <version>${project.version}</version>
+                    <scope>runtime</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.shardingsphere</groupId>
+                    <artifactId>shardingsphere-standalone-mode-repository-jdbc</artifactId>
+                    <version>${project.version}</version>
+                    <scope>runtime</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.shardingsphere</groupId>
+                    <artifactId>shardingsphere-cluster-mode-repository-zookeeper</artifactId>
+                    <version>${project.version}</version>
+                    <scope>runtime</scope>
+                </dependency>
+            </dependencies>
             <build>
                 <plugins>
                     <plugin>

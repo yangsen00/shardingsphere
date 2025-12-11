@@ -37,7 +37,7 @@ class ShardingSphereYamlRepresenterTest {
     @Test
     void assertToYamlWithoutContent() {
         YamlConfigurationFixture actual = new YamlConfigurationFixture();
-        assertThat(new Yaml(new ShardingSphereYamlRepresenter(), new DumperOptions()).dumpAsMap(actual), is("{}\n"));
+        assertThat(new Yaml(new ShardingSphereYamlRepresenter(new DumperOptions())).dumpAsMap(actual), is("{}\n"));
     }
     
     @Test
@@ -45,7 +45,7 @@ class ShardingSphereYamlRepresenterTest {
         YamlConfigurationFixture actual = new YamlConfigurationFixture();
         actual.setValue("value");
         actual.setCollection(Arrays.asList("value1", "value2"));
-        Map<String, String> map = new LinkedHashMap<>(2, 1);
+        Map<String, String> map = new LinkedHashMap<>(2, 1F);
         map.put("key1", "value1");
         map.put("key2", "value2");
         actual.setMap(map);
@@ -53,7 +53,7 @@ class ShardingSphereYamlRepresenterTest {
         actual.getEmbeddedMap().put("embedded_map_1", new LinkedHashMap<>());
         actual.getEmbeddedMap().put("embedded_map_2", Collections.singletonMap("embedded_map_foo", "embedded_map_foo_value"));
         actual.setCustomizedTag("customized_tag");
-        String expected = new Yaml(new ShardingSphereYamlRepresenter(), new DumperOptions()).dumpAsMap(actual);
+        String expected = new Yaml(new ShardingSphereYamlRepresenter(new DumperOptions())).dumpAsMap(actual);
         assertThat(expected, containsString("collection:\n- value1\n- value2\n"));
         assertThat(expected, containsString("map:\n  key1: value1\n  key2: value2\n"));
         assertThat(expected, not(containsString("embedded_map_1")));

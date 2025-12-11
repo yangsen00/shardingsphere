@@ -26,8 +26,8 @@ weight = 4
 `${DOCKER-IMAGE}` 表示 docker 镜像名称，如 `mysql:5.7` 。 `${DATABASE-TYPE}` 表示数据库类型。
 
 目录：`src/test/resources/env/`
-- `it-env.properties`：环境配置文件。
-- `${DATABASE-TYPE}/server.yaml`：ShardingSphere-Proxy 配置文件。
+- `e2e-env.properties`：环境配置文件。
+- `${DATABASE-TYPE}/global.yaml`：ShardingSphere-Proxy 配置文件。
 - `${DATABASE-TYPE}/initdb.sql`：数据库初始化 SQL 文件。
 - `${DATABASE-TYPE}/*.cnf,*.conf`：数据库配置文件。
 - `common/*.xml`：测试用到的 DistSQL 文件。
@@ -47,33 +47,34 @@ weight = 4
 
 ### 运行测试用例
 
-`it-env.properties` 所有属性都可以通过 Maven 命令行 `-D` 的方式传入，优先级高于配置文件。
+`e2e-env.properties` 所有属性都可以通过 Maven 命令行 `-D` 的方式传入，优先级高于配置文件。
 
 #### NATIVE 环境启动
 
-1. 在本地启动 ShardingSphere-Proxy（使用 3307 端口）：参考 [proxy 启动手册](/cn/user-manual/shardingsphere-proxy/startup/bin/)，或者修改 `proxy/bootstrap/src/main/resources/conf/server.yaml` 之后在 IDE 运行 `org.apache.shardingsphere.proxy.Bootstrap`。
+1. 在本地启动 ShardingSphere-Proxy（使用 3307 端口）：参考 [proxy 启动手册](/cn/user-manual/shardingsphere-proxy/startup/bin/)，或者修改 `proxy/bootstrap/src/main/resources/conf/global.yaml` 之后在 IDE 运行 `org.apache.shardingsphere.proxy.Bootstrap`。
 
 Proxy 配置可以参考：
 - test/e2e/operation/pipeline/src/test/resources/env/mysql/server-8.yaml
-- test/e2e/operation/pipeline/src/test/resources/env/postgresql/server.yaml
-- test/e2e/operation/pipeline/src/test/resources/env/opengauss/server.yaml
+- test/e2e/operation/pipeline/src/test/resources/env/postgresql/global.yaml
+- test/e2e/operation/pipeline/src/test/resources/env/opengauss/global.yaml
 
 2. 启动注册中心（如 ZooKeeper）和数据库。
 
-3. 以 MySQL 为例，`it-env.properties` 可以配置如下：
+3. 以 MySQL 为例，`e2e-env.properties` 可以配置如下：
+4. 
 ```
-pipeline.it.env.type=NATIVE
-pipeline.it.native.database=mysql
-pipeline.it.native.mysql.username=root
-pipeline.it.native.mysql.password=root
-pipeline.it.native.mysql.port=3306
+e2e.run.type=NATIVE
+
+e2e.native.database.port=3306
+e2e.native.database.username=root
+e2e.native.database.password=root
 ```
 
 4. 找到对应的测试类，在 IDE 启动运行。
 
 #### DOCKER 环境启动
 
-参考 `.github/workflows/e2e-pipeline.yml`。
+参考 `.github/workflows/e2e-operation.yml`。
 
 1. 打包镜像
 
@@ -87,15 +88,15 @@ pipeline.it.native.mysql.port=3306
 
 如果仅修改了测试代码，可以复用已有的测试镜像。
 
-2. 修改 `it-env.properties` 配置
+2. 修改 `e2e-env.properties` 配置
 
 ```
-pipeline.it.env.type=DOCKER
-pipeline.it.docker.mysql.version=mysql:5.7
+e2e.run.type=DOCKER
+e2e.docker.database.mysql.images=mysql:5.7
 ```
 
 3. 通过 Maven 运行测试用例。以 MySQL 为例：
 
 ```
-./mvnw -nsu -B install -f test/e2e/operation/pipeline/pom.xml -Dpipeline.it.env.type=docker -Dpipeline.it.docker.mysql.version=mysql:5.7
+./mvnw -nsu -B install -f test/e2e/operation/pipeline/pom.xml -De2e.run.type=docker -De2e.docker.database.mysql.images=mysql:5.7
 ```

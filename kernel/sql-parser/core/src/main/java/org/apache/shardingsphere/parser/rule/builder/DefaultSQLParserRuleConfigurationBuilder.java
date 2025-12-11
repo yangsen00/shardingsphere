@@ -20,7 +20,7 @@ package org.apache.shardingsphere.parser.rule.builder;
 import org.apache.shardingsphere.infra.rule.builder.global.DefaultGlobalRuleConfigurationBuilder;
 import org.apache.shardingsphere.parser.config.SQLParserRuleConfiguration;
 import org.apache.shardingsphere.parser.constant.SQLParserOrder;
-import org.apache.shardingsphere.sql.parser.api.CacheOption;
+import org.apache.shardingsphere.sql.parser.engine.api.CacheOption;
 
 /**
  * Default SQL parser rule configuration builder.
@@ -33,7 +33,7 @@ public final class DefaultSQLParserRuleConfigurationBuilder implements DefaultGl
     
     @Override
     public SQLParserRuleConfiguration build() {
-        return new SQLParserRuleConfiguration(false, PARSE_TREE_CACHE_OPTION, SQL_STATEMENT_CACHE_OPTION);
+        return new SQLParserRuleConfiguration(PARSE_TREE_CACHE_OPTION, SQL_STATEMENT_CACHE_OPTION);
     }
     
     @Override

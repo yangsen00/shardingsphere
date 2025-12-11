@@ -20,23 +20,94 @@ package org.apache.shardingsphere.infra.session.connection.transaction;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
+
 /**
  * Transaction connection context.
  */
 @Getter
-@Setter
 public final class TransactionConnectionContext implements AutoCloseable {
+    
+    private volatile String transactionType;
     
     private volatile boolean inTransaction;
     
-    private volatile long beginMills;
+    @Setter
+    private volatile long beginMillis;
     
+    @Setter
+    private volatile boolean exceptionOccur;
+    
+    @Setter
     private volatile String readWriteSplitReplicaRoute;
+    
+    private AtomicReference<TransactionManager> transactionManager;
+    
+    /**
+     * Begin transaction.
+     *
+     * @param transactionType transaction type
+     * @param transactionManager transaction manager
+     */
+    public void beginTransaction(final String transactionType, final TransactionManager transactionManager) {
+        this.transactionType = transactionType;
+        inTransaction = true;
+        this.transactionManager = new AtomicReference<>(transactionManager);
+    }
+    
+    /**
+     * Judge is in distributed transaction or not.
+     *
+     * @return in distributed transaction or not
+     */
+    public boolean isDistributedTransactionStarted() {
+        return isTransactionStarted() && ("XA".equals(transactionType) || "BASE".equals(transactionType));
+    }
+    
+    /**
+     * Get transaction type. 
+     *
+     * @return transaction type
+     */
+    public Optional<String> getTransactionType() {
+        return Optional.ofNullable(transactionType);
+    }
+    
+    /**
+     * Get read write split replica route. 
+     *
+     * @return read write split replica route
+     */
+    public Optional<String> getReadWriteSplitReplicaRoute() {
+        return Optional.ofNullable(readWriteSplitReplicaRoute);
+    }
+    
+    /**
+     * Get transaction manager.
+     *
+     * @return transaction manager
+     */
+    public Optional<TransactionManager> getTransactionManager() {
+        return null == transactionManager ? Optional.empty() : Optional.ofNullable(transactionManager.get());
+    }
+    
+    /**
+     * Judge transaction is started or not.
+     *
+     * @return whether transaction is started or not
+     */
+    public boolean isTransactionStarted() {
+        return inTransaction;
+    }
     
     @Override
     public void close() {
+        transactionType = null;
         inTransaction = false;
-        beginMills = 0L;
+        beginMillis = 0L;
+        exceptionOccur = false;
         readWriteSplitReplicaRoute = null;
+        transactionManager = null;
     }
 }

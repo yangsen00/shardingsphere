@@ -1,6 +1,6 @@
 +++
 title = "Readwrite-splitting"
-weight = 2
+weight = 3
 +++
 
 ## Background
@@ -13,11 +13,11 @@ Read/write splitting YAML configuration is highly readable. The YAML format enab
 ```yaml
 rules:
 - !READWRITE_SPLITTING
-  dataSources:
-    <data_source_name> (+): # Logic data source name of readwrite-splitting
-      write_data_source_name: # Write data source name
-      read_data_source_names: # Read data source names, multiple data source names separated with comma
-      transactionalReadQueryStrategy (?): # Routing strategy for read query within a transaction, values include: PRIMARY (to primary), FIXED (to fixed data source), DYNAMIC (to any data source), default value: DYNAMIC
+  dataSourceGroups:
+    <data_source_group_name> (+): # Logic data source group name of readwrite-splitting, which uses Groovy's Row Value Expressions SPI implementation to parse by default
+      write_data_source_name: # Write data source name, which uses Groovy's Row Value Expressions SPI implementation to parse by default
+      read_data_source_names: # Read data source names, multiple data source names separated with comma, which uses Groovy's Row Value Expressions SPI implementation to parse by default
+      transactionalReadQueryStrategy (?): # Routing strategy for read query within a transaction, values include: PRIMARY (to primary), FIXED (to fixed data source), DYNAMIC (to any data source), default value: PRIMARY, **Note: `FIXED` and `DYNAMIC` require a database that supports strong primary-replica synchronization, such as openGauss.**
       loadBalancerName: # Load balance algorithm name
   
   # Load balance algorithm configuration
@@ -29,7 +29,6 @@ rules:
 ```
 
 Please refer to [Built-in Load Balance Algorithm List](/en/user-manual/common-config/builtin-algorithm/load-balance) for more details about type of algorithm.
-Please refer to [Read-write splitting-Core features](/en/features/readwrite-splitting/) for more details about query consistent routing.
 
 ## Procedure
 1. Add read/write splitting data source.
@@ -40,7 +39,7 @@ Please refer to [Read-write splitting-Core features](/en/features/readwrite-spli
 ```yaml
 rules:
 - !READWRITE_SPLITTING
-  dataSources:
+  dataSourceGroups:
     readwrite_ds:
       writeDataSourceName: write_ds
       readDataSourceNames:

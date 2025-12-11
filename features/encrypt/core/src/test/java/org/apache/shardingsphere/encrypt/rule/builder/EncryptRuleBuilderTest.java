@@ -17,26 +17,29 @@
 
 package org.apache.shardingsphere.encrypt.rule.builder;
 
-import org.apache.shardingsphere.encrypt.api.config.EncryptRuleConfiguration;
+import org.apache.shardingsphere.database.connector.core.type.DatabaseType;
+import org.apache.shardingsphere.encrypt.config.EncryptRuleConfiguration;
 import org.apache.shardingsphere.encrypt.rule.EncryptRule;
-import org.apache.shardingsphere.infra.instance.InstanceContext;
 import org.apache.shardingsphere.infra.rule.builder.database.DatabaseRuleBuilder;
-import org.apache.shardingsphere.infra.util.spi.type.ordered.OrderedSPILoader;
+import org.apache.shardingsphere.infra.spi.type.ordered.OrderedSPILoader;
+import org.apache.shardingsphere.infra.spi.type.typed.TypedSPILoader;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.isA;
 import static org.mockito.Mockito.mock;
 
 class EncryptRuleBuilderTest {
+    
+    private final DatabaseType databaseType = TypedSPILoader.getService(DatabaseType.class, "FIXTURE");
     
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Test
     void assertBuild() {
         EncryptRuleConfiguration ruleConfig = mock(EncryptRuleConfiguration.class);
-        DatabaseRuleBuilder builder = OrderedSPILoader.getServices(DatabaseRuleBuilder.class, Collections.singletonList(ruleConfig)).get(ruleConfig);
-        assertThat(builder.build(ruleConfig, "", Collections.emptyMap(), Collections.emptyList(), mock(InstanceContext.class)), instanceOf(EncryptRule.class));
+        DatabaseRuleBuilder builder = OrderedSPILoader.getServices(DatabaseRuleBuilder.class, Collections.singleton(ruleConfig)).get(ruleConfig);
+        assertThat(builder.build(ruleConfig, "", databaseType, mock(), Collections.emptyList(), mock()), isA(EncryptRule.class));
     }
 }

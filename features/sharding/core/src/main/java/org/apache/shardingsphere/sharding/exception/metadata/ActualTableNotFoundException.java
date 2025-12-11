@@ -17,7 +17,7 @@
 
 package org.apache.shardingsphere.sharding.exception.metadata;
 
-import org.apache.shardingsphere.infra.util.exception.external.sql.sqlstate.XOpenSQLState;
+import org.apache.shardingsphere.infra.exception.external.sql.sqlstate.XOpenSQLState;
 import org.apache.shardingsphere.sharding.exception.ShardingSQLException;
 
 /**
@@ -28,6 +28,6 @@ public final class ActualTableNotFoundException extends ShardingSQLException {
     private static final long serialVersionUID = -5008645813201488531L;
     
     public ActualTableNotFoundException(final String dataSourceName, final String tableName) {
-        super(XOpenSQLState.CHECK_OPTION_VIOLATION, 4, "Actual table `%s.%s` is not in table rule configuration.", dataSourceName, tableName);
+        super(XOpenSQLState.NOT_FOUND, 4, "Actual table '%s.%s' is not in table rule configuration.", dataSourceName, tableName);
     }
 }

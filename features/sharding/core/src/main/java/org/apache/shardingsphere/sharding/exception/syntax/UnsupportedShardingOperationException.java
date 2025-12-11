@@ -17,7 +17,7 @@
 
 package org.apache.shardingsphere.sharding.exception.syntax;
 
-import org.apache.shardingsphere.infra.util.exception.external.sql.sqlstate.XOpenSQLState;
+import org.apache.shardingsphere.infra.exception.external.sql.sqlstate.XOpenSQLState;
 import org.apache.shardingsphere.sharding.exception.ShardingSQLException;
 
 /**
@@ -28,6 +28,6 @@ public final class UnsupportedShardingOperationException extends ShardingSQLExce
     private static final long serialVersionUID = 1009938372927671322L;
     
     public UnsupportedShardingOperationException(final String operation, final String tableName) {
-        super(XOpenSQLState.FEATURE_NOT_SUPPORTED, 40, "Can not support operation `%s` with sharding table `%s`.", operation, tableName);
+        super(XOpenSQLState.FEATURE_NOT_SUPPORTED, 30, "Can not support operation '%s' with sharding table '%s'.", operation, tableName);
     }
 }

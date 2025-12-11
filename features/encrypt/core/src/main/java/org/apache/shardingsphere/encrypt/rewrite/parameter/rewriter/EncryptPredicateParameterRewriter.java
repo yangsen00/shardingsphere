@@ -17,16 +17,16 @@
 
 package org.apache.shardingsphere.encrypt.rewrite.parameter.rewriter;
 
-import lombok.Setter;
-import org.apache.shardingsphere.encrypt.rewrite.aware.DatabaseNameAware;
-import org.apache.shardingsphere.encrypt.rewrite.aware.EncryptConditionsAware;
-import org.apache.shardingsphere.encrypt.rewrite.aware.EncryptRuleAware;
+import lombok.RequiredArgsConstructor;
+import org.apache.shardingsphere.database.connector.core.type.DatabaseTypeRegistry;
 import org.apache.shardingsphere.encrypt.rewrite.condition.EncryptCondition;
+import org.apache.shardingsphere.encrypt.rewrite.condition.EncryptConditionValues;
 import org.apache.shardingsphere.encrypt.rewrite.condition.impl.EncryptBinaryCondition;
 import org.apache.shardingsphere.encrypt.rule.EncryptRule;
-import org.apache.shardingsphere.infra.binder.statement.SQLStatementContext;
-import org.apache.shardingsphere.infra.binder.type.WhereAvailable;
-import org.apache.shardingsphere.infra.database.type.DatabaseTypeEngine;
+import org.apache.shardingsphere.encrypt.rule.column.EncryptColumn;
+import org.apache.shardingsphere.encrypt.rule.table.EncryptTable;
+import org.apache.shardingsphere.infra.binder.context.available.WhereContextAvailable;
+import org.apache.shardingsphere.infra.binder.context.statement.SQLStatementContext;
 import org.apache.shardingsphere.infra.rewrite.parameter.builder.ParameterBuilder;
 import org.apache.shardingsphere.infra.rewrite.parameter.builder.impl.StandardParameterBuilder;
 import org.apache.shardingsphere.infra.rewrite.parameter.rewriter.ParameterRewriter;
@@ -39,39 +39,42 @@ import java.util.Map.Entry;
 /**
  * Predicate parameter rewriter for encrypt.
  */
-@Setter
-public final class EncryptPredicateParameterRewriter implements ParameterRewriter<SQLStatementContext<?>>, EncryptRuleAware, EncryptConditionsAware, DatabaseNameAware {
+@RequiredArgsConstructor
+public final class EncryptPredicateParameterRewriter implements ParameterRewriter {
     
-    private EncryptRule encryptRule;
+    private final EncryptRule rule;
     
-    private Collection<EncryptCondition> encryptConditions;
+    private final String databaseName;
     
-    private String databaseName;
+    private final Collection<EncryptCondition> encryptConditions;
     
     @Override
-    public boolean isNeedRewrite(final SQLStatementContext<?> sqlStatementContext) {
-        return sqlStatementContext instanceof WhereAvailable && !((WhereAvailable) sqlStatementContext).getWhereSegments().isEmpty();
+    public boolean isNeedRewrite(final SQLStatementContext sqlStatementContext) {
+        return sqlStatementContext instanceof WhereContextAvailable;
     }
     
     @Override
-    public void rewrite(final ParameterBuilder paramBuilder, final SQLStatementContext<?> sqlStatementContext, final List<Object> params) {
-        String schemaName = sqlStatementContext.getTablesContext().getSchemaName().orElseGet(() -> DatabaseTypeEngine.getDefaultSchemaName(sqlStatementContext.getDatabaseType(), databaseName));
+    public void rewrite(final ParameterBuilder paramBuilder, final SQLStatementContext sqlStatementContext, final List<Object> params) {
+        String schemaName = sqlStatementContext.getTablesContext().getSchemaName()
+                .orElseGet(() -> new DatabaseTypeRegistry(sqlStatementContext.getSqlStatement().getDatabaseType()).getDefaultSchemaName(databaseName));
         for (EncryptCondition each : encryptConditions) {
-            encryptParameters(paramBuilder, each.getPositionIndexMap(), getEncryptedValues(schemaName, each, each.getValues(params)));
+            encryptParameters(paramBuilder, each.getPositionIndexMap(), getEncryptedValues(schemaName, each, new EncryptConditionValues(each).get(params)));
         }
     }
     
     private List<Object> getEncryptedValues(final String schemaName, final EncryptCondition encryptCondition, final List<Object> originalValues) {
-        String tableName = encryptCondition.getTableName();
-        String columnName = encryptCondition.getColumnName();
-        if (encryptCondition instanceof EncryptBinaryCondition && "LIKE".equals(((EncryptBinaryCondition) encryptCondition).getOperator())
-                && encryptRule.findLikeQueryColumn(tableName, columnName).isPresent()) {
-            return encryptRule.getEncryptLikeQueryValues(databaseName, schemaName, tableName, columnName, originalValues);
+        String tableName = encryptCondition.getColumnSegment().getColumnBoundInfo().getOriginalTable().getValue();
+        String columnName = encryptCondition.getColumnSegment().getColumnBoundInfo().getOriginalColumn().getValue();
+        EncryptTable encryptTable = rule.getEncryptTable(tableName);
+        EncryptColumn encryptColumn = encryptTable.getEncryptColumn(columnName);
+        if (encryptCondition instanceof EncryptBinaryCondition
+                && ("LIKE".equals(((EncryptBinaryCondition) encryptCondition).getOperator()) || "NOT LIKE".equals(((EncryptBinaryCondition) encryptCondition).getOperator()))
+                && encryptColumn.getLikeQuery().isPresent()) {
+            return encryptColumn.getLikeQuery().get().encrypt(databaseName, schemaName, tableName, columnName, originalValues);
         }
-        
-        return encryptRule.findAssistedQueryColumn(tableName, columnName).isPresent()
-                ? encryptRule.getEncryptAssistedQueryValues(databaseName, schemaName, tableName, columnName, originalValues)
-                : encryptRule.getEncryptValues(databaseName, schemaName, tableName, columnName, originalValues);
+        return encryptColumn.getAssistedQuery().isPresent()
+                ? encryptColumn.getAssistedQuery().get().encrypt(databaseName, schemaName, tableName, columnName, originalValues)
+                : encryptColumn.getCipher().encrypt(databaseName, schemaName, tableName, columnName, originalValues);
     }
     
     private void encryptParameters(final ParameterBuilder paramBuilder, final Map<Integer, Integer> positionIndexes, final List<Object> encryptValues) {

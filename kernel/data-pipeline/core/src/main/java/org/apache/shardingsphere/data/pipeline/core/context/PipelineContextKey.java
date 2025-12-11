@@ -17,7 +17,6 @@
 
 package org.apache.shardingsphere.data.pipeline.core.context;
 
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.shardingsphere.infra.instance.metadata.InstanceType;
@@ -27,7 +26,7 @@ import java.util.Objects;
 /**
  * Pipeline context key.
  */
-@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+@RequiredArgsConstructor
 @Getter
 public final class PipelineContextKey {
     
@@ -35,54 +34,28 @@ public final class PipelineContextKey {
     
     private final InstanceType instanceType;
     
-    /**
-     * Build context key.
-     *
-     * @param databaseName database name
-     * @param instanceType instance type
-     * @return context key
-     */
-    public static PipelineContextKey build(final String databaseName, final InstanceType instanceType) {
-        return new PipelineContextKey(databaseName, instanceType);
-    }
-    
-    /**
-     * Build context key for proxy.
-     *
-     * @return context key
-     */
-    public static PipelineContextKey buildForProxy() {
-        return new PipelineContextKey("", InstanceType.PROXY);
-    }
-    
-    /**
-     * Build context key for proxy.
-     *
-     * @param databaseName database name
-     * @return context key
-     */
-    public static PipelineContextKey buildForProxy(final String databaseName) {
-        return new PipelineContextKey(databaseName, InstanceType.PROXY);
+    public PipelineContextKey(final InstanceType instanceType) {
+        this("", instanceType);
     }
     
     @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
+    public boolean equals(final Object obj) {
+        if (this == obj) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (null == obj || getClass() != obj.getClass()) {
             return false;
         }
-        final PipelineContextKey that = (PipelineContextKey) o;
+        PipelineContextKey that = (PipelineContextKey) obj;
         return instanceType == that.instanceType && Objects.equals(filterDatabaseName(this), filterDatabaseName(that));
-    }
-    
-    private String filterDatabaseName(final PipelineContextKey contextKey) {
-        return contextKey.getInstanceType() == InstanceType.PROXY ? "" : contextKey.getDatabaseName();
     }
     
     @Override
     public int hashCode() {
         return Objects.hash(instanceType, filterDatabaseName(this));
+    }
+    
+    private String filterDatabaseName(final PipelineContextKey contextKey) {
+        return InstanceType.PROXY == contextKey.getInstanceType() ? "" : contextKey.getDatabaseName();
     }
 }

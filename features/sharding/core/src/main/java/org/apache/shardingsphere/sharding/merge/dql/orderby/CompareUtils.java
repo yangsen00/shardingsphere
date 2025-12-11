@@ -19,8 +19,8 @@ package org.apache.shardingsphere.sharding.merge.dql.orderby;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.apache.shardingsphere.sql.parser.sql.common.enums.NullsOrderType;
-import org.apache.shardingsphere.sql.parser.sql.common.enums.OrderDirection;
+import org.apache.shardingsphere.database.connector.core.metadata.database.enums.NullsOrderType;
+import org.apache.shardingsphere.sql.parser.statement.core.enums.OrderDirection;
 
 /**
  * Compare utility class.
@@ -35,7 +35,7 @@ public final class CompareUtils {
      * @param otherValue other value
      * @param orderDirection order direction 
      * @param nullsOrderType order type for nulls value
-     * @param caseSensitive case sensitive
+     * @param caseSensitive case-sensitive
      * @return compare result
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -45,10 +45,10 @@ public final class CompareUtils {
             return 0;
         }
         if (null == thisValue) {
-            return NullsOrderType.FIRST.equals(nullsOrderType) ? -1 : 1;
+            return NullsOrderType.FIRST == nullsOrderType ? -1 : 1;
         }
         if (null == otherValue) {
-            return NullsOrderType.FIRST.equals(nullsOrderType) ? 1 : -1;
+            return NullsOrderType.FIRST == nullsOrderType ? 1 : -1;
         }
         if (!caseSensitive && thisValue instanceof String && otherValue instanceof String) {
             return compareToCaseInsensitiveString((String) thisValue, (String) otherValue, orderDirection);

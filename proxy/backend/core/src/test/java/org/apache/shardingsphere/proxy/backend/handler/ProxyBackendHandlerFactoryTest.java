@@ -19,40 +19,55 @@ package org.apache.shardingsphere.proxy.backend.handler;
 
 import org.apache.shardingsphere.authority.rule.AuthorityRule;
 import org.apache.shardingsphere.authority.rule.builder.DefaultAuthorityRuleConfigurationBuilder;
+import org.apache.shardingsphere.authority.rule.builder.DefaultUser;
+import org.apache.shardingsphere.database.connector.core.type.DatabaseType;
 import org.apache.shardingsphere.infra.config.props.ConfigurationProperties;
-import org.apache.shardingsphere.infra.database.DefaultDatabase;
-import org.apache.shardingsphere.infra.database.type.DatabaseType;
+import org.apache.shardingsphere.infra.exception.generic.UnsupportedSQLOperationException;
+import org.apache.shardingsphere.infra.hint.HintValueContext;
 import org.apache.shardingsphere.infra.metadata.database.ShardingSphereDatabase;
-import org.apache.shardingsphere.infra.metadata.database.rule.ShardingSphereRuleMetaData;
-import org.apache.shardingsphere.infra.state.cluster.ClusterState;
-import org.apache.shardingsphere.infra.util.exception.external.sql.type.generic.UnsupportedSQLOperationException;
-import org.apache.shardingsphere.infra.util.spi.type.typed.TypedSPILoader;
+import org.apache.shardingsphere.infra.metadata.database.rule.RuleMetaData;
+import org.apache.shardingsphere.infra.metadata.user.Grantee;
+import org.apache.shardingsphere.infra.session.connection.ConnectionContext;
+import org.apache.shardingsphere.infra.session.connection.transaction.TransactionConnectionContext;
+import org.apache.shardingsphere.infra.spi.type.typed.TypedSPILoader;
 import org.apache.shardingsphere.mode.manager.ContextManager;
 import org.apache.shardingsphere.mode.metadata.MetaDataContexts;
+import org.apache.shardingsphere.mode.state.ShardingSphereState;
 import org.apache.shardingsphere.parser.rule.SQLParserRule;
 import org.apache.shardingsphere.parser.rule.builder.DefaultSQLParserRuleConfigurationBuilder;
+import org.apache.shardingsphere.proxy.backend.connector.DatabaseProxyConnector;
 import org.apache.shardingsphere.proxy.backend.connector.ProxyDatabaseConnectionManager;
-import org.apache.shardingsphere.proxy.backend.connector.DatabaseConnector;
 import org.apache.shardingsphere.proxy.backend.context.ProxyContext;
-import org.apache.shardingsphere.proxy.backend.handler.admin.DatabaseAdminQueryBackendHandler;
-import org.apache.shardingsphere.proxy.backend.handler.data.impl.UnicastDatabaseBackendHandler;
-import org.apache.shardingsphere.proxy.backend.handler.distsql.ral.QueryableRALBackendHandler;
-import org.apache.shardingsphere.proxy.backend.handler.distsql.ral.UpdatableRALBackendHandler;
-import org.apache.shardingsphere.proxy.backend.handler.distsql.rql.RQLBackendHandler;
-import org.apache.shardingsphere.proxy.backend.handler.distsql.rul.SQLRULBackendHandler;
-import org.apache.shardingsphere.proxy.backend.handler.skip.SkipBackendHandler;
-import org.apache.shardingsphere.proxy.backend.handler.transaction.TransactionBackendHandler;
+import org.apache.shardingsphere.proxy.backend.handler.admin.DatabaseAdminQueryProxyBackendHandler;
+import org.apache.shardingsphere.proxy.backend.handler.data.type.UnicastDatabaseProxyBackendHandler;
+import org.apache.shardingsphere.proxy.backend.handler.distsql.DistSQLQueryProxyBackendHandler;
+import org.apache.shardingsphere.proxy.backend.handler.distsql.DistSQLUpdateProxyBackendHandler;
+import org.apache.shardingsphere.proxy.backend.handler.skip.SkipProxyBackendHandler;
+import org.apache.shardingsphere.proxy.backend.handler.tcl.local.type.BeginTransactionProxyBackendHandler;
+import org.apache.shardingsphere.proxy.backend.handler.tcl.local.type.CommitProxyBackendHandler;
+import org.apache.shardingsphere.proxy.backend.handler.tcl.local.type.ReleaseSavepointProxyBackendHandler;
+import org.apache.shardingsphere.proxy.backend.handler.tcl.local.type.RollbackProxyBackendHandler;
+import org.apache.shardingsphere.proxy.backend.handler.tcl.local.type.RollbackSavepointProxyBackendHandler;
+import org.apache.shardingsphere.proxy.backend.handler.tcl.local.type.SetAutoCommitProxyBackendHandler;
+import org.apache.shardingsphere.proxy.backend.handler.tcl.local.type.SetSavepointProxyBackendHandler;
+import org.apache.shardingsphere.proxy.backend.handler.tcl.local.type.SetTransactionProxyBackendHandler;
 import org.apache.shardingsphere.proxy.backend.session.ConnectionSession;
-import org.apache.shardingsphere.sql.parser.exception.SQLParsingException;
-import org.apache.shardingsphere.test.mock.AutoMockExtension;
-import org.apache.shardingsphere.test.mock.StaticMockSettings;
-import org.apache.shardingsphere.transaction.api.TransactionType;
+import org.apache.shardingsphere.sql.parser.statement.core.statement.SQLStatement;
+import org.apache.shardingsphere.sql.parser.statement.core.statement.type.dal.EmptyStatement;
+import org.apache.shardingsphere.test.infra.framework.extension.mock.AutoMockExtension;
+import org.apache.shardingsphere.test.infra.framework.extension.mock.StaticMockSettings;
 import org.apache.shardingsphere.transaction.rule.TransactionRule;
 import org.apache.shardingsphere.transaction.rule.builder.DefaultTransactionRuleConfigurationBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.params.support.ParameterDeclarations;
 import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -62,10 +77,12 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Properties;
+import java.util.stream.Stream;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.isA;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
@@ -83,172 +100,161 @@ class ProxyBackendHandlerFactoryTest {
     
     @BeforeEach
     void setUp() {
-        when(connectionSession.getTransactionStatus().getTransactionType()).thenReturn(TransactionType.LOCAL);
-        when(connectionSession.getDefaultDatabaseName()).thenReturn("db");
-        when(connectionSession.getDatabaseName()).thenReturn("db");
+        ConnectionContext connectionContext = mockConnectionContext();
+        when(connectionSession.getConnectionContext()).thenReturn(connectionContext);
+        when(connectionSession.getCurrentDatabaseName()).thenReturn("db");
+        when(connectionSession.getUsedDatabaseName()).thenReturn("db");
         ProxyDatabaseConnectionManager databaseConnectionManager = mock(ProxyDatabaseConnectionManager.class);
         when(databaseConnectionManager.getConnectionSession()).thenReturn(connectionSession);
         when(connectionSession.getDatabaseConnectionManager()).thenReturn(databaseConnectionManager);
+        when(connectionSession.getProtocolType()).thenReturn(databaseType);
         ContextManager contextManager = mockContextManager();
-        when(contextManager.getClusterStateContext().getCurrentState()).thenReturn(ClusterState.OK);
+        when(contextManager.getStateContext().getState()).thenReturn(ShardingSphereState.OK);
         when(ProxyContext.getInstance().getContextManager()).thenReturn(contextManager);
+    }
+    
+    private ConnectionContext mockConnectionContext() {
+        ConnectionContext result = mock(ConnectionContext.class);
+        when(result.getCurrentDatabaseName()).thenReturn(Optional.of("foo_db"));
+        when(result.getGrantee()).thenReturn(new Grantee(DefaultUser.USERNAME, "%"));
+        when(result.getTransactionContext()).thenReturn(mock(TransactionConnectionContext.class));
+        return result;
     }
     
     private ContextManager mockContextManager() {
         MetaDataContexts metaDataContexts = mock(MetaDataContexts.class, RETURNS_DEEP_STUBS);
-        ShardingSphereDatabase database = mockDatabase();
-        when(metaDataContexts.getMetaData().getDatabase("db")).thenReturn(database);
+        when(metaDataContexts.getMetaData().getDatabase("db")).thenReturn(new ShardingSphereDatabase("foo_db", mock(), mock(), new RuleMetaData(Collections.emptyList()), Collections.emptyList()));
         ContextManager result = mock(ContextManager.class, RETURNS_DEEP_STUBS);
         when(result.getMetaDataContexts()).thenReturn(metaDataContexts);
         when(metaDataContexts.getMetaData().getProps()).thenReturn(new ConfigurationProperties(new Properties()));
-        ShardingSphereRuleMetaData globalRuleMetaData = new ShardingSphereRuleMetaData(Arrays.asList(
-                new AuthorityRule(new DefaultAuthorityRuleConfigurationBuilder().build(), Collections.emptyMap()),
+        RuleMetaData globalRuleMetaData = new RuleMetaData(Arrays.asList(
+                new AuthorityRule(new DefaultAuthorityRuleConfigurationBuilder().build()),
                 new SQLParserRule(new DefaultSQLParserRuleConfigurationBuilder().build()),
-                new TransactionRule(new DefaultTransactionRuleConfigurationBuilder().build(), Collections.emptyMap())));
+                new TransactionRule(new DefaultTransactionRuleConfigurationBuilder().build(), Collections.emptyList())));
         when(metaDataContexts.getMetaData().getGlobalRuleMetaData()).thenReturn(globalRuleMetaData);
-        return result;
-    }
-    
-    private ShardingSphereDatabase mockDatabase() {
-        ShardingSphereDatabase result = mock(ShardingSphereDatabase.class, RETURNS_DEEP_STUBS);
-        when(result.getRuleMetaData().getRules()).thenReturn(Collections.emptyList());
-        when(result.getSchema(DefaultDatabase.LOGIC_NAME).getAllColumnNames("t_order")).thenReturn(Collections.singletonList("order_id"));
         return result;
     }
     
     @Test
     void assertNewInstanceWithDistSQL() throws SQLException {
-        String sql = "set dist variable transaction_type='LOCAL'";
-        ProxyBackendHandler actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, connectionSession);
-        assertThat(actual, instanceOf(UpdatableRALBackendHandler.class));
-        sql = "show dist variable where name = transaction_type";
-        actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, connectionSession);
-        assertThat(actual, instanceOf(QueryableRALBackendHandler.class));
+        String sql = "set dist variable sql_show='true'";
+        SQLStatement sqlStatement = ProxySQLComQueryParser.parse(sql, databaseType, connectionSession);
+        ProxyBackendHandler actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, sqlStatement, connectionSession, new HintValueContext());
+        assertThat(actual, isA(DistSQLUpdateProxyBackendHandler.class));
+        sql = "show dist variable where name = sql_show";
+        sqlStatement = ProxySQLComQueryParser.parse(sql, databaseType, connectionSession);
+        actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, sqlStatement, connectionSession, new HintValueContext());
+        assertThat(actual, isA(DistSQLQueryProxyBackendHandler.class));
         sql = "show dist variables";
-        actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, connectionSession);
-        assertThat(actual, instanceOf(QueryableRALBackendHandler.class));
+        sqlStatement = ProxySQLComQueryParser.parse(sql, databaseType, connectionSession);
+        actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, sqlStatement, connectionSession, new HintValueContext());
+        assertThat(actual, isA(DistSQLQueryProxyBackendHandler.class));
     }
     
-    @Test
-    void assertNewInstanceWithBegin() throws SQLException {
-        String sql = "BEGIN";
-        ProxyBackendHandler actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, connectionSession);
-        assertThat(actual, instanceOf(TransactionBackendHandler.class));
-    }
-    
-    @Test
-    void assertNewInstanceWithStartTransaction() throws SQLException {
-        String sql = "START TRANSACTION";
-        ProxyBackendHandler actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, connectionSession);
-        assertThat(actual, instanceOf(TransactionBackendHandler.class));
-    }
-    
-    @Test
-    void assertNewInstanceWithSetAutoCommitToOff() throws SQLException {
-        String sql = "SET AUTOCOMMIT=0";
-        ProxyBackendHandler actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, connectionSession);
-        assertThat(actual, instanceOf(TransactionBackendHandler.class));
-    }
-    
-    @Test
-    void assertNewInstanceWithScopeSetAutoCommitToOff() throws SQLException {
-        String sql = "SET @@SESSION.AUTOCOMMIT = OFF";
-        ProxyBackendHandler actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, connectionSession);
-        assertThat(actual, instanceOf(TransactionBackendHandler.class));
-    }
-    
-    @Test
-    void assertNewInstanceWithSetAutoCommitToOn() throws SQLException {
-        String sql = "SET AUTOCOMMIT=1";
-        ProxyBackendHandler actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, connectionSession);
-        assertThat(actual, instanceOf(TransactionBackendHandler.class));
-    }
-    
-    @Test
-    void assertNewInstanceWithScopeSetAutoCommitToOnForInTransaction() throws SQLException {
-        String sql = "SET @@SESSION.AUTOCOMMIT = ON";
-        ProxyBackendHandler actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, connectionSession);
-        assertThat(actual, instanceOf(TransactionBackendHandler.class));
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(TCLTestCaseArgumentsProvider.class)
+    void assertNewInstanceWithTCL(final String sql, final Class<? extends ProxyBackendHandler> proxyBackendHandlerClass) throws SQLException {
+        SQLStatement sqlStatement = ProxySQLComQueryParser.parse(sql, databaseType, connectionSession);
+        ProxyBackendHandler actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, sqlStatement, connectionSession, new HintValueContext());
+        assertThat(actual, isA(proxyBackendHandlerClass));
     }
     
     @Test
     void assertNewInstanceWithShow() throws SQLException {
         String sql = "SHOW VARIABLES LIKE '%x%'";
-        ProxyBackendHandler actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, connectionSession);
-        assertThat(actual, instanceOf(UnicastDatabaseBackendHandler.class));
+        SQLStatement sqlStatement = ProxySQLComQueryParser.parse(sql, databaseType, connectionSession);
+        ProxyBackendHandler actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, sqlStatement, connectionSession, new HintValueContext());
+        assertThat(actual, isA(UnicastDatabaseProxyBackendHandler.class));
         sql = "SHOW VARIABLES WHERE Variable_name ='language'";
-        actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, connectionSession);
-        assertThat(actual, instanceOf(UnicastDatabaseBackendHandler.class));
+        sqlStatement = ProxySQLComQueryParser.parse(sql, databaseType, connectionSession);
+        actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, sqlStatement, connectionSession, new HintValueContext());
+        assertThat(actual, isA(UnicastDatabaseProxyBackendHandler.class));
         sql = "SHOW CHARACTER SET";
-        actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, connectionSession);
-        assertThat(actual, instanceOf(UnicastDatabaseBackendHandler.class));
+        sqlStatement = ProxySQLComQueryParser.parse(sql, databaseType, connectionSession);
+        actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, sqlStatement, connectionSession, new HintValueContext());
+        assertThat(actual, isA(UnicastDatabaseProxyBackendHandler.class));
         sql = "SHOW COLLATION";
-        actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, connectionSession);
-        assertThat(actual, instanceOf(UnicastDatabaseBackendHandler.class));
+        sqlStatement = ProxySQLComQueryParser.parse(sql, databaseType, connectionSession);
+        actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, sqlStatement, connectionSession, new HintValueContext());
+        assertThat(actual, isA(UnicastDatabaseProxyBackendHandler.class));
     }
     
-    // TODO Fix me
-    @Disabled
+    // TODO
+    @Disabled("FIXME")
     @Test
     void assertNewInstanceWithQuery() throws SQLException {
         String sql = "SELECT * FROM t_order limit 1";
         ProxyContext proxyContext = ProxyContext.getInstance();
-        when(proxyContext.getAllDatabaseNames()).thenReturn(new HashSet<>(Collections.singletonList("db")));
-        when(proxyContext.getDatabase("db").containsDataSource()).thenReturn(true);
-        ProxyBackendHandler actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, connectionSession);
-        assertThat(actual, instanceOf(DatabaseConnector.class));
+        when(proxyContext.getContextManager().getAllDatabaseNames()).thenReturn(new HashSet<>(Collections.singletonList("db")));
+        when(proxyContext.getContextManager().getDatabase("db").containsDataSource()).thenReturn(true);
+        SQLStatement sqlStatement = ProxySQLComQueryParser.parse(sql, databaseType, connectionSession);
+        ProxyBackendHandler actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, sqlStatement, connectionSession, new HintValueContext());
+        assertThat(actual, isA(DatabaseProxyConnector.class));
         sql = "SELECT * FROM information_schema.schemata LIMIT 1";
-        actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, connectionSession);
-        assertThat(actual, instanceOf(DatabaseAdminQueryBackendHandler.class));
+        sqlStatement = ProxySQLComQueryParser.parse(sql, databaseType, connectionSession);
+        actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, sqlStatement, connectionSession, new HintValueContext());
+        assertThat(actual, isA(DatabaseAdminQueryProxyBackendHandler.class));
     }
     
     @Test
     void assertNewInstanceWithEmptyString() throws SQLException {
         String sql = "";
-        ProxyBackendHandler actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, connectionSession);
-        assertThat(actual, instanceOf(SkipBackendHandler.class));
+        ProxyBackendHandler actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, new EmptyStatement(databaseType), connectionSession, new HintValueContext());
+        assertThat(actual, isA(SkipProxyBackendHandler.class));
     }
     
     @Test
-    void assertNewInstanceWithErrorSQL() {
-        String sql = "SELECT";
-        assertThrows(SQLParsingException.class, () -> ProxyBackendHandlerFactory.newInstance(databaseType, sql, connectionSession));
-    }
-    
-    @Test
-    void assertNewInstanceWithErrorRDL() {
-        String sql = "CREATE SHARDING";
-        assertThrows(SQLParsingException.class, () -> ProxyBackendHandlerFactory.newInstance(databaseType, sql, connectionSession));
-    }
-    
-    @Test
-    void assertUnsupportedNonQueryDistSQLInTransaction() {
+    void assertNewInstanceWithUnsupportedNonQueryDistSQLInTransaction() {
         when(connectionSession.getTransactionStatus().isInTransaction()).thenReturn(true);
         String sql = "CREATE SHARDING TABLE RULE t_order (STORAGE_UNITS(ms_group_0,ms_group_1), SHARDING_COLUMN=order_id, TYPE(NAME='hash_mod', PROPERTIES('sharding-count'='4')));";
-        assertThrows(UnsupportedSQLOperationException.class, () -> ProxyBackendHandlerFactory.newInstance(databaseType, sql, connectionSession));
+        SQLStatement sqlStatement = ProxySQLComQueryParser.parse(sql, databaseType, connectionSession);
+        assertThrows(UnsupportedSQLOperationException.class, () -> ProxyBackendHandlerFactory.newInstance(databaseType, sql, sqlStatement, connectionSession, new HintValueContext()));
     }
     
     @Test
-    void assertUnsupportedQueryableRALStatementInTransaction() throws SQLException {
+    void assertNewInstanceWithQueryableRALStatementInTransaction() throws SQLException {
         when(connectionSession.getTransactionStatus().isInTransaction()).thenReturn(true);
         String sql = "SHOW TRANSACTION RULE;";
-        ProxyBackendHandler actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, connectionSession);
-        assertThat(actual, instanceOf(QueryableRALBackendHandler.class));
+        SQLStatement sqlStatement = ProxySQLComQueryParser.parse(sql, databaseType, connectionSession);
+        ProxyBackendHandler actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, sqlStatement, connectionSession, new HintValueContext());
+        assertThat(actual, isA(DistSQLQueryProxyBackendHandler.class));
     }
     
     @Test
-    void assertUnsupportedRQLStatementInTransaction() throws SQLException {
+    void assertNewInstanceWithRQLStatementInTransaction() throws SQLException {
         when(connectionSession.getTransactionStatus().isInTransaction()).thenReturn(true);
         String sql = "SHOW DEFAULT SINGLE TABLE STORAGE UNIT";
-        ProxyBackendHandler actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, connectionSession);
-        assertThat(actual, instanceOf(RQLBackendHandler.class));
+        SQLStatement sqlStatement = ProxySQLComQueryParser.parse(sql, databaseType, connectionSession);
+        ProxyBackendHandler actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, sqlStatement, connectionSession, new HintValueContext());
+        assertThat(actual, isA(DistSQLQueryProxyBackendHandler.class));
     }
     
     @Test
-    void assertDistSQLRULStatementInTransaction() throws SQLException {
+    void assertNewInstanceWithRULStatementInTransaction() throws SQLException {
         when(connectionSession.getTransactionStatus().isInTransaction()).thenReturn(true);
         String sql = "PREVIEW INSERT INTO account VALUES(1, 1, 1)";
-        ProxyBackendHandler actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, connectionSession);
-        assertThat(actual, instanceOf(SQLRULBackendHandler.class));
+        SQLStatement sqlStatement = ProxySQLComQueryParser.parse(sql, databaseType, connectionSession);
+        ProxyBackendHandler actual = ProxyBackendHandlerFactory.newInstance(databaseType, sql, sqlStatement, connectionSession, new HintValueContext());
+        assertThat(actual, isA(DistSQLQueryProxyBackendHandler.class));
+    }
+    
+    private static final class TCLTestCaseArgumentsProvider implements ArgumentsProvider {
+        
+        @Override
+        public Stream<? extends Arguments> provideArguments(final ParameterDeclarations parameters, final ExtensionContext context) {
+            return Stream.of(
+                    Arguments.of("BEGIN", BeginTransactionProxyBackendHandler.class),
+                    Arguments.of("START TRANSACTION", BeginTransactionProxyBackendHandler.class),
+                    Arguments.of("SET AUTOCOMMIT=0", SetAutoCommitProxyBackendHandler.class),
+                    Arguments.of("SET @@SESSION.AUTOCOMMIT = OFF", SetAutoCommitProxyBackendHandler.class),
+                    Arguments.of("SET AUTOCOMMIT=1", SetAutoCommitProxyBackendHandler.class),
+                    Arguments.of("SET @@SESSION.AUTOCOMMIT = ON", SetAutoCommitProxyBackendHandler.class),
+                    Arguments.of("COMMIT", CommitProxyBackendHandler.class),
+                    Arguments.of("ROLLBACK", RollbackProxyBackendHandler.class),
+                    Arguments.of("SAVEPOINT foo_point", SetSavepointProxyBackendHandler.class),
+                    Arguments.of("RELEASE SAVEPOINT foo_point", ReleaseSavepointProxyBackendHandler.class),
+                    Arguments.of("ROLLBACK TO foo_point", RollbackSavepointProxyBackendHandler.class),
+                    Arguments.of("SET TRANSACTION READ ONLY, ISOLATION LEVEL REPEATABLE READ", SetTransactionProxyBackendHandler.class));
+        }
     }
 }

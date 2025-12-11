@@ -18,7 +18,8 @@
 package org.apache.shardingsphere.infra.util.yaml.constructor;
 
 import com.google.common.base.Preconditions;
-import org.apache.shardingsphere.infra.util.spi.ShardingSphereServiceLoader;
+import org.apache.shardingsphere.infra.spi.ShardingSphereServiceLoader;
+import org.apache.shardingsphere.infra.spi.type.typed.TypedSPILoader;
 import org.apache.shardingsphere.infra.util.yaml.shortcuts.ShardingSphereYamlShortcuts;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.TypeDescription;
@@ -28,34 +29,40 @@ import org.yaml.snakeyaml.nodes.Node;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * ShardingSphere YAML constructor.
  */
-public class ShardingSphereYamlConstructor extends Constructor {
-    
-    private final Map<Class<?>, Construct> typeConstructs = new HashMap<>();
+public final class ShardingSphereYamlConstructor extends Constructor {
     
     private final Class<?> rootClass;
     
+    @SuppressWarnings("CollectionWithoutInitialCapacity")
     public ShardingSphereYamlConstructor(final Class<?> rootClass) {
         super(rootClass, createLoaderOptions());
-        ShardingSphereServiceLoader.getServiceInstances(ShardingSphereYamlConstruct.class).forEach(each -> typeConstructs.put(each.getType(), each));
         Map<String, Class<?>> yamlShortcuts = new HashMap<>();
         ShardingSphereServiceLoader.getServiceInstances(ShardingSphereYamlShortcuts.class).stream().map(ShardingSphereYamlShortcuts::getYamlShortcuts).forEach(yamlShortcuts::putAll);
         yamlShortcuts.forEach((key, value) -> addTypeDescription(new TypeDescription(value, key)));
         this.rootClass = rootClass;
     }
     
-    private static LoaderOptions createLoaderOptions() {
+    /**
+     * Create loader options.
+     *
+     * @return loader options
+     */
+    public static LoaderOptions createLoaderOptions() {
         LoaderOptions result = new LoaderOptions();
+        result.setMaxAliasesForCollections(1000);
         result.setCodePointLimit(Integer.MAX_VALUE);
         return result;
     }
     
     @Override
-    protected final Construct getConstructor(final Node node) {
-        return typeConstructs.getOrDefault(node.getType(), super.getConstructor(node));
+    protected Construct getConstructor(final Node node) {
+        Optional<ShardingSphereYamlConstruct> construct = TypedSPILoader.findService(ShardingSphereYamlConstruct.class, node.getType());
+        return construct.isPresent() ? construct.get() : super.getConstructor(node);
     }
     
     @Override

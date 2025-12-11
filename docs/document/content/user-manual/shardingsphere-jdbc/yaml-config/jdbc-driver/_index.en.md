@@ -14,13 +14,9 @@ ShardingSphere-JDBC provides a JDBC Driver, which can be used only through confi
 
 `org.apache.shardingsphere.driver.ShardingSphereDriver`
 
-### URL Configuration
+### URL Configuration and sample
 
-- Use jdbc:shardingsphere: as prefix
-- Configuration file: xxx.yaml, keep consist format with [YAML Configuration](/en/user-manual/shardingsphere-jdbc/yaml-config/)
-- Configuration file loading rule:
-  - No prefix means to load the configuration file from the specified path
-  - `classpath:` prefix indicates that the configuration file is loaded from the classpath
+Refer to [known Implementation](./known-implementation/_index.en.md).
 
 ## Procedure
 
@@ -29,7 +25,7 @@ ShardingSphere-JDBC provides a JDBC Driver, which can be used only through confi
 ```xml
 <dependency>
     <groupId>org.apache.shardingsphere</groupId>
-    <artifactId>shardingsphere-jdbc-core</artifactId>
+    <artifactId>shardingsphere-jdbc</artifactId>
     <version>${shardingsphere.version}</version>
 </dependency>
 ```
@@ -40,11 +36,11 @@ ShardingSphere-JDBC provides a JDBC Driver, which can be used only through confi
 
 ```java
 Class.forName("org.apache.shardingsphere.driver.ShardingSphereDriver");
-String jdbcUrl = "jdbc:shardingsphere:classpath:config.yaml";
+String standardJdbcUrl = "jdbc:shardingsphere:classpath:config.yaml";
 
 String sql = "SELECT i.* FROM t_order o JOIN t_order_item i ON o.order_id=i.order_id WHERE o.user_id=? AND o.order_id=?";
 try (
-        Connection conn = DriverManager.getConnection(jdbcUrl);
+        Connection conn = DriverManager.getConnection(standardJdbcUrl);
         PreparedStatement ps = conn.prepareStatement(sql)) {
     ps.setInt(1, 10);
     ps.setInt(2, 1000);
@@ -60,12 +56,12 @@ try (
 
 ```java
 String driverClassName = "org.apache.shardingsphere.driver.ShardingSphereDriver";
-String jdbcUrl = "jdbc:shardingsphere:classpath:config.yaml";
+String standardJdbcUrl = "jdbc:shardingsphere:classpath:config.yaml";
 
 // Take HikariCP as an example 
 HikariDataSource dataSource = new HikariDataSource();
 dataSource.setDriverClassName(driverClassName);
-dataSource.setJdbcUrl(jdbcUrl);
+dataSource.setJdbcUrl(standardJdbcUrl);
 
 String sql = "SELECT i.* FROM t_order o JOIN t_order_item i ON o.order_id=i.order_id WHERE o.user_id=? AND o.order_id=?";
 try (
@@ -79,16 +75,4 @@ try (
         }
     }
 }
-```
-
-## Sample
-
-Load JDBC URL of config.yaml profile in classpath:
-```
-jdbc:shardingsphere:classpath:config.yaml
-```
-
-Load JDBC URL of config.yaml profile in absolute path
-```
-jdbc:shardingsphere:/path/to/config.yaml
 ```

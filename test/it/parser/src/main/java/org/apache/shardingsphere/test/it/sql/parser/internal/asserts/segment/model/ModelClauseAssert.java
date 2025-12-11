@@ -19,25 +19,25 @@ package org.apache.shardingsphere.test.it.sql.parser.internal.asserts.segment.mo
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.dml.column.ColumnSegment;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.dml.expr.subquery.SubquerySegment;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.dml.order.OrderBySegment;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.generic.ModelSegment;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.dml.column.ColumnSegment;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.dml.expr.subquery.SubquerySegment;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.dml.order.OrderBySegment;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.generic.ModelSegment;
 import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.SQLCaseAssertContext;
 import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.segment.SQLSegmentAssert;
 import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.segment.column.ColumnAssert;
 import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.segment.orderby.OrderByItemAssert;
-import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.statement.dml.impl.SelectStatementAssert;
+import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.statement.dml.standard.type.SelectStatementAssert;
 import org.apache.shardingsphere.test.it.sql.parser.internal.cases.parser.jaxb.segment.impl.column.ExpectedColumn;
 import org.apache.shardingsphere.test.it.sql.parser.internal.cases.parser.jaxb.segment.impl.model.ExpectedModelClause;
 import org.apache.shardingsphere.test.it.sql.parser.internal.cases.parser.jaxb.segment.impl.orderby.ExpectedOrderByClause;
-import org.apache.shardingsphere.test.it.sql.parser.internal.cases.parser.jaxb.statement.dml.SelectStatementTestCase;
+import org.apache.shardingsphere.test.it.sql.parser.internal.cases.parser.jaxb.statement.dml.standard.SelectStatementTestCase;
 
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Model clause assert.
@@ -56,7 +56,7 @@ public final class ModelClauseAssert {
         if (null != expected.getReferenceModelSelect()) {
             assertNotNull(actual.getReferenceModelSelects(), assertContext.getText("Actual reference model select subquery should exist."));
             assertThat(assertContext.getText("Actual reference model select subquery size assertion error: "), actual.getReferenceModelSelects().size(), is(expected.getReferenceModelSelect().size()));
-            assertReferenceModelSelectStatements(assertContext, actual.getReferenceModelSelects(), expected.getReferenceModelSelect());
+            assertSubquerySegments(assertContext, actual.getReferenceModelSelects(), expected.getReferenceModelSelect());
         }
         if (null != expected.getOrderBySegments()) {
             assertNotNull(actual.getOrderBySegments(), assertContext.getText("Actual order by segments should exist."));
@@ -71,11 +71,11 @@ public final class ModelClauseAssert {
         if (null != expected.getCellAssignmentSelect()) {
             assertNotNull(actual.getCellAssignmentSelects(), assertContext.getText("Actual cell assignment select subquery should exist."));
             assertThat(assertContext.getText("Actual cell assignment select size assertion error: "), actual.getCellAssignmentSelects().size(), is(expected.getCellAssignmentSelect().size()));
-            assertCellAssignmentSelectStatements(assertContext, actual.getCellAssignmentSelects(), expected.getCellAssignmentSelect());
+            assertSubquerySegments(assertContext, actual.getCellAssignmentSelects(), expected.getCellAssignmentSelect());
         }
     }
     
-    private static void assertReferenceModelSelectStatements(final SQLCaseAssertContext assertContext, final List<SubquerySegment> actual, final List<SelectStatementTestCase> expected) {
+    private static void assertSubquerySegments(final SQLCaseAssertContext assertContext, final List<SubquerySegment> actual, final List<SelectStatementTestCase> expected) {
         int count = 0;
         for (SubquerySegment each : actual) {
             SelectStatementAssert.assertIs(assertContext, each.getSelect(), expected.get(count));
@@ -95,14 +95,6 @@ public final class ModelClauseAssert {
         int count = 0;
         for (ColumnSegment each : actual) {
             ColumnAssert.assertIs(assertContext, each, expected.get(count));
-            count++;
-        }
-    }
-    
-    private static void assertCellAssignmentSelectStatements(final SQLCaseAssertContext assertContext, final List<SubquerySegment> actual, final List<SelectStatementTestCase> expected) {
-        int count = 0;
-        for (SubquerySegment each : actual) {
-            SelectStatementAssert.assertIs(assertContext, each.getSelect(), expected.get(count));
             count++;
         }
     }

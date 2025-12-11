@@ -19,8 +19,8 @@ package org.apache.shardingsphere.test.it.sql.parser.internal.asserts.statement.
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.apache.shardingsphere.distsql.parser.segment.DataSourceSegment;
-import org.apache.shardingsphere.distsql.parser.statement.rdl.create.RegisterStorageUnitStatement;
+import org.apache.shardingsphere.distsql.segment.DataSourceSegment;
+import org.apache.shardingsphere.distsql.statement.type.rdl.resource.unit.type.RegisterStorageUnitStatement;
 import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.SQLCaseAssertContext;
 import org.apache.shardingsphere.test.it.sql.parser.internal.asserts.segment.distsql.DataSourceAssert;
 import org.apache.shardingsphere.test.it.sql.parser.internal.cases.parser.jaxb.segment.impl.distsql.ExpectedDataSource;
@@ -64,8 +64,8 @@ public final class RegisterStorageUnitStatementAssert {
             assertNotNull(actual, assertContext.getText("Actual storage unit should exist."));
             assertThat(assertContext.getText(String.format("Actual storage unit size should be %s , but it was %s", expected.size(), actual.size())), actual.size(), is(expected.size()));
             int count = 0;
-            for (DataSourceSegment actualDataSource : actual) {
-                DataSourceAssert.assertIs(assertContext, actualDataSource, expected.get(count));
+            for (DataSourceSegment each : actual) {
+                DataSourceAssert.assertIs(assertContext, each, expected.get(count));
                 count++;
             }
         }

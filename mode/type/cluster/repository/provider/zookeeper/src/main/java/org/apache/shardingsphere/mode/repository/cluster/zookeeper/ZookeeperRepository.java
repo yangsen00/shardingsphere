@@ -18,30 +18,29 @@
 package org.apache.shardingsphere.mode.repository.cluster.zookeeper;
 
 import com.google.common.base.Strings;
-import lombok.Getter;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.CuratorFrameworkFactory.Builder;
 import org.apache.curator.framework.api.ACLProvider;
 import org.apache.curator.framework.recipes.cache.CuratorCache;
 import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
-import org.apache.curator.framework.recipes.cache.TreeCacheEvent;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.curator.utils.CloseableUtils;
-import org.apache.shardingsphere.infra.instance.InstanceContext;
-import org.apache.shardingsphere.infra.instance.InstanceContextAware;
+import org.apache.shardingsphere.infra.instance.ComputeNodeInstanceContext;
+import org.apache.shardingsphere.mode.event.DataChangedEvent;
+import org.apache.shardingsphere.mode.event.DataChangedEvent.Type;
 import org.apache.shardingsphere.mode.repository.cluster.ClusterPersistRepository;
 import org.apache.shardingsphere.mode.repository.cluster.ClusterPersistRepositoryConfiguration;
-import org.apache.shardingsphere.mode.repository.cluster.exception.ClusterPersistRepositoryException;
-import org.apache.shardingsphere.mode.repository.cluster.listener.DataChangedEvent;
-import org.apache.shardingsphere.mode.repository.cluster.listener.DataChangedEvent.Type;
+import org.apache.shardingsphere.mode.repository.cluster.exception.ClusterRepositoryPersistException;
 import org.apache.shardingsphere.mode.repository.cluster.listener.DataChangedEventListener;
-import org.apache.shardingsphere.mode.repository.cluster.lock.holder.DistributedLockHolder;
-import org.apache.shardingsphere.mode.repository.cluster.zookeeper.handler.ZookeeperExceptionHandler;
-import org.apache.shardingsphere.mode.repository.cluster.zookeeper.listener.SessionConnectionListener;
+import org.apache.shardingsphere.mode.repository.cluster.lock.DistributedLock;
+import org.apache.shardingsphere.mode.repository.cluster.zookeeper.exception.ZookeeperExceptionHandler;
+import org.apache.shardingsphere.mode.repository.cluster.zookeeper.listener.SessionConnectionReconnectListener;
+import org.apache.shardingsphere.mode.repository.cluster.zookeeper.lock.ZookeeperDistributedLock;
 import org.apache.shardingsphere.mode.repository.cluster.zookeeper.props.ZookeeperProperties;
 import org.apache.shardingsphere.mode.repository.cluster.zookeeper.props.ZookeeperPropertyKey;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.KeeperException.OperationTimeoutException;
 import org.apache.zookeeper.ZooDefs;
@@ -52,28 +51,29 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Registry repository of ZooKeeper.
  */
-public final class ZookeeperRepository implements ClusterPersistRepository, InstanceContextAware {
+public final class ZookeeperRepository implements ClusterPersistRepository {
     
     private final Map<String, CuratorCache> caches = new ConcurrentHashMap<>();
+    
+    private final Map<String, CuratorCacheListener> dataListeners = new ConcurrentHashMap<>();
     
     private final Builder builder = CuratorFrameworkFactory.builder();
     
     private CuratorFramework client;
     
-    @Getter
-    private DistributedLockHolder distributedLockHolder;
-    
     @Override
-    public void init(final ClusterPersistRepositoryConfiguration config) {
+    public void init(final ClusterPersistRepositoryConfiguration config, final ComputeNodeInstanceContext computeNodeInstanceContext) {
         ZookeeperProperties zookeeperProps = new ZookeeperProperties(config.getProps());
         client = buildCuratorClient(config, zookeeperProps);
-        distributedLockHolder = new DistributedLockHolder(getType(), client, zookeeperProps);
+        client.getConnectionStateListenable().addListener(new SessionConnectionReconnectListener(computeNodeInstanceContext, this));
         initCuratorClient(zookeeperProps);
     }
     
@@ -168,14 +168,15 @@ public final class ZookeeperRepository implements ClusterPersistRepository, Inst
     }
     
     @Override
-    public String getDirectly(final String key) {
+    public String query(final String key) {
         try {
             return new String(client.getData().forPath(key), StandardCharsets.UTF_8);
+        } catch (final KeeperException.NoNodeException ex) {
+            return null;
             // CHECKSTYLE:OFF
         } catch (final Exception ex) {
             // CHECKSTYLE:ON
-            ZookeeperExceptionHandler.handleException(ex);
-            return null;
+            throw new ClusterRepositoryPersistException(ex);
         }
     }
     
@@ -206,16 +207,22 @@ public final class ZookeeperRepository implements ClusterPersistRepository, Inst
     }
     
     @Override
-    public void persistExclusiveEphemeral(final String key, final String value) {
+    public boolean persistExclusiveEphemeral(final String key, final String value) {
         try {
             client.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(key, value.getBytes(StandardCharsets.UTF_8));
         } catch (final NodeExistsException ex) {
-            throw new ClusterPersistRepositoryException(ex);
+            return false;
             // CHECKSTYLE:OFF
         } catch (final Exception ex) {
             ZookeeperExceptionHandler.handleException(ex);
             // CHECKSTYLE:ON
         }
+        return true;
+    }
+    
+    @Override
+    public Optional<DistributedLock> getDistributedLock(final String lockKey) {
+        return Optional.of(new ZookeeperDistributedLock(lockKey, client));
     }
     
     @Override
@@ -233,44 +240,36 @@ public final class ZookeeperRepository implements ClusterPersistRepository, Inst
     
     @Override
     public void watch(final String key, final DataChangedEventListener listener) {
+        if (null != dataListeners.get(key)) {
+            return;
+        }
         CuratorCache cache = caches.get(key);
         if (null == cache) {
             cache = CuratorCache.build(client, key);
             caches.put(key, cache);
         }
         CuratorCacheListener curatorCacheListener = CuratorCacheListener.builder()
-                .forTreeCache(client, (framework, treeCacheListener) -> {
-                    Type changedType = getChangedType(treeCacheListener.getType());
-                    if (Type.IGNORED != changedType) {
-                        listener.onChange(new DataChangedEvent(treeCacheListener.getData().getPath(),
-                                new String(treeCacheListener.getData().getData(), StandardCharsets.UTF_8), changedType));
+                .forCreates(childData -> listener.onChange(new DataChangedEvent(childData.getPath(), new String(childData.getData(), StandardCharsets.UTF_8), Type.ADDED)))
+                .forChanges((oldData, newData) -> {
+                    if (!Objects.equals(oldData, newData)) {
+                        listener.onChange(new DataChangedEvent(newData.getPath(), new String(newData.getData(), StandardCharsets.UTF_8), Type.UPDATED));
                     }
-                }).build();
+                })
+                .forDeletes(oldData -> listener.onChange(new DataChangedEvent(oldData.getPath(), new String(oldData.getData(), StandardCharsets.UTF_8), Type.DELETED)))
+                .afterInitialized()
+                .build();
         cache.listenable().addListener(curatorCacheListener);
-        start(cache);
+        cache.start();
+        dataListeners.computeIfAbsent(key, curator -> curatorCacheListener);
     }
     
-    private void start(final CuratorCache cache) {
-        try {
-            cache.start();
-            // CHECKSTYLE:OFF
-        } catch (final Exception ex) {
-            // CHECKSTYLE:ON
-            ZookeeperExceptionHandler.handleException(ex);
+    @Override
+    public void removeDataListener(final String key) {
+        CuratorCacheListener cacheListener = dataListeners.remove(key);
+        if (null == cacheListener) {
+            return;
         }
-    }
-    
-    private Type getChangedType(final TreeCacheEvent.Type type) {
-        switch (type) {
-            case NODE_ADDED:
-                return Type.ADDED;
-            case NODE_UPDATED:
-                return Type.UPDATED;
-            case NODE_REMOVED:
-                return Type.DELETED;
-            default:
-                return Type.IGNORED;
-        }
+        Optional.ofNullable(caches.remove(key)).ifPresent(optional -> optional.listenable().removeListener(cacheListener));
     }
     
     @Override
@@ -290,11 +289,6 @@ public final class ZookeeperRepository implements ClusterPersistRepository, Inst
         } catch (final InterruptedException ex) {
             Thread.currentThread().interrupt();
         }
-    }
-    
-    @Override
-    public void setInstanceContext(final InstanceContext instanceContext) {
-        client.getConnectionStateListenable().addListener(new SessionConnectionListener(instanceContext, this));
     }
     
     @Override

@@ -40,7 +40,7 @@ value ::=
 
 - `defaultTransactionType` 支持 `LOCAL`、`XA`、`BASE`
 
-- `transactionManager` 支持  `Atomikos`、`Narayana` 和 `Bitronix`
+- `transactionManager` 支持  `Atomikos` 和 `Narayana`
 
 ### 示例
 
@@ -48,7 +48,7 @@ value ::=
 
 ```sql
 ALTER TRANSACTION RULE(
-  DEFAULT="XA", TYPE(NAME="Narayana", PROPERTIES("databaseName"="jbossts", "host"="127.0.0.1"))
+  DEFAULT="XA", TYPE(NAME="Narayana")
 );
 ```
 

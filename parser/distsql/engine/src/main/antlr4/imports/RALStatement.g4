@@ -28,7 +28,7 @@ showDistVariable
     ;
 
 showDistVariables
-    : SHOW DIST VARIABLES
+    : SHOW TEMP? DIST VARIABLES showLike?
     ;
 
 alterComputeNode
@@ -48,7 +48,7 @@ showComputeNodes
     ;
 
 refreshDatabaseMetadata
-    : REFRESH DATABASE METADATA databaseName? FROM GOVERNANCE CENTER
+    : FORCE? REFRESH DATABASE METADATA databaseName?
     ;
 
 refreshTableMetadata
@@ -56,7 +56,7 @@ refreshTableMetadata
     ;
 
 showTableMetadata
-    : SHOW TABLE METADATA tableName (COMMA_ tableName*)? (FROM databaseName)?
+    : SHOW TABLE METADATA tableName (COMMA_ tableName)* (FROM databaseName)?
     ;
 
 showComputeNodeInfo
@@ -99,52 +99,24 @@ convertYamlConfiguration
     : CONVERT YAML CONFIGURATION FROM FILE filePath
     ;
 
-showMigrationRule
-    : SHOW MIGRATION RULE
-    ;
-
-alterMigrationRule
-    : ALTER MIGRATION RULE inventoryIncrementalRule?
-    ;
-
 lockCluster
-    : LOCK CLUSTER WITH lockStrategy
+    : LOCK CLUSTER WITH lockStrategy (TIMEOUT INT_)?
     ;
 
 unlockCluster
-    : UNLOCK CLUSTER
+    : UNLOCK CLUSTER (TIMEOUT INT_)?
     ;
 
-inventoryIncrementalRule
-    : LP_ readDefinition? (COMMA_? writeDefinition)? (COMMA_? streamChannel)? RP_
+showPluginImplementations
+    : SHOW PLUGINS OF pluginClass
     ;
 
-readDefinition
-    : READ LP_ workerThread? (COMMA_? batchSize)? (COMMA_? shardingSize)? (COMMA_? rateLimiter)? RP_
+showKeyGenerateAlgorithmPlugins
+    : SHOW KEY GENERATE ALGORITHM PLUGINS
     ;
 
-writeDefinition
-    : WRITE LP_ workerThread? (COMMA_? batchSize)? (COMMA_? rateLimiter)? RP_
-    ;
-
-workerThread
-    : WORKER_THREAD EQ_ intValue
-    ;
-
-batchSize
-    : BATCH_SIZE EQ_ intValue
-    ;
-
-shardingSize
-    : SHARDING_SIZE EQ_ intValue
-    ;
-
-rateLimiter
-    : RATE_LIMITER LP_ algorithmDefinition RP_
-    ;
-
-streamChannel
-    : STREAM_CHANNEL LP_ algorithmDefinition RP_
+showLoadBalanceAlgorithmPlugins
+    : SHOW LOAD BALANCE ALGORITHM PLUGINS
     ;
 
 confPath
@@ -191,6 +163,14 @@ label
     : IDENTIFIER_
     ;
 
-intValue
-    : INT_
+showLike
+    : LIKE likePattern
+    ;
+
+likePattern
+    : STRING_
+    ;
+
+pluginClass
+    : STRING_
     ;

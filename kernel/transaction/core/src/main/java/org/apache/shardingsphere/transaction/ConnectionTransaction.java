@@ -18,12 +18,10 @@
 package org.apache.shardingsphere.transaction;
 
 import lombok.Getter;
-import lombok.Setter;
 import org.apache.shardingsphere.infra.session.connection.transaction.TransactionConnectionContext;
 import org.apache.shardingsphere.transaction.api.TransactionType;
-import org.apache.shardingsphere.transaction.core.TransactionTypeHolder;
 import org.apache.shardingsphere.transaction.rule.TransactionRule;
-import org.apache.shardingsphere.transaction.spi.ShardingSphereTransactionManager;
+import org.apache.shardingsphere.transaction.spi.ShardingSphereDistributedTransactionManager;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -37,47 +35,43 @@ public final class ConnectionTransaction {
     @Getter
     private final TransactionType transactionType;
     
-    private final String databaseName;
-    
-    @Setter
     @Getter
-    private volatile boolean rollbackOnly;
+    private final ShardingSphereDistributedTransactionManager distributedTransactionManager;
     
-    private final ShardingSphereTransactionManager transactionManager;
+    private final TransactionConnectionContext transactionContext;
     
-    public ConnectionTransaction(final String databaseName, final TransactionRule rule) {
-        this(databaseName, rule.getDefaultType(), rule);
-    }
-    
-    public ConnectionTransaction(final String databaseName, final TransactionType transactionType, final TransactionRule rule) {
-        this.databaseName = databaseName;
-        this.transactionType = transactionType;
-        transactionManager = rule.getResource().getTransactionManager(transactionType);
-        TransactionTypeHolder.set(transactionType);
-    }
-    
-    /**
-     * Whether in transaction.
-     * 
-     * @param transactionConnectionContext transaction connection context
-     * @return in transaction or not
-     */
-    public boolean isInTransaction(final TransactionConnectionContext transactionConnectionContext) {
-        return transactionConnectionContext.isInTransaction() && null != transactionManager && transactionManager.isInTransaction();
+    public ConnectionTransaction(final TransactionRule rule, final TransactionConnectionContext transactionContext) {
+        transactionType = transactionContext.getTransactionType().isPresent() ? TransactionType.valueOf(transactionContext.getTransactionType().get()) : rule.getDefaultType();
+        this.transactionContext = transactionContext;
+        if (transactionContext.getTransactionManager().isPresent()) {
+            distributedTransactionManager = (ShardingSphereDistributedTransactionManager) transactionContext.getTransactionManager().get();
+        } else {
+            distributedTransactionManager = TransactionType.LOCAL == transactionType ? null : rule.getResource().getTransactionManager(rule.getDefaultType());
+        }
     }
     
     /**
-     * Whether in transaction.
+     * Whether in distributed transaction.
      *
-     * @return in transaction or not
+     * @param transactionContext transaction connection context
+     * @return in distributed transaction or not
      */
-    public boolean isInTransaction() {
-        return null != transactionManager && transactionManager.isInTransaction();
+    public boolean isInDistributedTransaction(final TransactionConnectionContext transactionContext) {
+        return transactionContext.isTransactionStarted() && isInDistributedTransaction();
+    }
+    
+    /**
+     * Whether in distributed transaction.
+     *
+     * @return in distributed transaction or not
+     */
+    public boolean isInDistributedTransaction() {
+        return null != distributedTransactionManager && distributedTransactionManager.isInTransaction();
     }
     
     /**
      * Judge is local transaction or not.
-     * 
+     *
      * @return is local transaction or not
      */
     public boolean isLocalTransaction() {
@@ -91,59 +85,61 @@ public final class ConnectionTransaction {
      * @return hold transaction or not
      */
     public boolean isHoldTransaction(final boolean autoCommit) {
-        return TransactionType.LOCAL == transactionType && !autoCommit || TransactionType.XA == transactionType && isInTransaction();
+        return TransactionType.LOCAL == transactionType && !autoCommit || TransactionType.XA == transactionType && isInDistributedTransaction();
     }
     
     /**
      * Get connection in transaction.
-     * 
+     *
+     * @param databaseName database name
      * @param dataSourceName data source name
      * @param transactionConnectionContext transaction connection context
      * @return connection in transaction
      * @throws SQLException SQL exception
      */
-    public Optional<Connection> getConnection(final String dataSourceName, final TransactionConnectionContext transactionConnectionContext) throws SQLException {
-        return isInTransaction(transactionConnectionContext) ? Optional.of(transactionManager.getConnection(this.databaseName, dataSourceName)) : Optional.empty();
+    public Optional<Connection> getConnection(final String databaseName, final String dataSourceName, final TransactionConnectionContext transactionConnectionContext) throws SQLException {
+        return isInDistributedTransaction(transactionConnectionContext) ? Optional.of(distributedTransactionManager.getConnection(databaseName, dataSourceName)) : Optional.empty();
     }
     
     /**
      * Begin transaction.
      */
     public void begin() {
-        transactionManager.begin();
+        distributedTransactionManager.begin();
     }
     
     /**
      * Commit transaction.
      */
     public void commit() {
-        transactionManager.commit(rollbackOnly);
+        distributedTransactionManager.commit(transactionContext.isExceptionOccur());
     }
     
     /**
      * Rollback transaction.
      */
     public void rollback() {
-        transactionManager.rollback();
+        distributedTransactionManager.rollback();
     }
     
     /**
      * Get distributed transaction operation type.
-     * 
+     *
      * @param autoCommit is auto commit
-     * @return distributed transaction operation type
+     * @return got distributed transaction operation type
      */
-    public DistributedTransactionOperationType getDistributedTransactionOperationType(final boolean autoCommit) {
-        if (!autoCommit && !transactionManager.isInTransaction()) {
-            return DistributedTransactionOperationType.BEGIN;
+    public Optional<DistributedTransactionOperationType> getDistributedTransactionOperationType(final boolean autoCommit) {
+        if (!autoCommit && !distributedTransactionManager.isInTransaction()) {
+            return Optional.of(DistributedTransactionOperationType.BEGIN);
         }
-        if (autoCommit && transactionManager.isInTransaction()) {
-            return DistributedTransactionOperationType.COMMIT;
+        if (autoCommit && distributedTransactionManager.isInTransaction()) {
+            return Optional.of(DistributedTransactionOperationType.COMMIT);
         }
-        return DistributedTransactionOperationType.IGNORE;
+        return Optional.empty();
     }
     
     public enum DistributedTransactionOperationType {
-        BEGIN, COMMIT, IGNORE
+        
+        BEGIN, COMMIT
     }
 }

@@ -17,7 +17,7 @@
 
 package org.apache.shardingsphere.readwritesplitting.distsql.parser.core;
 
-import org.antlr.v4.runtime.tree.ParseTree;
+import org.apache.shardingsphere.database.connector.core.metadata.database.enums.QuoteCharacter;
 import org.apache.shardingsphere.distsql.parser.autogen.ReadwriteSplittingDistSQLStatementBaseVisitor;
 import org.apache.shardingsphere.distsql.parser.autogen.ReadwriteSplittingDistSQLStatementParser.AlgorithmDefinitionContext;
 import org.apache.shardingsphere.distsql.parser.autogen.ReadwriteSplittingDistSQLStatementParser.AlterReadwriteSplittingRuleContext;
@@ -31,21 +31,22 @@ import org.apache.shardingsphere.distsql.parser.autogen.ReadwriteSplittingDistSQ
 import org.apache.shardingsphere.distsql.parser.autogen.ReadwriteSplittingDistSQLStatementParser.ReadwriteSplittingRuleDefinitionContext;
 import org.apache.shardingsphere.distsql.parser.autogen.ReadwriteSplittingDistSQLStatementParser.ShowReadwriteSplittingRulesContext;
 import org.apache.shardingsphere.distsql.parser.autogen.ReadwriteSplittingDistSQLStatementParser.ShowStatusFromReadwriteSplittingRulesContext;
-import org.apache.shardingsphere.distsql.parser.segment.AlgorithmSegment;
-import org.apache.shardingsphere.readwritesplitting.distsql.parser.segment.ReadwriteSplittingRuleSegment;
-import org.apache.shardingsphere.readwritesplitting.distsql.parser.statement.AlterReadwriteSplittingRuleStatement;
-import org.apache.shardingsphere.readwritesplitting.distsql.parser.statement.CountReadwriteSplittingRuleStatement;
-import org.apache.shardingsphere.readwritesplitting.distsql.parser.statement.CreateReadwriteSplittingRuleStatement;
-import org.apache.shardingsphere.readwritesplitting.distsql.parser.statement.DropReadwriteSplittingRuleStatement;
-import org.apache.shardingsphere.readwritesplitting.distsql.parser.statement.ShowReadwriteSplittingRulesStatement;
-import org.apache.shardingsphere.readwritesplitting.distsql.parser.statement.ShowStatusFromReadwriteSplittingRulesStatement;
-import org.apache.shardingsphere.readwritesplitting.distsql.parser.statement.status.AlterReadwriteSplittingStorageUnitStatusStatement;
+import org.apache.shardingsphere.distsql.segment.AlgorithmSegment;
+import org.apache.shardingsphere.distsql.statement.type.rql.rule.database.CountRuleStatement;
+import org.apache.shardingsphere.readwritesplitting.distsql.segment.ReadwriteSplittingRuleSegment;
+import org.apache.shardingsphere.readwritesplitting.distsql.statement.AlterReadwriteSplittingRuleStatement;
+import org.apache.shardingsphere.readwritesplitting.distsql.statement.AlterReadwriteSplittingStorageUnitStatusStatement;
+import org.apache.shardingsphere.readwritesplitting.distsql.statement.CreateReadwriteSplittingRuleStatement;
+import org.apache.shardingsphere.readwritesplitting.distsql.statement.DropReadwriteSplittingRuleStatement;
+import org.apache.shardingsphere.readwritesplitting.distsql.statement.ShowReadwriteSplittingRulesStatement;
+import org.apache.shardingsphere.readwritesplitting.distsql.statement.ShowStatusFromReadwriteSplittingRulesStatement;
 import org.apache.shardingsphere.sql.parser.api.ASTNode;
 import org.apache.shardingsphere.sql.parser.api.visitor.SQLVisitor;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.generic.DatabaseSegment;
-import org.apache.shardingsphere.sql.parser.sql.common.value.identifier.IdentifierValue;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.dal.FromDatabaseSegment;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.generic.DatabaseSegment;
+import org.apache.shardingsphere.sql.parser.statement.core.util.IdentifierValueUtils;
+import org.apache.shardingsphere.sql.parser.statement.core.value.identifier.IdentifierValue;
 
-import java.util.Objects;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
@@ -67,28 +68,27 @@ public final class ReadwriteSplittingDistSQLStatementVisitor extends ReadwriteSp
     
     @Override
     public ASTNode visitDropReadwriteSplittingRule(final DropReadwriteSplittingRuleContext ctx) {
-        return new DropReadwriteSplittingRuleStatement(ctx.ifExists() != null, ctx.ruleName().stream().map(this::getIdentifierValue).collect(Collectors.toList()));
+        return new DropReadwriteSplittingRuleStatement(null != ctx.ifExists(), ctx.ruleName().stream().map(IdentifierValueUtils::getValue).collect(Collectors.toList()));
     }
     
     @Override
     public ASTNode visitAlterReadwriteSplittingStorageUnitStatus(final AlterReadwriteSplittingStorageUnitStatusContext ctx) {
-        DatabaseSegment databaseSegment = Objects.nonNull(ctx.databaseName()) ? (DatabaseSegment) visit(ctx.databaseName()) : null;
-        String groupName = getIdentifierValue(ctx.groupName());
-        String status = null == ctx.ENABLE() ? ctx.DISABLE().getText().toUpperCase() : ctx.ENABLE().getText().toUpperCase();
-        String storageUnitName = getIdentifierValue(ctx.storageUnitName());
-        return new AlterReadwriteSplittingStorageUnitStatusStatement(databaseSegment, groupName, storageUnitName, status);
+        FromDatabaseSegment fromDatabase = null == ctx.databaseName() ? null : new FromDatabaseSegment(ctx.FROM().getSymbol().getStartIndex(), (DatabaseSegment) visit(ctx.databaseName()));
+        return new AlterReadwriteSplittingStorageUnitStatusStatement(fromDatabase, IdentifierValueUtils.getValue(ctx.ruleName()), IdentifierValueUtils.getValue(ctx.storageUnitName()),
+                null == ctx.DISABLE());
     }
     
     @Override
     public ASTNode visitShowReadwriteSplittingRules(final ShowReadwriteSplittingRulesContext ctx) {
-        return new ShowReadwriteSplittingRulesStatement(null == ctx.ruleName() ? null : getIdentifierValue(ctx.ruleName()),
-                Objects.nonNull(ctx.databaseName()) ? (DatabaseSegment) visit(ctx.databaseName()) : null);
+        return new ShowReadwriteSplittingRulesStatement(null == ctx.ruleName() ? null : IdentifierValueUtils.getValue(ctx.ruleName()),
+                null == ctx.databaseName() ? null : new FromDatabaseSegment(ctx.FROM().getSymbol().getStartIndex(), (DatabaseSegment) visit(ctx.databaseName())));
     }
     
     @Override
     public ASTNode visitReadwriteSplittingRuleDefinition(final ReadwriteSplittingRuleDefinitionContext ctx) {
-        return new ReadwriteSplittingRuleSegment(getIdentifierValue(ctx.ruleName()), getIdentifierValue(ctx.writeStorageUnitName()),
-                ctx.readStorageUnitsNames().storageUnitName().stream().map(this::getIdentifierValue).collect(Collectors.toList()),
+        return new ReadwriteSplittingRuleSegment(IdentifierValueUtils.getValue(ctx.ruleName()), IdentifierValueUtils.getValue(ctx.dataSourceDefinition().writeStorageUnit().writeStorageUnitName()),
+                ctx.dataSourceDefinition().readStorageUnits().readStorageUnitsNames().storageUnitName().stream().map(IdentifierValueUtils::getValue).collect(Collectors.toList()),
+                null == ctx.transactionalReadQueryStrategy() ? null : IdentifierValueUtils.getValue(ctx.transactionalReadQueryStrategy().transactionalReadQueryStrategyName()),
                 null == ctx.algorithmDefinition() ? null : (AlgorithmSegment) visitAlgorithmDefinition(ctx.algorithmDefinition()));
     }
     
@@ -99,23 +99,21 @@ public final class ReadwriteSplittingDistSQLStatementVisitor extends ReadwriteSp
     
     @Override
     public ASTNode visitAlgorithmDefinition(final AlgorithmDefinitionContext ctx) {
-        return new AlgorithmSegment(getIdentifierValue(ctx.algorithmTypeName()), getProperties(ctx.propertiesDefinition()));
+        return new AlgorithmSegment(IdentifierValueUtils.getValue(ctx.algorithmTypeName()), getProperties(ctx.propertiesDefinition()));
     }
     
     @Override
     public ASTNode visitShowStatusFromReadwriteSplittingRules(final ShowStatusFromReadwriteSplittingRulesContext ctx) {
-        DatabaseSegment databaseSegment = Objects.nonNull(ctx.databaseName()) ? (DatabaseSegment) visit(ctx.databaseName()) : null;
-        String groupName = getIdentifierValue(ctx.groupName());
-        return new ShowStatusFromReadwriteSplittingRulesStatement(databaseSegment, groupName);
-    }
-    
-    private String getIdentifierValue(final ParseTree context) {
-        return null == context ? null : new IdentifierValue(context.getText()).getValue();
+        FromDatabaseSegment fromDatabase = null == ctx.databaseName() ? null : new FromDatabaseSegment(ctx.FROM().get(1).getSymbol().getStartIndex(), (DatabaseSegment) visit(ctx.databaseName()));
+        String ruleName = IdentifierValueUtils.getValue(ctx.ruleName());
+        return new ShowStatusFromReadwriteSplittingRulesStatement(fromDatabase, ruleName);
     }
     
     @Override
     public ASTNode visitCountReadwriteSplittingRule(final CountReadwriteSplittingRuleContext ctx) {
-        return new CountReadwriteSplittingRuleStatement(Objects.nonNull(ctx.databaseName()) ? (DatabaseSegment) visit(ctx.databaseName()) : null);
+        return new CountRuleStatement(null == ctx.databaseName()
+                ? null
+                : new FromDatabaseSegment(ctx.FROM().getSymbol().getStartIndex(), (DatabaseSegment) visit(ctx.databaseName())), "READWRITE_SPLITTING");
     }
     
     private Properties getProperties(final PropertiesDefinitionContext ctx) {
@@ -124,7 +122,7 @@ public final class ReadwriteSplittingDistSQLStatementVisitor extends ReadwriteSp
             return result;
         }
         for (PropertyContext each : ctx.properties().property()) {
-            result.setProperty(IdentifierValue.getQuotedContent(each.key.getText()), IdentifierValue.getQuotedContent(each.value.getText()));
+            result.setProperty(QuoteCharacter.unwrapAndTrimText(each.key.getText()), QuoteCharacter.unwrapAndTrimText(each.value.getText()));
         }
         return result;
     }

@@ -17,7 +17,7 @@
 
 package org.apache.shardingsphere.sharding.exception.metadata;
 
-import org.apache.shardingsphere.infra.util.exception.external.sql.sqlstate.XOpenSQLState;
+import org.apache.shardingsphere.infra.exception.external.sql.sqlstate.XOpenSQLState;
 import org.apache.shardingsphere.sharding.exception.ShardingSQLException;
 
 /**
@@ -28,7 +28,7 @@ public final class BindingTableNotFoundException extends ShardingSQLException {
     private static final long serialVersionUID = -8845309665057958820L;
     
     public BindingTableNotFoundException(final String dataSource, final String logicTable, final String otherActualTable) {
-        super(XOpenSQLState.CHECK_OPTION_VIOLATION, 5,
-                "Can not find binding actual table, data source is `%s`, logic table is `%s`, other actual table is `%s`.", dataSource, logicTable, otherActualTable);
+        super(XOpenSQLState.NOT_FOUND, 5,
+                "Can not find binding actual table, data source is '%s', logic table is '%s', other actual table is '%s'.", dataSource, logicTable, otherActualTable);
     }
 }

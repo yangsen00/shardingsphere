@@ -23,11 +23,14 @@ import org.apache.shardingsphere.infra.executor.sql.execute.result.query.QueryRe
 import org.apache.shardingsphere.infra.executor.sql.execute.result.query.QueryResultMetaData;
 import org.apache.shardingsphere.infra.executor.sql.execute.result.query.type.memory.row.MemoryQueryResultDataRow;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
+import java.io.Reader;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Iterator;
@@ -75,7 +78,7 @@ public abstract class AbstractMemoryQueryResult implements QueryResult {
     }
     
     @Override
-    public final Object getCalendarValue(final int columnIndex, final Class<?> type, final Calendar calendar) {
+    public final Object getCalendarValue(final int columnIndex, final Class<?> type, @SuppressWarnings("UseOfObsoleteDateTimeApi") final Calendar calendar) {
         Object result = currentRow.getValue().get(columnIndex - 1);
         wasNull = null == result;
         return result;
@@ -96,6 +99,12 @@ public abstract class AbstractMemoryQueryResult implements QueryResult {
         objectOutputStream.flush();
         objectOutputStream.close();
         return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
+    }
+    
+    @Override
+    public Reader getCharacterStream(final int columnIndex) {
+        // TODO Support connection property character encoding
+        return new BufferedReader(new InputStreamReader(getInputStream(columnIndex)));
     }
     
     @Override

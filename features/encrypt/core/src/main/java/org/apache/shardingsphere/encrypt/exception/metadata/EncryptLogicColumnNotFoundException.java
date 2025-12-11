@@ -18,7 +18,7 @@
 package org.apache.shardingsphere.encrypt.exception.metadata;
 
 import org.apache.shardingsphere.encrypt.exception.EncryptSQLException;
-import org.apache.shardingsphere.infra.util.exception.external.sql.sqlstate.XOpenSQLState;
+import org.apache.shardingsphere.infra.exception.external.sql.sqlstate.XOpenSQLState;
 
 /**
  * Encrypt logic column not found exception.
@@ -28,6 +28,6 @@ public final class EncryptLogicColumnNotFoundException extends EncryptSQLExcepti
     private static final long serialVersionUID = 3934531389314348880L;
     
     public EncryptLogicColumnNotFoundException(final String actualColumn) {
-        super(XOpenSQLState.CHECK_OPTION_VIOLATION, 0, "Can not find logic encrypt column by `%s`.", actualColumn);
+        super(XOpenSQLState.NOT_FOUND, 2, "Can not find logic encrypt column by '%s'.", actualColumn);
     }
 }

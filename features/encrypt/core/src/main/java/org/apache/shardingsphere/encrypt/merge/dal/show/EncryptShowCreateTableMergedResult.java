@@ -17,95 +17,84 @@
 
 package org.apache.shardingsphere.encrypt.merge.dal.show;
 
-import com.google.common.base.Splitter;
 import org.apache.shardingsphere.encrypt.exception.syntax.UnsupportedEncryptSQLException;
 import org.apache.shardingsphere.encrypt.rule.EncryptRule;
-import org.apache.shardingsphere.encrypt.rule.EncryptTable;
-import org.apache.shardingsphere.infra.binder.statement.SQLStatementContext;
-import org.apache.shardingsphere.infra.binder.type.TableAvailable;
+import org.apache.shardingsphere.encrypt.rule.table.EncryptTable;
+import org.apache.shardingsphere.infra.binder.context.statement.SQLStatementContext;
+import org.apache.shardingsphere.infra.exception.ShardingSpherePreconditions;
 import org.apache.shardingsphere.infra.merge.result.MergedResult;
-import org.apache.shardingsphere.infra.util.exception.ShardingSpherePreconditions;
+import org.apache.shardingsphere.infra.merge.result.impl.decorator.DecoratorMergedResult;
+import org.apache.shardingsphere.infra.metadata.database.rule.RuleMetaData;
+import org.apache.shardingsphere.infra.parser.SQLParserEngine;
+import org.apache.shardingsphere.parser.rule.SQLParserRule;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.ddl.column.ColumnDefinitionSegment;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.dml.column.ColumnSegment;
+import org.apache.shardingsphere.sql.parser.statement.core.statement.attribute.type.TableInResultSetSQLStatementAttribute;
+import org.apache.shardingsphere.sql.parser.statement.core.statement.type.ddl.table.CreateTableStatement;
 
-import java.io.InputStream;
 import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
-import java.util.Calendar;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Encrypt show create table merged result.
  */
-public abstract class EncryptShowCreateTableMergedResult implements MergedResult {
+public final class EncryptShowCreateTableMergedResult extends DecoratorMergedResult {
     
-    private static final String COMMA = ",";
+    private static final String COMMA = ", ";
     
-    private static final int CREATE_TABLE_DEFINITION_INDEX = 2;
+    private final EncryptRule rule;
     
     private final String tableName;
     
-    private final EncryptRule encryptRule;
+    private final int tableNameResultSetIndex;
     
-    protected EncryptShowCreateTableMergedResult(final SQLStatementContext<?> sqlStatementContext, final EncryptRule encryptRule) {
-        ShardingSpherePreconditions.checkState(sqlStatementContext instanceof TableAvailable && 1 == ((TableAvailable) sqlStatementContext).getAllTables().size(),
-                () -> new UnsupportedEncryptSQLException("SHOW CREATE TABLE FOR MULTI TABLE"));
-        tableName = ((TableAvailable) sqlStatementContext).getAllTables().iterator().next().getTableName().getIdentifier().getValue();
-        this.encryptRule = encryptRule;
+    private final SQLParserEngine sqlParserEngine;
+    
+    public EncryptShowCreateTableMergedResult(final RuleMetaData globalRuleMetaData, final MergedResult mergedResult, final SQLStatementContext sqlStatementContext, final EncryptRule rule) {
+        super(mergedResult);
+        ShardingSpherePreconditions.checkState(1 == sqlStatementContext.getTablesContext().getSimpleTables().size(),
+                () -> new UnsupportedEncryptSQLException("SHOW CREATE TABLE FOR MULTI TABLES"));
+        this.rule = rule;
+        tableName = sqlStatementContext.getTablesContext().getSimpleTables().iterator().next().getTableName().getIdentifier().getValue();
+        TableInResultSetSQLStatementAttribute attribute = sqlStatementContext.getSqlStatement().getAttributes().getAttribute(TableInResultSetSQLStatementAttribute.class);
+        tableNameResultSetIndex = attribute.getNameResultSetIndex();
+        sqlParserEngine = globalRuleMetaData.getSingleRule(SQLParserRule.class).getSQLParserEngine(sqlStatementContext.getSqlStatement().getDatabaseType());
     }
     
     @Override
-    public final boolean next() throws SQLException {
-        return nextValue();
+    public Object getValue(final int columnIndex, final Class<?> type) throws SQLException {
+        if (tableNameResultSetIndex != columnIndex) {
+            return getMergedResult().getValue(columnIndex, type);
+        }
+        String createTableSQL = getMergedResult().getValue(tableNameResultSetIndex, type).toString();
+        Optional<EncryptTable> encryptTable = rule.findEncryptTable(tableName);
+        if (!encryptTable.isPresent() || !createTableSQL.contains("(")) {
+            return createTableSQL;
+        }
+        CreateTableStatement createTableStatement = (CreateTableStatement) sqlParserEngine.parse(createTableSQL, false);
+        List<ColumnDefinitionSegment> columnDefinitions = new ArrayList<>(createTableStatement.getColumnDefinitions());
+        StringBuilder result = new StringBuilder(createTableSQL.substring(0, columnDefinitions.get(0).getStartIndex()));
+        for (ColumnDefinitionSegment each : columnDefinitions) {
+            findLogicColumnDefinition(each, encryptTable.get(), createTableSQL).ifPresent(optional -> result.append(optional).append(COMMA));
+        }
+        // TODO decorate encrypt column index when we support index rewrite
+        result.delete(result.length() - COMMA.length(), result.length()).append(createTableSQL.substring(columnDefinitions.get(columnDefinitions.size() - 1).getStopIndex() + 1));
+        return result.toString();
     }
     
-    @Override
-    public final Object getValue(final int columnIndex, final Class<?> type) throws SQLException {
-        if (CREATE_TABLE_DEFINITION_INDEX == columnIndex) {
-            String result = getOriginalValue(CREATE_TABLE_DEFINITION_INDEX, type).toString();
-            Optional<EncryptTable> encryptTable = encryptRule.findEncryptTable(tableName);
-            if (!encryptTable.isPresent()) {
-                return result;
-            }
-            StringBuilder builder = new StringBuilder(result.substring(0, result.indexOf('(') + 1));
-            List<String> columnDefinitions = Splitter.on(COMMA).splitToList(result.substring(result.indexOf('(') + 1, result.lastIndexOf(')')));
-            for (String each : columnDefinitions) {
-                findLogicColumnDefinition(each, encryptTable.get()).ifPresent(optional -> builder.append(optional).append(COMMA));
-            }
-            builder.deleteCharAt(builder.length() - 1).append(result.substring(result.lastIndexOf(')')));
-            return builder.toString();
+    private Optional<String> findLogicColumnDefinition(final ColumnDefinitionSegment columnDefinition, final EncryptTable encryptTable, final String createTableSQL) {
+        ColumnSegment columnSegment = columnDefinition.getColumnName();
+        String columnName = columnSegment.getIdentifier().getValue();
+        if (encryptTable.isCipherColumn(columnName)) {
+            String logicColumn = encryptTable.getLogicColumnByCipherColumn(columnName);
+            return Optional.of(createTableSQL.substring(columnDefinition.getStartIndex(), columnSegment.getStartIndex())
+                    + columnSegment.getIdentifier().getQuoteCharacter().wrap(logicColumn) + createTableSQL.substring(columnSegment.getStopIndex() + 1, columnDefinition.getStopIndex() + 1));
         }
-        return getOriginalValue(columnIndex, type);
-    }
-    
-    private Optional<String> findLogicColumnDefinition(final String columnDefinition, final EncryptTable encryptTable) {
-        Collection<String> cipherColumns = encryptTable.getLogicColumns().stream().map(encryptTable::getCipherColumn).collect(Collectors.toList());
-        for (String each : cipherColumns) {
-            if (columnDefinition.contains(each)) {
-                return Optional.of(columnDefinition.replace(each, encryptTable.getLogicColumnByCipherColumn(each)));
-            }
-        }
-        if (encryptTable.getAssistedQueryColumns().stream().anyMatch(columnDefinition::contains)) {
+        if (encryptTable.isDerivedColumn(columnName)) {
             return Optional.empty();
         }
-        if (encryptTable.getLikeQueryColumns().stream().anyMatch(columnDefinition::contains)) {
-            return Optional.empty();
-        }
-        return Optional.of(columnDefinition);
+        return Optional.of(createTableSQL.substring(columnDefinition.getStartIndex(), columnDefinition.getStopIndex() + 1));
     }
-    
-    @Override
-    public final Object getCalendarValue(final int columnIndex, final Class<?> type, final Calendar calendar) throws SQLException {
-        throw new SQLFeatureNotSupportedException("");
-    }
-    
-    @Override
-    public final InputStream getInputStream(final int columnIndex, final String type) throws SQLException {
-        throw new SQLFeatureNotSupportedException("");
-    }
-    
-    protected abstract boolean nextValue() throws SQLException;
-    
-    protected abstract Object getOriginalValue(int columnIndex, Class<?> type) throws SQLException;
 }

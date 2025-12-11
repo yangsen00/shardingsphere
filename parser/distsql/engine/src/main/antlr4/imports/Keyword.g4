@@ -35,10 +35,6 @@ CREATE
     : C R E A T E
     ;
 
-DEFAULT
-    : D E F A U L T
-    ;
-
 ALTER
     : A L T E R
     ;
@@ -53,6 +49,10 @@ SET
 
 SHOW
     : S H O W
+    ;
+
+FOR
+    : F O R
     ;
 
 FROM
@@ -111,10 +111,6 @@ DISABLE
     : D I S A B L E
     ;
 
-INSTANCE
-    : I N S T A N C E
-    ;
-
 IGNORE
     : I G N O R E
     ;
@@ -125,6 +121,10 @@ SCHEMA
 
 DATABASE
     : D A T A B A S E
+    ;
+
+FULL
+    : F U L L
     ;
 
 LOGICAL
@@ -151,10 +151,6 @@ RULES
     : R U L E S
     ;
 
-RULE
-    : R U L E
-    ;
-
 REFRESH
     : R E F R E S H
     ;
@@ -171,7 +167,7 @@ FALSE
     : F A L S E
     ;
 
-IF  
+IF
     : I F
     ;
 
@@ -185,10 +181,6 @@ TYPE
 
 MODE
     : M O D E
-    ;
-
-COUNT
-    : C O U N T
     ;
 
 LABEL
@@ -235,44 +227,8 @@ WITH
     : W I T H
     ;
 
-UNUSED
-    : U N U S E D
-    ;
-
 INFO
     : I N F O
-    ;
-
-MIGRATION
-    : M I G R A T I O N
-    ;
-
-READ
-    : R E A D
-    ;
-
-WRITE
-    : W R I T E
-    ;
-
-WORKER_THREAD
-    : W O R K E R UL_ T H R E A D
-    ;
-
-BATCH_SIZE
-    : B A T C H UL_ S I Z E
-    ;
-
-SHARDING_SIZE
-    : S H A R D I N G UL_ S I Z E
-    ;
-
-RATE_LIMITER
-    : R A T E UL_ L I M I T E R
-    ;
-
-STREAM_CHANNEL
-    : S T R E A M UL_ C H A N N E L
     ;
 
 STORAGE
@@ -285,10 +241,6 @@ UNIT
 
 UNITS
     : U N I T S
-    ;
-
-RANDOM
-    : R A N D O M
     ;
 
 DIST
@@ -309,10 +261,6 @@ NODE
 
 NODES
     : N O D E S
-    ;
-
-USAGE_COUNT
-    : U S A G E UL_ C O U N T
     ;
 
 REGISTER
@@ -353,4 +301,52 @@ CLUSTER
 
 LOCK_STRATEGY
     : L O C K UL_ S T R A T E G Y
+    ;
+
+BROADCAST
+    : B R O A D C A S T
+    ;
+
+PLUGINS
+    : P L U G I N S
+    ;
+
+OF
+    : O F
+    ;
+
+KEY
+    : K E Y
+    ;
+
+GENERATE
+    : G E N E R A T E
+    ;
+
+LOAD
+    : L O A D
+    ;
+
+BALANCE
+    : B A L A N C E
+    ;
+
+ALGORITHM
+    : A L G O R I T H M
+    ;
+
+FORCE
+    : F O R C E
+    ;
+
+CHECK_PRIVILEGES
+    : C H E C K UL_ P R I V I L E G E S
+    ;
+
+TIMEOUT
+    : T I M E O U T
+    ;
+
+TEMP
+    : T E M P
     ;

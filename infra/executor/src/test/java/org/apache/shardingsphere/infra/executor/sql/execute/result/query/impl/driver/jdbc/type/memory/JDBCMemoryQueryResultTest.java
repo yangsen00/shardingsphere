@@ -17,16 +17,19 @@
 
 package org.apache.shardingsphere.infra.executor.sql.execute.result.query.impl.driver.jdbc.type.memory;
 
-import org.apache.shardingsphere.infra.database.type.DatabaseType;
-import org.apache.shardingsphere.infra.database.type.dialect.MySQLDatabaseType;
+import org.apache.shardingsphere.database.connector.core.type.DatabaseType;
+import org.apache.shardingsphere.infra.spi.type.typed.TypedSPILoader;
 import org.hamcrest.core.Is;
 import org.junit.jupiter.api.Test;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
+import java.io.Reader;
 import java.math.BigDecimal;
 import java.sql.Array;
 import java.sql.Blob;
@@ -52,13 +55,14 @@ import static org.mockito.Mockito.when;
 
 class JDBCMemoryQueryResultTest {
     
-    private final DatabaseType databaseType = new MySQLDatabaseType();
+    private final DatabaseType databaseType = TypedSPILoader.getService(DatabaseType.class, "FIXTURE");
     
     @Test
     void assertConstructorWithSqlException() throws SQLException {
-        ResultSet resultSet = mockResultSet();
-        when(resultSet.next()).thenThrow(new SQLException(""));
-        assertThrows(SQLException.class, () -> new JDBCMemoryQueryResult(resultSet, databaseType));
+        try (ResultSet resultSet = mockResultSet()) {
+            when(resultSet.next()).thenThrow(new SQLException(""));
+            assertThrows(SQLException.class, () -> new JDBCMemoryQueryResult(resultSet, databaseType));
+        }
     }
     
     @Test
@@ -354,6 +358,14 @@ class JDBCMemoryQueryResultTest {
         objectOutputStream.flush();
         objectOutputStream.close();
         return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
+    }
+    
+    @Test
+    void assertGetCharacterStream() throws SQLException, IOException {
+        JDBCMemoryQueryResult queryResult = new JDBCMemoryQueryResult(mockResultSet(), databaseType);
+        queryResult.next();
+        Reader reader = queryResult.getCharacterStream(1);
+        assertThat(reader.read(), is(new BufferedReader(new InputStreamReader(getInputStream(1))).read()));
     }
     
     @Test

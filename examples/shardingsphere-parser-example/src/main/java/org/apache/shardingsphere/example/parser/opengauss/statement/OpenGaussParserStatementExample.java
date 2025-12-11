@@ -17,11 +17,11 @@
 
 package org.apache.shardingsphere.example.parser.opengauss.statement;
 
-import org.apache.shardingsphere.sql.parser.api.CacheOption;
-import org.apache.shardingsphere.sql.parser.api.SQLParserEngine;
-import org.apache.shardingsphere.sql.parser.api.SQLStatementVisitorEngine;
-import org.apache.shardingsphere.sql.parser.core.ParseASTNode;
-import org.apache.shardingsphere.sql.parser.sql.common.statement.SQLStatement;
+import org.apache.shardingsphere.sql.parser.engine.api.CacheOption;
+import org.apache.shardingsphere.sql.parser.engine.api.SQLParserEngine;
+import org.apache.shardingsphere.sql.parser.engine.api.SQLStatementVisitorEngine;
+import org.apache.shardingsphere.sql.parser.engine.core.ParseASTNode;
+import org.apache.shardingsphere.sql.parser.statement.core.statement.SQLStatement;
 
 import java.util.Arrays;
 import java.util.List;
@@ -55,7 +55,7 @@ public final class OpenGaussParserStatementExample {
             CacheOption cacheOption = new CacheOption(128, 1024L);
             SQLParserEngine parserEngine = new SQLParserEngine("openGauss", cacheOption);
             ParseASTNode parseASTNode = parserEngine.parse(sql, false);
-            SQLStatementVisitorEngine visitorEngine = new SQLStatementVisitorEngine("openGauss", false);
+            SQLStatementVisitorEngine visitorEngine = new SQLStatementVisitorEngine("openGauss");
             SQLStatement sqlStatement = visitorEngine.visit(parseASTNode);
             System.out.println(sqlStatement.toString());
         });

@@ -1,6 +1,6 @@
 +++
 title = "混合规则"
-weight = 9
+weight = 10
 +++
 
 ## 背景信息
@@ -102,6 +102,7 @@ rules:
       type: AES
       props:
         aes-key-value: 123456abc
+        digest-algorithm-name: SHA-1
     assisted_encryptor:
       type: MD5
     like_encryptor:

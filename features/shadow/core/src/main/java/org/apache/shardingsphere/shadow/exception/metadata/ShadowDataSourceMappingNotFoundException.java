@@ -17,7 +17,7 @@
 
 package org.apache.shardingsphere.shadow.exception.metadata;
 
-import org.apache.shardingsphere.infra.util.exception.external.sql.sqlstate.XOpenSQLState;
+import org.apache.shardingsphere.infra.exception.external.sql.sqlstate.XOpenSQLState;
 import org.apache.shardingsphere.shadow.exception.ShadowSQLException;
 
 /**
@@ -28,6 +28,6 @@ public final class ShadowDataSourceMappingNotFoundException extends ShadowSQLExc
     private static final long serialVersionUID = 4141501883104032467L;
     
     public ShadowDataSourceMappingNotFoundException(final String tableName) {
-        super(XOpenSQLState.CHECK_OPTION_VIOLATION, 2, "No available shadow data sources mappings in shadow table `%s`.", tableName);
+        super(XOpenSQLState.NOT_FOUND, 2, "No available shadow data sources mappings in shadow table '%s'.", tableName);
     }
 }

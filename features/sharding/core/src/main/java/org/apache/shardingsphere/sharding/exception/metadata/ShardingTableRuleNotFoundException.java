@@ -17,7 +17,7 @@
 
 package org.apache.shardingsphere.sharding.exception.metadata;
 
-import org.apache.shardingsphere.infra.util.exception.external.sql.sqlstate.XOpenSQLState;
+import org.apache.shardingsphere.infra.exception.external.sql.sqlstate.XOpenSQLState;
 import org.apache.shardingsphere.sharding.exception.ShardingSQLException;
 
 import java.util.Collection;
@@ -30,6 +30,6 @@ public final class ShardingTableRuleNotFoundException extends ShardingSQLExcepti
     private static final long serialVersionUID = 142299282103233064L;
     
     public ShardingTableRuleNotFoundException(final Collection<String> logicTables) {
-        super(XOpenSQLState.CHECK_OPTION_VIOLATION, 0, "Can not find table rule with logic tables `%s`.", logicTables.toString());
+        super(XOpenSQLState.NOT_FOUND, 1, "Can not find table rule with logic tables '%s'.", logicTables);
     }
 }

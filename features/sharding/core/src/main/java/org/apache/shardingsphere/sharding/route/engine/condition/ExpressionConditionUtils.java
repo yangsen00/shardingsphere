@@ -19,8 +19,8 @@ package org.apache.shardingsphere.sharding.route.engine.condition;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.dml.expr.ExpressionSegment;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.dml.expr.complex.ComplexExpressionSegment;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.dml.expr.ExpressionSegment;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.dml.expr.complex.ComplexExpressionSegment;
 
 /**
  * Expression judgment tool for route.
@@ -34,6 +34,6 @@ public final class ExpressionConditionUtils {
      * @return true or false
      */
     public static boolean isNowExpression(final ExpressionSegment segment) {
-        return segment instanceof ComplexExpressionSegment && "now()".equalsIgnoreCase(((ComplexExpressionSegment) segment).getText());
+        return segment instanceof ComplexExpressionSegment && "now()".equalsIgnoreCase(segment.getText());
     }
 }

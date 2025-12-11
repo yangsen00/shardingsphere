@@ -17,8 +17,8 @@
 
 package org.apache.shardingsphere.encrypt.exception;
 
-import org.apache.shardingsphere.infra.util.exception.external.sql.sqlstate.SQLState;
-import org.apache.shardingsphere.infra.util.exception.external.sql.type.feature.FeatureSQLException;
+import org.apache.shardingsphere.infra.exception.external.sql.sqlstate.SQLState;
+import org.apache.shardingsphere.infra.exception.external.sql.type.feature.FeatureSQLException;
 
 /**
  * Encrypt SQL exception.
@@ -27,9 +27,13 @@ public abstract class EncryptSQLException extends FeatureSQLException {
     
     private static final long serialVersionUID = -8616403083235617682L;
     
-    private static final int FEATURE_CODE = 7;
+    private static final int FEATURE_CODE = 10;
     
     protected EncryptSQLException(final SQLState sqlState, final int errorCode, final String reason, final Object... messageArgs) {
         super(sqlState, FEATURE_CODE, errorCode, reason, messageArgs);
+    }
+    
+    protected EncryptSQLException(final SQLState sqlState, final int errorCode, final Exception cause, final String reason, final Object... messageArgs) {
+        super(sqlState, FEATURE_CODE, errorCode, cause, reason, messageArgs);
     }
 }

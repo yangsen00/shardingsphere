@@ -17,15 +17,14 @@
 
 package org.apache.shardingsphere.readwritesplitting.route.qualified.type;
 
-import org.apache.shardingsphere.infra.binder.statement.CommonSQLStatementContext;
-import org.apache.shardingsphere.infra.binder.statement.SQLStatementContext;
-import org.apache.shardingsphere.infra.binder.statement.dml.SelectStatementContext;
+import org.apache.shardingsphere.infra.binder.context.statement.SQLStatementContext;
+import org.apache.shardingsphere.infra.binder.context.statement.type.dml.SelectStatementContext;
 import org.apache.shardingsphere.infra.hint.HintManager;
+import org.apache.shardingsphere.infra.hint.HintValueContext;
 import org.apache.shardingsphere.readwritesplitting.route.qualified.QualifiedReadwriteSplittingDataSourceRouter;
-import org.apache.shardingsphere.readwritesplitting.rule.ReadwriteSplittingDataSourceRule;
-import org.apache.shardingsphere.sql.parser.sql.common.statement.SQLStatement;
-import org.apache.shardingsphere.sql.parser.sql.common.statement.dml.SelectStatement;
-import org.apache.shardingsphere.sql.parser.sql.dialect.handler.dml.SelectStatementHandler;
+import org.apache.shardingsphere.readwritesplitting.rule.ReadwriteSplittingDataSourceGroupRule;
+import org.apache.shardingsphere.sql.parser.statement.core.statement.SQLStatement;
+import org.apache.shardingsphere.sql.parser.statement.core.statement.type.dml.SelectStatement;
 
 /**
  * Qualified data source primary router for readwrite-splitting.
@@ -33,33 +32,33 @@ import org.apache.shardingsphere.sql.parser.sql.dialect.handler.dml.SelectStatem
 public final class QualifiedReadwriteSplittingPrimaryDataSourceRouter implements QualifiedReadwriteSplittingDataSourceRouter {
     
     @Override
-    public boolean isQualified(final SQLStatementContext<?> sqlStatementContext, final ReadwriteSplittingDataSourceRule rule) {
-        return isPrimaryRoute(sqlStatementContext);
+    public boolean isQualified(final SQLStatementContext sqlStatementContext, final ReadwriteSplittingDataSourceGroupRule rule, final HintValueContext hintValueContext) {
+        return isPrimaryRoute(sqlStatementContext, hintValueContext);
     }
     
-    private boolean isPrimaryRoute(final SQLStatementContext<?> sqlStatementContext) {
-        return isWriteRouteStatement(sqlStatementContext) || isHintWriteRouteOnly(sqlStatementContext);
+    private boolean isPrimaryRoute(final SQLStatementContext sqlStatementContext, final HintValueContext hintValueContext) {
+        return isWriteRouteStatement(sqlStatementContext) || isHintWriteRouteOnly(hintValueContext);
     }
     
-    private boolean isWriteRouteStatement(final SQLStatementContext<?> sqlStatementContext) {
+    private boolean isWriteRouteStatement(final SQLStatementContext sqlStatementContext) {
         SQLStatement sqlStatement = sqlStatementContext.getSqlStatement();
         return containsLockSegment(sqlStatement) || containsLastInsertIdProjection(sqlStatementContext) || !(sqlStatement instanceof SelectStatement);
     }
     
     private boolean containsLockSegment(final SQLStatement sqlStatement) {
-        return sqlStatement instanceof SelectStatement && SelectStatementHandler.getLockSegment((SelectStatement) sqlStatement).isPresent();
+        return sqlStatement instanceof SelectStatement && ((SelectStatement) sqlStatement).getLock().isPresent();
     }
     
-    private boolean containsLastInsertIdProjection(final SQLStatementContext<?> sqlStatementContext) {
+    private boolean containsLastInsertIdProjection(final SQLStatementContext sqlStatementContext) {
         return sqlStatementContext instanceof SelectStatementContext && ((SelectStatementContext) sqlStatementContext).getProjectionsContext().isContainsLastInsertIdProjection();
     }
     
-    private boolean isHintWriteRouteOnly(final SQLStatementContext<?> sqlStatementContext) {
-        return HintManager.isWriteRouteOnly() || sqlStatementContext instanceof CommonSQLStatementContext && ((CommonSQLStatementContext<?>) sqlStatementContext).isHintWriteRouteOnly();
+    private boolean isHintWriteRouteOnly(final HintValueContext hintValueContext) {
+        return HintManager.isWriteRouteOnly() || hintValueContext.isWriteRouteOnly();
     }
     
     @Override
-    public String route(final ReadwriteSplittingDataSourceRule rule) {
+    public String route(final ReadwriteSplittingDataSourceGroupRule rule) {
         return rule.getWriteDataSource();
     }
 }

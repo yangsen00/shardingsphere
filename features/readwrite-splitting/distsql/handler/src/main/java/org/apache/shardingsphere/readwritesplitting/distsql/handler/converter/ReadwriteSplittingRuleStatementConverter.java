@@ -19,12 +19,12 @@ package org.apache.shardingsphere.readwritesplitting.distsql.handler.converter;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.apache.shardingsphere.infra.config.algorithm.AlgorithmConfiguration;
-import org.apache.shardingsphere.readwritesplitting.api.ReadwriteSplittingRuleConfiguration;
-import org.apache.shardingsphere.readwritesplitting.api.rule.ReadwriteSplittingDataSourceRuleConfiguration;
-import org.apache.shardingsphere.readwritesplitting.distsql.parser.segment.ReadwriteSplittingRuleSegment;
+import org.apache.shardingsphere.infra.algorithm.core.config.AlgorithmConfiguration;
+import org.apache.shardingsphere.readwritesplitting.config.ReadwriteSplittingRuleConfiguration;
+import org.apache.shardingsphere.readwritesplitting.config.rule.ReadwriteSplittingDataSourceGroupRuleConfiguration;
+import org.apache.shardingsphere.readwritesplitting.transaction.TransactionalReadQueryStrategy;
+import org.apache.shardingsphere.readwritesplitting.distsql.segment.ReadwriteSplittingRuleSegment;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -43,23 +43,25 @@ public final class ReadwriteSplittingRuleStatementConverter {
      * @return readwrite-splitting rule configuration
      */
     public static ReadwriteSplittingRuleConfiguration convert(final Collection<ReadwriteSplittingRuleSegment> ruleSegments) {
-        Collection<ReadwriteSplittingDataSourceRuleConfiguration> dataSources = new LinkedList<>();
-        Map<String, AlgorithmConfiguration> loadBalancers = new HashMap<>(ruleSegments.size(), 1);
+        Collection<ReadwriteSplittingDataSourceGroupRuleConfiguration> dataSourceGroups = new LinkedList<>();
+        Map<String, AlgorithmConfiguration> loadBalancers = new HashMap<>(ruleSegments.size(), 1F);
         for (ReadwriteSplittingRuleSegment each : ruleSegments) {
             if (null == each.getLoadBalancer()) {
-                dataSources.add(createDataSourceRuleConfiguration(each, null));
+                dataSourceGroups.add(createDataSourceGroupRuleConfiguration(each, null));
             } else {
                 String loadBalancerName = getLoadBalancerName(each.getName(), each.getLoadBalancer().getName());
                 loadBalancers.put(loadBalancerName, createLoadBalancer(each));
-                dataSources.add(createDataSourceRuleConfiguration(each, loadBalancerName));
+                dataSourceGroups.add(createDataSourceGroupRuleConfiguration(each, loadBalancerName));
             }
         }
-        return new ReadwriteSplittingRuleConfiguration(dataSources, loadBalancers);
+        return new ReadwriteSplittingRuleConfiguration(dataSourceGroups, loadBalancers);
     }
     
-    private static ReadwriteSplittingDataSourceRuleConfiguration createDataSourceRuleConfiguration(final ReadwriteSplittingRuleSegment segment,
-                                                                                                   final String loadBalancerName) {
-        return new ReadwriteSplittingDataSourceRuleConfiguration(segment.getName(), segment.getWriteDataSource(), new ArrayList<>(segment.getReadDataSources()), loadBalancerName);
+    private static ReadwriteSplittingDataSourceGroupRuleConfiguration createDataSourceGroupRuleConfiguration(final ReadwriteSplittingRuleSegment segment, final String loadBalancerName) {
+        return null == segment.getTransactionalReadQueryStrategy()
+                ? new ReadwriteSplittingDataSourceGroupRuleConfiguration(segment.getName(), segment.getWriteDataSource(), new LinkedList<>(segment.getReadDataSources()), loadBalancerName)
+                : new ReadwriteSplittingDataSourceGroupRuleConfiguration(segment.getName(), segment.getWriteDataSource(), new LinkedList<>(segment.getReadDataSources()),
+                        TransactionalReadQueryStrategy.valueOf(segment.getTransactionalReadQueryStrategy().toUpperCase()), loadBalancerName);
     }
     
     private static AlgorithmConfiguration createLoadBalancer(final ReadwriteSplittingRuleSegment ruleSegment) {

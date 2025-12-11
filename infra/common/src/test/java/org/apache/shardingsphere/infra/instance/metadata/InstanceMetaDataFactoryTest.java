@@ -17,6 +17,7 @@
 
 package org.apache.shardingsphere.infra.instance.metadata;
 
+import org.apache.shardingsphere.infra.instance.ComputeNodeData;
 import org.apache.shardingsphere.infra.instance.metadata.proxy.ProxyInstanceMetaData;
 import org.junit.jupiter.api.Test;
 
@@ -28,17 +29,17 @@ class InstanceMetaDataFactoryTest {
     
     @Test
     void assertCreateJDBCInstanceMetaDataWithInstanceId() {
-        InstanceMetaData actual = InstanceMetaDataFactory.create("foo_id", InstanceType.JDBC, "", "foo_version");
+        InstanceMetaData actual = InstanceMetaDataFactory.create("foo_id", InstanceType.JDBC, new ComputeNodeData("foo_db", "127.0.0.1", "foo_version"));
         assertThat(actual.getId(), is("foo_id"));
         assertNotNull(actual.getIp());
-        assertThat(actual.getAttributes(), is(""));
+        assertThat(actual.getAttributes(), is("127.0.0.1"));
         assertThat(actual.getVersion(), is("foo_version"));
         assertThat(actual.getType(), is(InstanceType.JDBC));
     }
     
     @Test
     void assertCreateProxyInstanceMetaDataWithInstanceId() {
-        ProxyInstanceMetaData actual = (ProxyInstanceMetaData) InstanceMetaDataFactory.create("foo_id", InstanceType.PROXY, "127.0.0.1@3307", "foo_version");
+        ProxyInstanceMetaData actual = (ProxyInstanceMetaData) InstanceMetaDataFactory.create("foo_id", InstanceType.PROXY, new ComputeNodeData("foo_db", "127.0.0.1@3307", "foo_version"));
         assertThat(actual.getId(), is("foo_id"));
         assertThat(actual.getIp(), is("127.0.0.1"));
         assertThat(actual.getPort(), is(3307));

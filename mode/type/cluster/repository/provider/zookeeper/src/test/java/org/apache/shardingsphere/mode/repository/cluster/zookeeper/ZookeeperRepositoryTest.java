@@ -17,7 +17,6 @@
 
 package org.apache.shardingsphere.mode.repository.cluster.zookeeper;
 
-import com.google.common.util.concurrent.SettableFuture;
 import lombok.SneakyThrows;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
@@ -31,39 +30,26 @@ import org.apache.curator.framework.api.GetChildrenBuilder;
 import org.apache.curator.framework.api.ProtectACLCreateModeStatPathAndBytesable;
 import org.apache.curator.framework.api.SetDataBuilder;
 import org.apache.curator.framework.listen.Listenable;
-import org.apache.curator.framework.recipes.cache.ChildData;
-import org.apache.curator.framework.recipes.cache.CuratorCache;
-import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
+import org.apache.shardingsphere.infra.instance.ComputeNodeInstanceContext;
+import org.apache.shardingsphere.infra.util.props.PropertiesBuilder;
+import org.apache.shardingsphere.infra.util.props.PropertiesBuilder.Property;
 import org.apache.shardingsphere.mode.repository.cluster.ClusterPersistRepositoryConfiguration;
-import org.apache.shardingsphere.mode.repository.cluster.listener.DataChangedEvent;
-import org.apache.shardingsphere.mode.repository.cluster.listener.DataChangedEvent.Type;
-import org.apache.shardingsphere.mode.repository.cluster.lock.holder.DistributedLockHolder;
-import org.apache.shardingsphere.mode.repository.cluster.zookeeper.lock.ZookeeperDistributedLock;
-import org.apache.shardingsphere.mode.repository.cluster.zookeeper.props.ZookeeperProperties;
 import org.apache.shardingsphere.mode.repository.cluster.zookeeper.props.ZookeeperPropertyKey;
-import org.apache.shardingsphere.test.util.PropertiesBuilder;
-import org.apache.shardingsphere.test.util.PropertiesBuilder.Property;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.data.Stat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.AdditionalAnswers;
 import org.mockito.Mock;
 import org.mockito.internal.configuration.plugins.Plugins;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.mockito.stubbing.VoidAnswer1;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -74,9 +60,8 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -89,13 +74,7 @@ class ZookeeperRepositoryTest {
     private static final String SERVER_LISTS = "127.0.0.1:2181";
     
     @Mock
-    private CuratorCache curatorCache;
-    
-    @Mock
     private CuratorFramework client;
-    
-    @Mock
-    private Listenable<CuratorCacheListener> listenable;
     
     @Mock
     private ExistsBuilder existsBuilder;
@@ -126,8 +105,7 @@ class ZookeeperRepositoryTest {
         mockClient();
         mockBuilder();
         ClusterPersistRepositoryConfiguration config = new ClusterPersistRepositoryConfiguration(REPOSITORY.getType(), "governance", SERVER_LISTS, new Properties());
-        REPOSITORY.init(config);
-        mockDistributedLockHolder();
+        REPOSITORY.init(config, mock(ComputeNodeInstanceContext.class));
     }
     
     @SneakyThrows({ReflectiveOperationException.class, InterruptedException.class})
@@ -145,13 +123,7 @@ class ZookeeperRepositoryTest {
         when(client.blockUntilConnected(anyInt(), eq(TimeUnit.MILLISECONDS))).thenReturn(true);
     }
     
-    @SneakyThrows(ReflectiveOperationException.class)
-    private void mockDistributedLockHolder() {
-        DistributedLockHolder distributedLockHolder = new DistributedLockHolder("Zookeeper", client, new ZookeeperProperties(new Properties()));
-        Plugins.getMemberAccessor().set(DistributedLockHolder.class.getDeclaredField("locks"), distributedLockHolder, Collections.singletonMap("/locks/glock", mock(ZookeeperDistributedLock.class)));
-        Plugins.getMemberAccessor().set(ZookeeperRepository.class.getDeclaredField("distributedLockHolder"), REPOSITORY, distributedLockHolder);
-    }
-    
+    @SuppressWarnings("unchecked")
     private void mockBuilder() {
         when(client.checkExists()).thenReturn(existsBuilder);
         when(client.create()).thenReturn(createBuilder);
@@ -160,6 +132,7 @@ class ZookeeperRepositoryTest {
         when(client.delete()).thenReturn(deleteBuilder);
         when(deleteBuilder.deletingChildrenIfNeeded()).thenReturn(backgroundVersionable);
         when(client.getChildren()).thenReturn(getChildrenBuilder);
+        when(client.getConnectionStateListenable()).thenReturn(mock(Listenable.class));
     }
     
     @Test
@@ -201,91 +174,41 @@ class ZookeeperRepositoryTest {
     }
     
     @Test
-    void assertWatchUpdatedChangedType() throws ExecutionException, InterruptedException {
-        mockCache("/test/children_updated/1");
-        ChildData oldData = new ChildData("/test/children_updated/1", null, "value1".getBytes());
-        ChildData data = new ChildData("/test/children_updated/1", null, "value2".getBytes());
-        doAnswer(AdditionalAnswers.answerVoid(getListenerAnswer(CuratorCacheListener.Type.NODE_CHANGED, oldData, data))).when(listenable).addListener(any(CuratorCacheListener.class));
-        SettableFuture<DataChangedEvent> settableFuture = SettableFuture.create();
-        REPOSITORY.watch("/test/children_updated/1", settableFuture::set);
-        DataChangedEvent dataChangedEvent = settableFuture.get();
-        assertThat(dataChangedEvent.getType(), is(Type.UPDATED));
-        assertThat(dataChangedEvent.getKey(), is("/test/children_updated/1"));
-        assertThat(dataChangedEvent.getValue(), is("value2"));
-    }
-    
-    @Test
-    void assertWatchDeletedChangedType() throws ExecutionException, InterruptedException {
-        mockCache("/test/children_deleted/5");
-        ChildData oldData = new ChildData("/test/children_deleted/5", null, "value5".getBytes());
-        ChildData data = new ChildData("/test/children_deleted/5", null, "value5".getBytes());
-        doAnswer(AdditionalAnswers.answerVoid(getListenerAnswer(CuratorCacheListener.Type.NODE_DELETED, oldData, data))).when(listenable).addListener(any(CuratorCacheListener.class));
-        SettableFuture<DataChangedEvent> settableFuture = SettableFuture.create();
-        REPOSITORY.watch("/test/children_deleted/5", settableFuture::set);
-        DataChangedEvent dataChangedEvent = settableFuture.get();
-        assertThat(dataChangedEvent.getType(), is(Type.DELETED));
-        assertThat(dataChangedEvent.getKey(), is("/test/children_deleted/5"));
-        assertThat(dataChangedEvent.getValue(), is("value5"));
-    }
-    
-    @Test
-    void assertWatchAddedChangedType() throws ExecutionException, InterruptedException {
-        mockCache("/test/children_added/4");
-        ChildData data = new ChildData("/test/children_added/4", null, "value4".getBytes());
-        doAnswer(AdditionalAnswers.answerVoid(getListenerAnswer(CuratorCacheListener.Type.NODE_CREATED, null, data))).when(listenable).addListener(any(CuratorCacheListener.class));
-        SettableFuture<DataChangedEvent> settableFuture = SettableFuture.create();
-        REPOSITORY.watch("/test/children_added/4", settableFuture::set);
-        DataChangedEvent dataChangedEvent = settableFuture.get();
-        assertThat(dataChangedEvent.getType(), is(Type.ADDED));
-        assertThat(dataChangedEvent.getKey(), is("/test/children_added/4"));
-        assertThat(dataChangedEvent.getValue(), is("value4"));
-    }
-    
-    @SneakyThrows(ReflectiveOperationException.class)
-    private void mockCache(final String key) {
-        Map<String, CuratorCache> caches = new HashMap<>();
-        caches.put(key, curatorCache);
-        Plugins.getMemberAccessor().set(ZookeeperRepository.class.getDeclaredField("caches"), REPOSITORY, caches);
-        when(curatorCache.listenable()).thenReturn(listenable);
-    }
-    
-    private VoidAnswer1<CuratorCacheListener> getListenerAnswer(final CuratorCacheListener.Type type, final ChildData oldData, final ChildData data) {
-        return listener -> listener.event(type, oldData, data);
-    }
-    
-    @Test
-    void assertBuildCuratorClientWithCustomConfig() {
+    void assertBuildCuratorClientWithCustomConfiguration() {
         Properties props = PropertiesBuilder.build(
                 new Property(ZookeeperPropertyKey.RETRY_INTERVAL_MILLISECONDS.getKey(), "1000"),
                 new Property(ZookeeperPropertyKey.MAX_RETRIES.getKey(), "1"),
                 new Property(ZookeeperPropertyKey.TIME_TO_LIVE_SECONDS.getKey(), "1000"),
                 new Property(ZookeeperPropertyKey.OPERATION_TIMEOUT_MILLISECONDS.getKey(), "2000"));
-        assertDoesNotThrow(() -> REPOSITORY.init(new ClusterPersistRepositoryConfiguration(REPOSITORY.getType(), "governance", SERVER_LISTS, props)));
+        assertDoesNotThrow(() -> REPOSITORY.init(new ClusterPersistRepositoryConfiguration(REPOSITORY.getType(), "governance", SERVER_LISTS, props),
+                mock(ComputeNodeInstanceContext.class)));
     }
     
     @Test
     void assertBuildCuratorClientWithTimeToLiveSecondsEqualsZero() {
         assertDoesNotThrow(() -> REPOSITORY.init(new ClusterPersistRepositoryConfiguration(
-                REPOSITORY.getType(), "governance", SERVER_LISTS, PropertiesBuilder.build(new Property(ZookeeperPropertyKey.TIME_TO_LIVE_SECONDS.getKey(), "0")))));
+                REPOSITORY.getType(), "governance", SERVER_LISTS, PropertiesBuilder.build(new Property(ZookeeperPropertyKey.TIME_TO_LIVE_SECONDS.getKey(), "0"))),
+                mock(ComputeNodeInstanceContext.class)));
     }
     
     @Test
     void assertBuildCuratorClientWithOperationTimeoutMillisecondsEqualsZero() {
         assertDoesNotThrow(() -> REPOSITORY.init(new ClusterPersistRepositoryConfiguration(
-                REPOSITORY.getType(), "governance", SERVER_LISTS, PropertiesBuilder.build(new Property(ZookeeperPropertyKey.OPERATION_TIMEOUT_MILLISECONDS.getKey(), "0")))));
+                REPOSITORY.getType(), "governance", SERVER_LISTS, PropertiesBuilder.build(new Property(ZookeeperPropertyKey.OPERATION_TIMEOUT_MILLISECONDS.getKey(), "0"))),
+                mock(ComputeNodeInstanceContext.class)));
     }
     
     @Test
     void assertBuildCuratorClientWithDigest() {
         REPOSITORY.init(new ClusterPersistRepositoryConfiguration(REPOSITORY.getType(), "governance", SERVER_LISTS,
-                PropertiesBuilder.build(new Property(ZookeeperPropertyKey.DIGEST.getKey(), "any"))));
+                PropertiesBuilder.build(new Property(ZookeeperPropertyKey.DIGEST.getKey(), "any"))), mock(ComputeNodeInstanceContext.class));
         verify(builder).aclProvider(any(ACLProvider.class));
     }
     
     @Test
     void assertDeleteNotExistKey() {
         REPOSITORY.delete("/test/children/1");
-        verify(client, times(0)).delete();
+        verify(client, never()).delete();
     }
     
     @Test

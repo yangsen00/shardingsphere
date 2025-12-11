@@ -19,37 +19,41 @@ package org.apache.shardingsphere.sharding.route.engine.type.standard.assertion;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.apache.shardingsphere.infra.session.query.QueryContext;
-import org.apache.shardingsphere.infra.binder.SQLStatementContextFactory;
-import org.apache.shardingsphere.infra.binder.statement.SQLStatementContext;
+import org.apache.shardingsphere.database.connector.core.type.DatabaseType;
+import org.apache.shardingsphere.infra.binder.context.statement.SQLStatementContext;
+import org.apache.shardingsphere.infra.binder.engine.SQLBindEngine;
 import org.apache.shardingsphere.infra.config.props.ConfigurationProperties;
-import org.apache.shardingsphere.infra.session.connection.ConnectionContext;
-import org.apache.shardingsphere.infra.database.DefaultDatabase;
-import org.apache.shardingsphere.infra.database.type.DatabaseType;
-import org.apache.shardingsphere.infra.database.type.dialect.MySQLDatabaseType;
+import org.apache.shardingsphere.infra.hint.HintValueContext;
 import org.apache.shardingsphere.infra.metadata.ShardingSphereMetaData;
 import org.apache.shardingsphere.infra.metadata.database.ShardingSphereDatabase;
-import org.apache.shardingsphere.infra.metadata.database.resource.ShardingSphereResourceMetaData;
-import org.apache.shardingsphere.infra.metadata.database.rule.ShardingSphereRuleMetaData;
+import org.apache.shardingsphere.infra.metadata.database.resource.ResourceMetaData;
+import org.apache.shardingsphere.infra.metadata.database.rule.RuleMetaData;
 import org.apache.shardingsphere.infra.metadata.database.schema.model.ShardingSphereColumn;
 import org.apache.shardingsphere.infra.metadata.database.schema.model.ShardingSphereSchema;
 import org.apache.shardingsphere.infra.metadata.database.schema.model.ShardingSphereTable;
-import org.apache.shardingsphere.infra.parser.sql.SQLStatementParserEngine;
+import org.apache.shardingsphere.infra.parser.SQLParserEngine;
 import org.apache.shardingsphere.infra.route.context.RouteContext;
 import org.apache.shardingsphere.infra.route.engine.SQLRouteEngine;
-import org.apache.shardingsphere.infra.util.spi.type.typed.TypedSPILoader;
-import org.apache.shardingsphere.sharding.route.engine.fixture.ShardingRoutingEngineFixtureBuilder;
+import org.apache.shardingsphere.infra.rule.ShardingSphereRule;
+import org.apache.shardingsphere.infra.rule.attribute.table.TableMapperRuleAttribute;
+import org.apache.shardingsphere.infra.session.connection.ConnectionContext;
+import org.apache.shardingsphere.infra.session.query.QueryContext;
+import org.apache.shardingsphere.infra.spi.type.typed.TypedSPILoader;
+import org.apache.shardingsphere.parser.config.SQLParserRuleConfiguration;
+import org.apache.shardingsphere.parser.rule.SQLParserRule;
+import org.apache.shardingsphere.sharding.route.engine.fixture.ShardingRouteEngineFixtureBuilder;
 import org.apache.shardingsphere.sharding.rule.ShardingRule;
 import org.apache.shardingsphere.single.rule.SingleRule;
-import org.apache.shardingsphere.sql.parser.api.CacheOption;
-import org.apache.shardingsphere.timeservice.core.rule.TimeServiceRule;
+import org.apache.shardingsphere.sql.parser.engine.api.CacheOption;
+import org.apache.shardingsphere.timeservice.core.rule.TimestampServiceRule;
 
 import java.sql.Types;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
@@ -64,47 +68,56 @@ public final class ShardingRouteAssert {
     
     /**
      * Assert route.
-     * 
+     *
      * @param sql SQL 
      * @param params parameters
      * @return route context
      */
     public static RouteContext assertRoute(final String sql, final List<Object> params) {
-        ShardingRule shardingRule = ShardingRoutingEngineFixtureBuilder.createAllShardingRule();
-        SingleRule singleRule = ShardingRoutingEngineFixtureBuilder.createSingleRule(Collections.singletonList(shardingRule));
-        TimeServiceRule timeServiceRule = ShardingRoutingEngineFixtureBuilder.createTimeServiceRule();
-        Map<String, ShardingSphereSchema> schemas = buildSchemas();
+        DatabaseType databaseType = TypedSPILoader.getService(DatabaseType.class, "MySQL");
+        ShardingRule shardingRule = ShardingRouteEngineFixtureBuilder.createAllShardingRule();
+        SingleRule singleRule = ShardingRouteEngineFixtureBuilder.createSingleRule(Collections.singleton(shardingRule));
+        TimestampServiceRule timestampServiceRule = ShardingRouteEngineFixtureBuilder.createTimeServiceRule();
+        SQLParserRule sqlParserRule = new SQLParserRule(new SQLParserRuleConfiguration(new CacheOption(2000, 65535L), new CacheOption(128, 1024L)));
+        SQLParserEngine sqlParserEngine = sqlParserRule.getSQLParserEngine(databaseType);
+        ShardingSphereRule broadcastRule = mock(ShardingSphereRule.class, RETURNS_DEEP_STUBS);
+        TableMapperRuleAttribute ruleAttribute = mock(TableMapperRuleAttribute.class);
+        when(ruleAttribute.getDistributedTableNames()).thenReturn(Collections.singleton("t_product"));
+        when(broadcastRule.getAttributes().findAttribute(TableMapperRuleAttribute.class)).thenReturn(Optional.of(ruleAttribute));
+        RuleMetaData ruleMetaData = new RuleMetaData(Arrays.asList(shardingRule, broadcastRule, singleRule, timestampServiceRule));
+        ShardingSphereDatabase database = new ShardingSphereDatabase("foo_db", databaseType, mock(ResourceMetaData.class, RETURNS_DEEP_STUBS), ruleMetaData, buildSchemas());
+        ShardingSphereMetaData metaData = new ShardingSphereMetaData(Collections.singleton(database), mock(), mock(), mock());
+        SQLStatementContext sqlStatementContext = new SQLBindEngine(metaData, "foo_db", new HintValueContext()).bind(sqlParserEngine.parse(sql, false));
+        ConnectionContext connectionContext = new ConnectionContext(Collections::emptySet);
+        connectionContext.setCurrentDatabaseName("foo_db");
+        QueryContext queryContext = new QueryContext(sqlStatementContext, sql, params, new HintValueContext(), connectionContext, metaData);
         ConfigurationProperties props = new ConfigurationProperties(new Properties());
-        SQLStatementParserEngine sqlStatementParserEngine = new SQLStatementParserEngine("MySQL",
-                new CacheOption(2000, 65535L), new CacheOption(128, 1024L), false);
-        ShardingSphereRuleMetaData ruleMetaData = new ShardingSphereRuleMetaData(Arrays.asList(shardingRule, singleRule, timeServiceRule));
-        ShardingSphereResourceMetaData resourceMetaData = mock(ShardingSphereResourceMetaData.class, RETURNS_DEEP_STUBS);
-        when(resourceMetaData.getStorageTypes()).thenReturn(Collections.singletonMap("ds_0", new MySQLDatabaseType()));
-        ShardingSphereDatabase database = new ShardingSphereDatabase(
-                DefaultDatabase.LOGIC_NAME, TypedSPILoader.getService(DatabaseType.class, "MySQL"), resourceMetaData, ruleMetaData, schemas);
-        SQLStatementContext<?> sqlStatementContext =
-                SQLStatementContextFactory.newInstance(createShardingSphereMetaData(database), params, sqlStatementParserEngine.parse(sql, false), DefaultDatabase.LOGIC_NAME);
-        QueryContext queryContext = new QueryContext(sqlStatementContext, sql, params);
-        return new SQLRouteEngine(Arrays.asList(shardingRule, singleRule), props).route(new ConnectionContext(), queryContext, mock(ShardingSphereRuleMetaData.class), database);
+        return new SQLRouteEngine(Arrays.asList(shardingRule, singleRule), props).route(queryContext, mock(RuleMetaData.class), database);
     }
     
-    private static ShardingSphereMetaData createShardingSphereMetaData(final ShardingSphereDatabase database) {
-        return new ShardingSphereMetaData(Collections.singletonMap(DefaultDatabase.LOGIC_NAME, database), mock(ShardingSphereRuleMetaData.class), mock(ConfigurationProperties.class));
-    }
-    
-    private static Map<String, ShardingSphereSchema> buildSchemas() {
-        Map<String, ShardingSphereTable> tables = new HashMap<>(3, 1);
-        tables.put("t_order", new ShardingSphereTable("t_order", Arrays.asList(new ShardingSphereColumn("order_id", Types.INTEGER, true, false, false, true, false),
-                new ShardingSphereColumn("user_id", Types.INTEGER, false, false, false, true, false),
-                new ShardingSphereColumn("status", Types.INTEGER, false, false, false, true, false)), Collections.emptyList(), Collections.emptyList()));
-        tables.put("t_order_item", new ShardingSphereTable("t_order_item", Arrays.asList(new ShardingSphereColumn("item_id", Types.INTEGER, true, false, false, true, false),
-                new ShardingSphereColumn("order_id", Types.INTEGER, false, false, false, true, false),
-                new ShardingSphereColumn("user_id", Types.INTEGER, false, false, false, true, false),
-                new ShardingSphereColumn("status", Types.VARCHAR, false, false, false, true, false),
-                new ShardingSphereColumn("c_date", Types.TIMESTAMP, false, false, false, true, false)), Collections.emptyList(), Collections.emptyList()));
-        tables.put("t_other", new ShardingSphereTable("t_other", Collections.singletonList(
-                new ShardingSphereColumn("order_id", Types.INTEGER, true, false, false, true, false)), Collections.emptyList(), Collections.emptyList()));
-        tables.put("t_category", new ShardingSphereTable("t_category", Collections.emptyList(), Collections.emptyList(), Collections.emptyList()));
-        return Collections.singletonMap(DefaultDatabase.LOGIC_NAME, new ShardingSphereSchema(tables, Collections.emptyMap()));
+    private static Collection<ShardingSphereSchema> buildSchemas() {
+        Collection<ShardingSphereTable> tables = new LinkedList<>();
+        tables.add(new ShardingSphereTable("t_order", Arrays.asList(new ShardingSphereColumn("order_id", Types.INTEGER, true, false, false, true, false, false),
+                new ShardingSphereColumn("id", Types.INTEGER, false, false, false, true, false, false),
+                new ShardingSphereColumn("user_id", Types.INTEGER, false, false, false, true, false, false),
+                new ShardingSphereColumn("product_id", Types.INTEGER, false, false, false, true, false, false),
+                new ShardingSphereColumn("status", Types.INTEGER, false, false, false, true, false, false)), Collections.emptyList(), Collections.emptyList()));
+        tables.add(new ShardingSphereTable("t_order_item", Arrays.asList(new ShardingSphereColumn("item_id", Types.INTEGER, true, false, false, true, false, false),
+                new ShardingSphereColumn("order_id", Types.INTEGER, false, false, false, true, false, false),
+                new ShardingSphereColumn("user_id", Types.INTEGER, false, false, false, true, false, false),
+                new ShardingSphereColumn("product_id", Types.INTEGER, false, false, false, true, false, false),
+                new ShardingSphereColumn("status", Types.VARCHAR, false, false, false, true, false, false),
+                new ShardingSphereColumn("c_date", Types.TIMESTAMP, false, false, false, true, false, false)), Collections.emptyList(), Collections.emptyList()));
+        tables.add(new ShardingSphereTable("t_other", Collections.singletonList(
+                new ShardingSphereColumn("order_id", Types.INTEGER, true, false, false, true, false, false)), Collections.emptyList(), Collections.emptyList()));
+        tables.add(new ShardingSphereTable("t_category", Collections.singleton(new ShardingSphereColumn("id", Types.INTEGER, true, false, false, true, false, false)),
+                Collections.emptyList(), Collections.emptyList()));
+        tables.add(new ShardingSphereTable("t_product", Collections.singleton(new ShardingSphereColumn("product_id", Types.INTEGER, true, false, false, true, false, false)),
+                Collections.emptyList(), Collections.emptyList()));
+        tables.add(new ShardingSphereTable("t_user", Collections.singleton(new ShardingSphereColumn("user_id", Types.INTEGER, true, false, false, true, false, false)),
+                Collections.emptyList(), Collections.emptyList()));
+        tables.add(new ShardingSphereTable("t_hint_test", Collections.singleton(new ShardingSphereColumn("user_id", Types.INTEGER, true, false, false, true, false, false)),
+                Collections.emptyList(), Collections.emptyList()));
+        return Collections.singleton(new ShardingSphereSchema("foo_db", tables, Collections.emptyList()));
     }
 }

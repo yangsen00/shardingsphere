@@ -19,16 +19,15 @@ package org.apache.shardingsphere.infra.executor.audit;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.apache.shardingsphere.infra.binder.statement.SQLStatementContext;
+import org.apache.shardingsphere.infra.annotation.HighFrequencyInvocation;
 import org.apache.shardingsphere.infra.metadata.database.ShardingSphereDatabase;
-import org.apache.shardingsphere.infra.metadata.database.rule.ShardingSphereRuleMetaData;
-import org.apache.shardingsphere.infra.metadata.user.Grantee;
+import org.apache.shardingsphere.infra.metadata.database.rule.RuleMetaData;
 import org.apache.shardingsphere.infra.rule.ShardingSphereRule;
-import org.apache.shardingsphere.infra.util.spi.type.ordered.OrderedSPILoader;
+import org.apache.shardingsphere.infra.session.query.QueryContext;
+import org.apache.shardingsphere.infra.spi.type.ordered.OrderedSPILoader;
 
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map.Entry;
 
 /**
@@ -40,21 +39,19 @@ public final class SQLAuditEngine {
     /**
      * Audit SQL.
      *
-     * @param sqlStatementContext SQL statement context
-     * @param params SQL parameters
-     * @param globalRuleMetaData global rule meta data
+     * @param queryContext query context
      * @param database database
-     * @param grantee grantee
      */
+    @HighFrequencyInvocation
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public static void audit(final SQLStatementContext<?> sqlStatementContext, final List<Object> params,
-                             final ShardingSphereRuleMetaData globalRuleMetaData, final ShardingSphereDatabase database, final Grantee grantee) {
+    public static void audit(final QueryContext queryContext, final ShardingSphereDatabase database) {
+        RuleMetaData globalRuleMetaData = queryContext.getMetaData().getGlobalRuleMetaData();
         Collection<ShardingSphereRule> rules = new LinkedList<>(globalRuleMetaData.getRules());
         if (null != database) {
             rules.addAll(database.getRuleMetaData().getRules());
         }
         for (Entry<ShardingSphereRule, SQLAuditor> entry : OrderedSPILoader.getServices(SQLAuditor.class, rules).entrySet()) {
-            entry.getValue().audit(sqlStatementContext, params, grantee, globalRuleMetaData, database, entry.getKey());
+            entry.getValue().audit(queryContext, database, entry.getKey());
         }
     }
 }

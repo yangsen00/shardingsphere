@@ -17,7 +17,7 @@
 
 package org.apache.shardingsphere.sharding.exception.syntax;
 
-import org.apache.shardingsphere.infra.util.exception.external.sql.sqlstate.XOpenSQLState;
+import org.apache.shardingsphere.infra.exception.external.sql.sqlstate.XOpenSQLState;
 import org.apache.shardingsphere.sharding.exception.ShardingSQLException;
 
 /**
@@ -28,6 +28,6 @@ public final class MissingGenerateKeyColumnWithInsertSelectException extends Sha
     private static final long serialVersionUID = 568269722599010228L;
     
     public MissingGenerateKeyColumnWithInsertSelectException() {
-        super(XOpenSQLState.SYNTAX_ERROR, 48, "INSERT INTO ... SELECT can not support applying key generator with absent generate key column.");
+        super(XOpenSQLState.SYNTAX_ERROR, 38, "INSERT INTO ... SELECT can not support applying key generator with absent generate key column.");
     }
 }

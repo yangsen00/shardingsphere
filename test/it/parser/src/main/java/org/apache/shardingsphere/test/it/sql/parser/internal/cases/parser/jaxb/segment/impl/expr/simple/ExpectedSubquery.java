@@ -19,7 +19,8 @@ package org.apache.shardingsphere.test.it.sql.parser.internal.cases.parser.jaxb.
 
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.shardingsphere.test.it.sql.parser.internal.cases.parser.jaxb.statement.dml.SelectStatementTestCase;
+import org.apache.shardingsphere.test.it.sql.parser.internal.cases.parser.jaxb.statement.dml.standard.MergeStatementTestCase;
+import org.apache.shardingsphere.test.it.sql.parser.internal.cases.parser.jaxb.statement.dml.standard.SelectStatementTestCase;
 
 import javax.xml.bind.annotation.XmlElement;
 
@@ -32,4 +33,7 @@ public final class ExpectedSubquery extends ExpectedBaseSimpleExpression {
     
     @XmlElement(name = "select")
     private SelectStatementTestCase selectTestCases;
+    
+    @XmlElement(name = "merge")
+    private MergeStatementTestCase mergeTestCases;
 }

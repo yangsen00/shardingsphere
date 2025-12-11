@@ -35,12 +35,8 @@ execute
     | showComputeNodeMode
     | labelComputeNode
     | unlabelComputeNode
-    | countSingleTable
     | alterComputeNode
     | showLogicalTables
-    | showSingleTable
-    | showDefaultSingleTableStorageUnit
-    | setDefaultSingleTableStorageUnit
     | refreshDatabaseMetadata
     | refreshTableMetadata
     | showTableMetadata
@@ -50,9 +46,10 @@ execute
     | importMetaData
     | exportStorageNodes
     | convertYamlConfiguration
-    | showMigrationRule
-    | alterMigrationRule
     | lockCluster
     | unlockCluster
-    ) SEMI?
+    | showPluginImplementations
+    | showKeyGenerateAlgorithmPlugins
+    | showLoadBalanceAlgorithmPlugins
+    ) SEMI_? EOF
     ;

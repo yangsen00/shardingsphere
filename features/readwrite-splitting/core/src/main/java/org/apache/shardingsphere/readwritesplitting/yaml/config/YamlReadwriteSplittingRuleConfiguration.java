@@ -19,10 +19,13 @@ package org.apache.shardingsphere.readwritesplitting.yaml.config;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.shardingsphere.infra.algorithm.core.yaml.YamlAlgorithmConfiguration;
 import org.apache.shardingsphere.infra.yaml.config.pojo.rule.YamlRuleConfiguration;
-import org.apache.shardingsphere.infra.yaml.config.pojo.algorithm.YamlAlgorithmConfiguration;
-import org.apache.shardingsphere.readwritesplitting.api.ReadwriteSplittingRuleConfiguration;
-import org.apache.shardingsphere.readwritesplitting.yaml.config.rule.YamlReadwriteSplittingDataSourceRuleConfiguration;
+import org.apache.shardingsphere.mode.node.rule.tuple.annotation.RuleNodeTupleField;
+import org.apache.shardingsphere.mode.node.rule.tuple.annotation.RuleNodeTupleEntity;
+import org.apache.shardingsphere.mode.node.rule.tuple.annotation.RuleNodeTupleField.Type;
+import org.apache.shardingsphere.readwritesplitting.config.ReadwriteSplittingRuleConfiguration;
+import org.apache.shardingsphere.readwritesplitting.yaml.config.rule.YamlReadwriteSplittingDataSourceGroupRuleConfiguration;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -30,12 +33,15 @@ import java.util.Map;
 /**
  * Readwrite-splitting rule configuration for YAML.
  */
+@RuleNodeTupleEntity("readwrite_splitting")
 @Getter
 @Setter
 public final class YamlReadwriteSplittingRuleConfiguration implements YamlRuleConfiguration {
     
-    private Map<String, YamlReadwriteSplittingDataSourceRuleConfiguration> dataSources = new LinkedHashMap<>();
+    @RuleNodeTupleField(type = Type.DATA_SOURCE)
+    private Map<String, YamlReadwriteSplittingDataSourceGroupRuleConfiguration> dataSourceGroups = new LinkedHashMap<>();
     
+    @RuleNodeTupleField(type = Type.ALGORITHM)
     private Map<String, YamlAlgorithmConfiguration> loadBalancers = new LinkedHashMap<>();
     
     @Override

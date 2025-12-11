@@ -21,15 +21,15 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.shardingsphere.database.exception.core.exception.connection.TooManyConnectionsException;
 import org.apache.shardingsphere.proxy.frontend.connection.ConnectionLimitContext;
-import org.apache.shardingsphere.dialect.exception.connection.TooManyConnectionsException;
 import org.apache.shardingsphere.proxy.frontend.spi.DatabaseProtocolFrontendEngine;
 
 /**
  * Frontend channel limitation inbound handler.
  */
-@Slf4j
 @RequiredArgsConstructor
+@Slf4j
 public class FrontendChannelLimitationInboundHandler extends ChannelInboundHandlerAdapter {
     
     private final DatabaseProtocolFrontendEngine databaseProtocolFrontendEngine;

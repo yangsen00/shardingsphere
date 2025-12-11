@@ -32,11 +32,11 @@ dropEncryptRule
     ;
 
 encryptRuleDefinition
-    : tableName LP_ COLUMNS LP_ encryptColumnDefinition (COMMA_ encryptColumnDefinition)* RP_ RP_
+    : tableName encryptTableRuleDefinition
     ;
 
-resourceName
-    : IDENTIFIER_
+encryptTableRuleDefinition
+    : LP_ COLUMNS LP_ encryptColumnDefinition (COMMA_ encryptColumnDefinition)* RP_ RP_
     ;
 
 encryptColumnDefinition
@@ -45,10 +45,6 @@ encryptColumnDefinition
 
 columnDefinition
     : NAME EQ_ columnName
-    ;
-
-columnName
-    : IDENTIFIER_
     ;
 
 cipherColumnDefinition
@@ -87,10 +83,3 @@ likeQueryAlgorithm
     : LIKE_QUERY_ALGORITHM LP_ algorithmDefinition RP_
     ;
 
-ifExists
-    : IF EXISTS
-    ;
-
-ifNotExists
-    : IF NOT EXISTS
-    ;

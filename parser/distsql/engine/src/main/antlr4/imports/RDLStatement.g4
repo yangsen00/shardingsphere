@@ -20,19 +20,19 @@ grammar RDLStatement;
 import BaseRule;
 
 registerStorageUnit
-    : REGISTER STORAGE UNIT ifNotExists? storageUnitDefinition (COMMA_ storageUnitDefinition)*
+    : REGISTER STORAGE UNIT ifNotExists? storageUnitsDefinition (COMMA_ checkPrivileges)?
     ;
 
 alterStorageUnit
-    : ALTER STORAGE UNIT storageUnitDefinition (COMMA_ storageUnitDefinition)*
+    : ALTER STORAGE UNIT storageUnitsDefinition (COMMA_ checkPrivileges)?
     ;
 
 unregisterStorageUnit
-    : UNREGISTER STORAGE UNIT ifExists? storageUnitName (COMMA_ storageUnitName)* ignoreSingleTables?
+    : UNREGISTER STORAGE UNIT ifExists? storageUnitName (COMMA_ storageUnitName)* ignoreTables?
     ;
 
-setDefaultSingleTableStorageUnit
-    : SET DEFAULT SINGLE TABLE STORAGE UNIT EQ_ (storageUnitName | RANDOM)
+storageUnitsDefinition
+    : storageUnitDefinition (COMMA_ storageUnitDefinition)*
     ;
 
 storageUnitDefinition
@@ -71,8 +71,10 @@ password
     : STRING_
     ;
 
-ignoreSingleTables
-    : IGNORE SINGLE TABLES
+ignoreTables
+    : IGNORE (SINGLE COMMA_ BROADCAST | BROADCAST COMMA_ SINGLE) TABLES # ignoreSingleAndBroadcastTables
+    | IGNORE SINGLE TABLES # ignoreSingleTables
+    | IGNORE BROADCAST TABLES # ignoreBroadcastTables
     ;
 
 ifExists
@@ -81,4 +83,12 @@ ifExists
 
 ifNotExists
     : IF NOT EXISTS
+    ;
+
+checkPrivileges
+    : CHECK_PRIVILEGES EQ_ privilegeType (COMMA_ privilegeType)*
+    ;
+
+privilegeType
+    : IDENTIFIER_
     ;

@@ -25,8 +25,8 @@ import org.mockito.internal.configuration.plugins.Plugins;
 
 import java.util.Collections;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.isA;
 
 class PrometheusMetricsGaugeMetricFamilyCollectorTest {
     
@@ -34,7 +34,7 @@ class PrometheusMetricsGaugeMetricFamilyCollectorTest {
     void assertCreate() throws ReflectiveOperationException {
         PrometheusMetricsGaugeMetricFamilyCollector collector = new PrometheusMetricsGaugeMetricFamilyCollector(new MetricConfiguration("foo_gauge_metric_family",
                 MetricCollectorType.GAUGE_METRIC_FAMILY, "foo_help", Collections.emptyList(), Collections.emptyMap()));
-        collector.addMetric(Collections.emptyList(), 1d);
-        assertThat(Plugins.getMemberAccessor().get(PrometheusMetricsGaugeMetricFamilyCollector.class.getDeclaredField("gaugeMetricFamily"), collector), instanceOf(GaugeMetricFamily.class));
+        collector.addMetric(Collections.emptyList(), 1D);
+        assertThat(Plugins.getMemberAccessor().get(PrometheusMetricsGaugeMetricFamilyCollector.class.getDeclaredField("gaugeMetricFamily"), collector), isA(GaugeMetricFamily.class));
     }
 }

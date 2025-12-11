@@ -17,7 +17,8 @@
 
 package org.apache.shardingsphere.transaction.exception;
 
-import org.apache.shardingsphere.infra.util.exception.external.sql.sqlstate.XOpenSQLState;
+import org.apache.shardingsphere.infra.exception.external.sql.sqlstate.XOpenSQLState;
+import org.apache.shardingsphere.infra.exception.external.sql.type.kernel.category.TransactionSQLException;
 
 /**
  * Close transaction manager failed exception.
@@ -26,7 +27,7 @@ public final class CloseTransactionManagerFailedException extends TransactionSQL
     
     private static final long serialVersionUID = -3396778990357223580L;
     
-    public CloseTransactionManagerFailedException(final Exception exception) {
-        super(XOpenSQLState.INVALID_TRANSACTION_STATE, 205, "Close transaction manager failed, `%s`", exception.getMessage());
+    public CloseTransactionManagerFailedException(final Exception cause) {
+        super(XOpenSQLState.INVALID_TRANSACTION_STATE, 4, cause, "Close transaction manager failed.");
     }
 }

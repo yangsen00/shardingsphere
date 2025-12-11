@@ -19,32 +19,43 @@ chapter = true
 ## 代码提交行为规范
 
  - 确保遵守编码规范。
- - 确保构建流程中的各个步骤都成功完成，包括：Apache 协议文件头检查、Checkstyle 检查、编译、单元测试等。构建流程启动命令：`./mvnw clean install -B -T1C -Dmaven.javadoc.skip -Dmaven.jacoco.skip -e`。
+ - 确保构建流程中的各个步骤都成功完成，包括：Apache 协议文件头检查、Checkstyle 检查、编译、单元测试等。构建流程启动命令：`./mvnw clean install -B -T1C -Pcheck`。
+ - 通过 Spotless 统一代码风格，执行 `./mvnw spotless:apply -Pcheck` 格式化代码。
  - 确保覆盖率不低于 master 分支。
  - 应尽量将设计精细化拆分；做到小幅度修改，多次数提交，但应保证提交的完整性。
- - 通过 Spotless 统一代码风格，执行 `mvn spotless:apply` 格式化代码。
- - 如果您使用 IDEA，可导入推荐的 `src/resources/code-style-idea.xml`。
- 
+ - 如果您使用 IDEA，可导入 `src/resources/idea/code-style.xml`，用于保持代码风格一致性。
+ - 如果您使用 IDEA，可导入 `src/resources/idea/inspections.xml`，用于检测代码潜在问题。
+
 ## 编码规范
 
  - 使用 linux 换行符。
+ - 每行代码不超过 200 字符无需换行。
  - 不应有无意义的空行。请提炼私有方法，代替方法体过长或代码段逻辑闭环而采用的空行间隔。
- - 类、方法和变量的命名要做到顾名思义，类、方法名避免使用缩写，部分变量名可以使用缩写。
-   - 变量名 `arguments` 缩写为 `args`；
-   - 变量名 `parameters` 缩写为 `params`；
-   - 变量名 `environment` 缩写为 `env`；
-   - 变量名 `properties` 缩写为 `props`；
-   - 变量名 `configuration` 缩写为 `config`。
- - 三位以内字符的专有名词缩写使用大写，超过三位字符的缩写采用驼峰形式。
-   - 三位以内字符的类和方法名称缩写的示例：SQL92Lexer、XMLTransfer、MySQLAdminExecutorCreator；
-   - 三位以上字符的类和方法名称缩写的示例：JdbcUrlAppender、YamlAgentConfigurationSwapper；
-   - 变量应使用小驼峰形式：mysqlAuthenticationMethod、sqlStatement、mysqlConfig。
- - 除了直接返回方法入参，返回变量使用 `result` 命名；循环中使用 `each` 命名循环变量；map 中使用 `entry` 代替 `each`。
- - 捕获的异常名称命名为 `ex` ；捕获异常且不做任何事情，异常名称命名为 `ignored`。
- - 配置文件使用 `Spinal Case` 命名（一种使用 `-` 分割单词的特殊 `Snake Case`）。
+ - 命名规范：
+   - 命名要做到顾名思义。
+   - 类、方法名避免使用缩写，部分变量名可以使用缩写。
+     - 变量名 `arguments` 缩写为 `args`；
+     - 变量名 `parameters` 缩写为 `params`；
+     - 变量名 `environment` 缩写为 `env`；
+     - 变量名 `properties` 缩写为 `props`；
+     - 变量名 `configuration` 缩写为 `config`。
+   - 三位以内字符的专有名词缩写使用大写，超过三位字符的缩写采用驼峰形式。
+     - 三位以内字符的类和方法名称缩写的示例：SQL92Lexer、XMLTransfer、MySQLAdminExecutorCreator；
+     - 三位以上字符的类和方法名称缩写的示例：JdbcUrlAppender、YamlAgentConfigurationSwapper；
+     - 变量应使用小驼峰形式：mysqlAuthenticationMethod、sqlStatement、mysqlConfig。
+   - 符合下列条件的局部变量，应参照下列规则命名：
+     - 除了直接返回方法入参，返回变量使用 `result` 命名；
+     - 循环中使用 `each` 命名循环变量；
+     - map 中使用 `entry` 代替 `each`；
+     - 捕获的异常名称命名为 `ex` ；
+     - 捕获异常且不做任何事情，异常名称命名为 `ignored`。
+   - 方法入参名禁止使用 `result`、`each`、`entry`。
+   - 工具类名称命名为 `xxUtils`。
+   - 配置文件使用 `Spinal Case` 命名（一种使用 `-` 分割单词的特殊 `Snake Case`）。
  - 需要注释解释的代码尽量提成小方法，用方法名称解释。
  - `equals` 和 `==` 条件表达式中，常量在左，变量在右；大于小于等条件表达式中，变量在左，常量在右。
  - 除了构造器入参与全局变量名称相同的赋值语句外，避免使用 `this` 修饰符。
+ - 局部变量不应设置为 final。
  - 除了用于继承的抽象类之外，尽量将类设计为 `final`。
  - 嵌套循环尽量提成方法。
  - 成员变量定义顺序以及参数传递顺序在各个类和方法中保持一致。
@@ -55,15 +66,22 @@ chapter = true
  - 优先使用 lombok 代替构造器，getter, setter 方法和 log 变量。
  - 优先考虑使用 `LinkedList`，只有在需要通过下标获取集合中元素值时再使用 `ArrayList`。
  - `ArrayList`，`HashMap` 等可能产生扩容的集合类型必须指定集合初始大小，避免扩容。
- - 日志与注释一律使用英文。
- - 注释只能包含 javadoc，todo 和 fixme。
- - 公开的类和方法必须有 javadoc，对用户的 API 和 SPI 的 javadoc 需要写的清晰全面，其他类和方法以及覆盖自父类的方法无需 javadoc。
  - 优先使用三目运算符代替 if else 的返回和赋值语句。
  - 禁止嵌套使用三目运算符。
  - 条件表达式中，优先使用正向语义，以便于理解代码逻辑。例如：`if (null == param) {} else {}`。
  - 使用具体的 `@SuppressWarnings("xxx")` 代替 `@SuppressWarnings("all")`。
- - 热点方法内应避免使用 Java Stream，除非该场景下使用 Stream 的性能优于普通循环。
- - 工具类名称命名为 `xxUtils`。
+ - 合理使用 `@HighFrequencyInvocation` 注解，用于聚焦关键方法性能的优化。
+   - 使用 `@HighFrequencyInvocation` 注解的时机：
+     - 请求频繁调用的链路，标注其中高频调用的类、方法或构造器，标注范围精确匹配；
+     - `canBeCached` 属性为 `true` 时，表示该目标为可复用的缓存资源，例如：数据库连接。
+   - 标注 `@HighFrequencyInvocation` 的代码段须严格保证代码性能，以下为标注代码段内的禁止项：
+     - 禁止调用 Java Stream API；
+     - 禁止通过 `+` 拼接字符串；
+     - 禁止调用 LinkedList 的 `get(int index)` 方法。
+ - 注释 & 日志规范：
+   - 日志与注释一律使用英文。
+   - 注释只能包含 JAVADOC，TODO 和 FIXME。
+   - 公开的类和方法必须有 JAVADOC，对用户的 API 和 SPI 的 JAVADOC 需要写的清晰全面，其他类和方法以及覆盖自父类的方法无需 JAVADOC。
 
 ## 单元测试规范
 
@@ -84,19 +102,44 @@ chapter = true
  - 数据断言规范应遵循：
     - 布尔类型断言应使用 `assertTrue` 和 `assertFalse`；
     - 空值断言应使用 `assertNull` 和 `assertNotNull`；
-    - 其他类型应使用 `assertThat`。
+    - 其他类型断言应使用 `assertThat(actual, is(expected))` 代替 `assertEquals`；
+    - 使用 Hamcrest 匹配器（如 `is()`、`not()`）来进行精确且可读性高的断言。
  - 测试用例的真实值应名为为 actual XXX，期望值应命名为 expected XXX。
- - 测试类和 `@Test` 标注的方法无需 javadoc。
+ - 测试类和 `@Test` 标注的方法无需 JAVADOC。
  - 使用 `mock` 应遵循如下规范：
    - 单元测试需要连接某个环境时，应使用 `mock`；
    - 单元测试包含不容易构建的对象时，例如：超过两层嵌套并且和测试无关的对象，应使用 `mock`。
    - 模拟静态方法或构造器，应优先考虑使用测试框架提供的 `AutoMockExtension` 和 `StaticMockSettings` 自动释放资源；若使用 Mockito `mockStatic` 和 `mockConstruction` 方法，必须搭配 `try-with-resource` 或在清理方法中关闭，避免泄漏。
    - 校验仅有一次调用时，无需使用 `times(1)` 参数，使用 `verify` 的单参数方法即可。
+ - 使用 `assert` 前缀命名所有的测试用例。
+ - 测试数据应使用标准化前缀（如 `foo_`/`bar_`）明确标识其测试用途。
+ - 使用 `PropertiesBuilder` 简化 `Properties` 构造。
 
-## G4 规范
+## SQL 解析规范
 
- - 公共规范
-   - 每行长度不超过 `200` 个字符，保证每一行语义完整以便于理解。
+### 维护规范
+
+ - SQL 解析模块涉及的 `G4` 语法文件以及 `SQLVisitor` 实现类，需要根据如下的数据库关系进行差异代码标记。当数据库 A 不提供对应的数据库驱动和协议，而是直接使用数据库 B 的驱动和协议时，可以认为数据库 A 是数据库 B 的分支数据库。
+通常分支数据库会直接使用主干数据库的 SQL 解析逻辑，但是为了适配分支数据库的特有语法，部分分支数据库会从主干数据库复制并维护自己的 SQL 解析逻辑，此时对于分支数据库的特有语法，需要使用注释进行标记，其他部分需要和主干数据库的实现保持一致；
+
+    | 主干数据库      | 分支数据库         |
+    |------------|---------------|
+    | MySQL      | MariaDB、Doris |
+    | PostgreSQL | -             |
+    | openGauss  | -             |
+    | Oracle     | -             |
+    | SQLServer  | -             |
+    | ClickHouse | -             |
+    | Hive       | -             |
+    | Presto     | -             |
+    | SQL92      | -             |
+
+ - 差异代码标记语法，增加时将 `{DatabaseType}` 替换为数据库类型大写名，例如：`DORIS`。
+   - 新增语法：`// {DatabaseType} ADDED BEGIN` 和 `// {DatabaseType} ADDED END`；
+   - 修改语法：`// {DatabaseType} CHANGED BEGIN` 和 `// {DatabaseType} CHANGED END`。
+
+### G4 规范
+
  - 词法解析规范
    - 每个规则一行，规则间无需空行。
    - 规则名称使用大写字母。如果名称由多个单词组成，用 `下划线` 间隔。`DataType` 和 `Symbol` 的规则命名以 `下划线` 结尾。与 ANTLR 内置变量或关键字重名的规则在结尾加 `下划线` 以示区分。
@@ -112,10 +155,11 @@ chapter = true
 ## GitHub Action 规范
 
 - Workflow 文件名以 `.yml` 结尾。
-- Workflow 文件名由 `触发方式-执行操作` 的小写字母组成，例如 `nightly-check.yml`。pull_request 触发的任务省略触发方式，例如 `check.yml`。
-- 触发方式包括：pull_request（不加前缀）、nightly。
-- 执行操作包括： check、ci、e2e 、build。
-- Workflow 文件内的 `name` 属性命名与文件名一致，单词以 `-` 作为分隔符，分隔符两侧要加空格，每个单词首字母大写，例如 `Nightly - Check`。
+- Workflow 文件名由 `触发方式-执行操作` 的小写字母组成。例如：`nightly-check.yml`。pull_request 触发的任务省略触发方式，例如：`check.yml`。
+- 触发方式包括：pull_request（不加前缀）、nightly、schedule。
+- 执行操作包括：check、ci、e2e 、build、report。
+- Workflow 文件内的 `name` 属性命名与文件名一致，单词以 `-` 作为分隔符，分隔符两侧要加空格，每个单词首字母大写。例如：`Nightly - Check`。
+- Step 下的 `name` 属性应该描述 step 的功能，每个单词首字母大写，介词小写。例如：`Build Project with Maven`。
 - Workflow 中的 `job` 属性命名，须在 Workflow 中保持唯一。
-- 使用 `matrix` 的时候，必须添加作业并行度限制为 5：`max-parallel: 5`。
-- 必须为作业设置超时时间，最大不超过 1 小时。例如 `timeout-minutes: 10`。
+- 使用 `matrix` 的时候，必须添加作业并行度限制为 20。例如：`max-parallel: 20`。
+- 必须为作业设置超时时间，最大不超过 1 小时。例如：`timeout-minutes: 10`。

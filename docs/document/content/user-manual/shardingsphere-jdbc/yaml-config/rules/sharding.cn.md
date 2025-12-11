@@ -44,9 +44,6 @@ rules:
   bindingTables (+): # 绑定表规则列表
     - <logic_table_name_1, logic_table_name_2, ...> 
     - <logic_table_name_1, logic_table_name_2, ...> 
-  broadcastTables (+): # 广播表规则列表
-    - <table_name>
-    - <table_name>
   defaultDatabaseStrategy: # 默认数据库分片策略
   defaultTableStrategy: # 默认表分片策略
   defaultKeyGenerateStrategy: # 默认的分布式序列策略
@@ -71,6 +68,11 @@ rules:
       type: # 分片审计算法类型
       props: # 分片审计算法属性配置
       # ...
+
+- !BROADCAST
+  tables: # 广播表规则列表
+    - <table_name>
+    - <table_name>
 ```
 
 ## 操作步骤
@@ -87,13 +89,13 @@ dataSources:
   ds_0:
     dataSourceClassName: com.zaxxer.hikari.HikariDataSource
     driverClassName: com.mysql.jdbc.Driver
-    jdbcUrl: jdbc:mysql://localhost:3306/demo_ds_0?serverTimezone=UTC&useSSL=false&useUnicode=true&characterEncoding=UTF-8
+    standardJdbcUrl: jdbc:mysql://localhost:3306/demo_ds_0?serverTimezone=UTC&useSSL=false&useUnicode=true&characterEncoding=UTF-8
     username: root
     password:
   ds_1:
     dataSourceClassName: com.zaxxer.hikari.HikariDataSource
     driverClassName: com.mysql.jdbc.Driver
-    jdbcUrl: jdbc:mysql://localhost:3306/demo_ds_1?serverTimezone=UTC&useSSL=false&useUnicode=true&characterEncoding=UTF-8
+    standardJdbcUrl: jdbc:mysql://localhost:3306/demo_ds_1?serverTimezone=UTC&useSSL=false&useUnicode=true&characterEncoding=UTF-8
     username: root
     password:
 
@@ -133,8 +135,6 @@ rules:
   defaultShardingColumn: account_id
   bindingTables:
     - t_order,t_order_item
-  broadcastTables:
-    - t_address
   defaultDatabaseStrategy:
     standard:
       shardingColumn: user_id
@@ -165,6 +165,10 @@ rules:
   auditors:
     sharding_key_required_auditor:
       type: DML_SHARDING_CONDITIONS
+
+- !BROADCAST
+  tables:
+    - t_address
 
 props:
   sql-show: false

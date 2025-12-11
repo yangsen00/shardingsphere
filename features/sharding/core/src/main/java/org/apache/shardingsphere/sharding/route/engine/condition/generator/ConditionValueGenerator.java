@@ -17,10 +17,10 @@
 
 package org.apache.shardingsphere.sharding.route.engine.condition.generator;
 
-import org.apache.shardingsphere.sharding.route.engine.condition.Column;
+import org.apache.shardingsphere.infra.metadata.database.schema.HashColumn;
 import org.apache.shardingsphere.sharding.route.engine.condition.value.ShardingConditionValue;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.dml.expr.ExpressionSegment;
-import org.apache.shardingsphere.timeservice.core.rule.TimeServiceRule;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.dml.expr.ExpressionSegment;
+import org.apache.shardingsphere.timeservice.core.rule.TimestampServiceRule;
 
 import java.util.List;
 import java.util.Optional;
@@ -34,12 +34,12 @@ public interface ConditionValueGenerator<T extends ExpressionSegment> {
     
     /**
      * Generate route value.
-     * 
+     *
      * @param predicateRightValue predicate right value
      * @param column column
      * @param params SQL parameters
-     * @param timeServiceRule time service rule
+     * @param timestampServiceRule time service rule
      * @return route value
      */
-    Optional<ShardingConditionValue> generate(T predicateRightValue, Column column, List<Object> params, TimeServiceRule timeServiceRule);
+    Optional<ShardingConditionValue> generate(T predicateRightValue, HashColumn column, List<Object> params, TimestampServiceRule timestampServiceRule);
 }

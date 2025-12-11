@@ -14,13 +14,9 @@ ShardingSphere-JDBC 提供了 JDBC 驱动，可以仅通过配置变更即可使
 
 `org.apache.shardingsphere.driver.ShardingSphereDriver`
 
-### URL 配置
+### URL 配置及配置示例
 
-- 以 `jdbc:shardingsphere:` 为前缀
-- 配置文件：`xxx.yaml`，配置文件格式与 [YAML 配置](/cn/user-manual/shardingsphere-jdbc/yaml-config/)一致
-- 配置文件加载规则：
-  - 无前缀表示从指定路径加载配置文件
-  - `classpath:` 前缀表示从类路径中加载配置文件
+参考 [已知实现](./known-implementation/_index.cn.md) 。
 
 ## 操作步骤
 
@@ -29,7 +25,7 @@ ShardingSphere-JDBC 提供了 JDBC 驱动，可以仅通过配置变更即可使
 ```xml
 <dependency>
     <groupId>org.apache.shardingsphere</groupId>
-    <artifactId>shardingsphere-jdbc-core</artifactId>
+    <artifactId>shardingsphere-jdbc</artifactId>
     <version>${shardingsphere.version}</version>
 </dependency>
 ```
@@ -40,11 +36,11 @@ ShardingSphere-JDBC 提供了 JDBC 驱动，可以仅通过配置变更即可使
 
 ```java
 Class.forName("org.apache.shardingsphere.driver.ShardingSphereDriver");
-String jdbcUrl = "jdbc:shardingsphere:classpath:config.yaml";
+String standardJdbcUrl = "jdbc:shardingsphere:classpath:config.yaml";
 
 String sql = "SELECT i.* FROM t_order o JOIN t_order_item i ON o.order_id=i.order_id WHERE o.user_id=? AND o.order_id=?";
 try (
-        Connection conn = DriverManager.getConnection(jdbcUrl);
+        Connection conn = DriverManager.getConnection(standardJdbcUrl);
         PreparedStatement ps = conn.prepareStatement(sql)) {
     ps.setInt(1, 10);
     ps.setInt(2, 1000);
@@ -60,12 +56,12 @@ try (
 
 ```java
 String driverClassName = "org.apache.shardingsphere.driver.ShardingSphereDriver";
-String jdbcUrl = "jdbc:shardingsphere:classpath:config.yaml";
+String standardJdbcUrl = "jdbc:shardingsphere:classpath:config.yaml";
 
 // 以 HikariCP 为例 
 HikariDataSource dataSource = new HikariDataSource();
 dataSource.setDriverClassName(driverClassName);
-dataSource.setJdbcUrl(jdbcUrl);
+dataSource.setJdbcUrl(standardJdbcUrl);
 
 String sql = "SELECT i.* FROM t_order o JOIN t_order_item i ON o.order_id=i.order_id WHERE o.user_id=? AND o.order_id=?";
 try (
@@ -79,16 +75,4 @@ try (
         }
     }
 }
-```
-
-## 配置示例
-
-加载 classpath 中 config.yaml 配置文件的 JDBC URL：
-```
-jdbc:shardingsphere:classpath:config.yaml
-```
-
-加载绝对路径中 config.yaml 配置文件的 JDBC URL：
-```
-jdbc:shardingsphere:/path/to/config.yaml
 ```

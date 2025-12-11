@@ -17,10 +17,11 @@
 
 package org.apache.shardingsphere.readwritesplitting.route.standard.filter;
 
-import org.apache.shardingsphere.readwritesplitting.algorithm.loadbalance.RandomReadQueryLoadBalanceAlgorithm;
-import org.apache.shardingsphere.readwritesplitting.api.rule.ReadwriteSplittingDataSourceRuleConfiguration;
-import org.apache.shardingsphere.readwritesplitting.api.transaction.TransactionalReadQueryStrategy;
-import org.apache.shardingsphere.readwritesplitting.rule.ReadwriteSplittingDataSourceRule;
+import org.apache.shardingsphere.infra.algorithm.loadbalancer.random.RandomLoadBalanceAlgorithm;
+import org.apache.shardingsphere.readwritesplitting.config.rule.ReadwriteSplittingDataSourceGroupRuleConfiguration;
+import org.apache.shardingsphere.readwritesplitting.route.standard.filter.type.DisabledReadDataSourcesFilter;
+import org.apache.shardingsphere.readwritesplitting.rule.ReadwriteSplittingDataSourceGroupRule;
+import org.apache.shardingsphere.readwritesplitting.transaction.TransactionalReadQueryStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -32,13 +33,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 class DisabledReadDataSourcesFilterTest {
     
-    private ReadwriteSplittingDataSourceRule rule;
+    private ReadwriteSplittingDataSourceGroupRule rule;
     
     @BeforeEach
     void setUp() {
-        rule = new ReadwriteSplittingDataSourceRule(
-                new ReadwriteSplittingDataSourceRuleConfiguration("test_pr", "write_ds", Arrays.asList("read_ds_0", "read_ds_1"), null),
-                TransactionalReadQueryStrategy.DYNAMIC, new RandomReadQueryLoadBalanceAlgorithm());
+        rule = new ReadwriteSplittingDataSourceGroupRule(
+                new ReadwriteSplittingDataSourceGroupRuleConfiguration("test_pr", "write_ds", Arrays.asList("read_ds_0", "read_ds_1"), null),
+                TransactionalReadQueryStrategy.DYNAMIC, new RandomLoadBalanceAlgorithm());
     }
     
     @Test
@@ -47,27 +48,21 @@ class DisabledReadDataSourcesFilterTest {
     }
     
     @Test
-    void assertGetReadDataSourceNamesWithDisabledDataSourceNames() {
-        rule.updateDisabledDataSourceNames("read_ds_0", true);
+    void assertDisableDataSource() {
+        rule.disableDataSource("read_ds_0");
         assertThat(new DisabledReadDataSourcesFilter().filter(rule, Arrays.asList("read_ds_0", "read_ds_1")), is(Collections.singletonList("read_ds_1")));
     }
     
     @Test
-    void assertUpdateDisabledDataSourceNamesForDisabled() {
-        rule.updateDisabledDataSourceNames("read_ds_0", true);
-        assertThat(new DisabledReadDataSourcesFilter().filter(rule, Arrays.asList("read_ds_0", "read_ds_1")), is(Collections.singletonList("read_ds_1")));
-    }
-    
-    @Test
-    void assertUpdateDisabledDataSourceNamesForEnabled() {
-        rule.updateDisabledDataSourceNames("read_ds_0", true);
-        rule.updateDisabledDataSourceNames("read_ds_0", false);
+    void assertEnableDataSource() {
+        rule.disableDataSource("read_ds_0");
+        rule.enableDataSource("read_ds_0");
         assertThat(new DisabledReadDataSourcesFilter().filter(rule, Arrays.asList("read_ds_0", "read_ds_1")), is(Arrays.asList("read_ds_0", "read_ds_1")));
     }
     
     @Test
     void assertGetEnabledReplicaDataSources() {
-        rule.updateDisabledDataSourceNames("read_ds_0", true);
+        rule.disableDataSource("read_ds_0");
         assertThat(new DisabledReadDataSourcesFilter().filter(rule, Arrays.asList("read_ds_0", "read_ds_1")), is(Collections.singletonList("read_ds_1")));
     }
 }

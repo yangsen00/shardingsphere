@@ -108,7 +108,7 @@ mode:
  repository:
    type: H2
    props:
-     jdbcUrl: jdbc:h2:file:~/config_data # 元数据持久化数据库连接 URL
+     standardJdbcUrl: jdbc:h2:file:~/config_data # 元数据持久化数据库连接 URL
 
 rules: # 认证信息
  - !AUTHORITY
@@ -121,7 +121,6 @@ rules: # 认证信息
    defaultType: XA
    providerType: Atomikos
  - !SQL_PARSER
-   sqlCommentParseEnabled: true
    sqlStatementCache:
      initialCapacity: 2000
      maximumSize: 65535

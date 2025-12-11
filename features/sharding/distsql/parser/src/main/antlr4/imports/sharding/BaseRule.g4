@@ -23,6 +23,34 @@ literal
     : STRING_ | (MINUS_)? INT_ | TRUE | FALSE
     ;
 
+databaseName
+    : IDENTIFIER_
+    ;
+
+tableName
+    : IDENTIFIER_
+    ;
+
+columnName
+    : IDENTIFIER_
+    ;
+
+storageUnits
+    : STORAGE_UNITS LP_ storageUnit (COMMA_ storageUnit)* RP_
+    ;
+
+storageUnit
+    : IDENTIFIER_ | STRING_
+    ;
+
+dataNodes
+    : DATANODES LP_ dataNode (COMMA_ dataNode)* RP_
+    ;
+
+dataNode
+    : STRING_
+    ;
+
 algorithmDefinition
     : TYPE LP_ NAME EQ_ algorithmTypeName (COMMA_ propertiesDefinition)? RP_
     ;
@@ -39,9 +67,6 @@ buildInShardingAlgorithmType
     | AUTO_INTERVAL
     | INLINE
     | INTERVAL
-    | COSID_MOD
-    | COSID_INTERVAL
-    | COSID_INTERVAL_SNOWFLAKE
     | COMPLEX_INLINE
     | HINT_INLINE
     | CLASS_BASED
@@ -49,10 +74,7 @@ buildInShardingAlgorithmType
 
 buildInKeyGenerateAlgorithmType
     : SNOWFLAKE
-    | NANOID
     | UUID
-    | COSID
-    | COSID_SNOWFLAKE
     ;
 
 buildInShardingAuditAlgorithmType
@@ -71,7 +93,15 @@ property
     : key=STRING_ EQ_ value=literal
     ;
 
-tableName
+ifExists
+    : IF EXISTS
+    ;
+
+ifNotExists
+    : IF NOT EXISTS
+    ;
+
+ruleName
     : IDENTIFIER_
     ;
 
@@ -84,9 +114,5 @@ keyGeneratorName
     ;
 
 auditorName
-    : IDENTIFIER_
-    ;
-
-ruleName
     : IDENTIFIER_
     ;

@@ -18,7 +18,7 @@
 package org.apache.shardingsphere.shadow.yaml.swapper.table;
 
 import org.apache.shardingsphere.infra.util.yaml.swapper.YamlConfigurationSwapper;
-import org.apache.shardingsphere.shadow.api.config.table.ShadowTableConfiguration;
+import org.apache.shardingsphere.shadow.config.table.ShadowTableConfiguration;
 import org.apache.shardingsphere.shadow.yaml.config.table.YamlShadowTableConfiguration;
 
 import java.util.LinkedList;
@@ -31,8 +31,8 @@ public final class YamlShadowTableConfigurationSwapper implements YamlConfigurat
     @Override
     public YamlShadowTableConfiguration swapToYamlConfiguration(final ShadowTableConfiguration data) {
         YamlShadowTableConfiguration result = new YamlShadowTableConfiguration();
-        result.setDataSourceNames(data.getDataSourceNames());
-        result.setShadowAlgorithmNames(data.getShadowAlgorithmNames());
+        result.setDataSourceNames(new LinkedList<>(data.getDataSourceNames()));
+        result.setShadowAlgorithmNames(new LinkedList<>(data.getShadowAlgorithmNames()));
         return result;
     }
     

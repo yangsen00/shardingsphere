@@ -20,7 +20,7 @@ grammar RQLStatement;
 import BaseRule;
 
 showEncryptRules
-    : SHOW ENCRYPT (TABLE tableRule | RULES) (FROM databaseName)?
+    : SHOW ENCRYPT (TABLE? tableRule | RULES) (FROM databaseName)?
     ;
 
 tableRule
@@ -29,8 +29,4 @@ tableRule
 
 countEncryptRule
     : COUNT ENCRYPT RULE (FROM databaseName)?
-    ;
-
-databaseName
-    : IDENTIFIER_
     ;

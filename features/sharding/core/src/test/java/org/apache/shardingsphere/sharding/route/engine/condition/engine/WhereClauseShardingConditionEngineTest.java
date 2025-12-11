@@ -17,24 +17,20 @@
 
 package org.apache.shardingsphere.sharding.route.engine.condition.engine;
 
-import org.apache.groovy.util.Maps;
-import org.apache.shardingsphere.infra.binder.segment.table.TablesContext;
-import org.apache.shardingsphere.infra.binder.statement.dml.SelectStatementContext;
-import org.apache.shardingsphere.infra.database.type.DatabaseTypeEngine;
-import org.apache.shardingsphere.infra.metadata.database.ShardingSphereDatabase;
+import org.apache.shardingsphere.infra.binder.context.statement.type.dml.SelectStatementContext;
 import org.apache.shardingsphere.sharding.route.engine.condition.ShardingCondition;
 import org.apache.shardingsphere.sharding.route.engine.condition.value.ListShardingConditionValue;
 import org.apache.shardingsphere.sharding.route.engine.condition.value.RangeShardingConditionValue;
 import org.apache.shardingsphere.sharding.rule.ShardingRule;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.dml.column.ColumnSegment;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.dml.expr.BetweenExpression;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.dml.expr.ExpressionSegment;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.dml.expr.InExpression;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.dml.expr.ListExpression;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.dml.expr.simple.LiteralExpressionSegment;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.dml.predicate.WhereSegment;
-import org.apache.shardingsphere.sql.parser.sql.common.value.identifier.IdentifierValue;
-import org.apache.shardingsphere.timeservice.core.rule.TimeServiceRule;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.dml.column.ColumnSegment;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.dml.expr.BetweenExpression;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.dml.expr.ExpressionSegment;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.dml.expr.InExpression;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.dml.expr.ListExpression;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.dml.expr.simple.LiteralExpressionSegment;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.dml.predicate.WhereSegment;
+import org.apache.shardingsphere.sql.parser.statement.core.value.identifier.IdentifierValue;
+import org.apache.shardingsphere.timeservice.core.rule.TimestampServiceRule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,9 +43,8 @@ import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.hamcrest.Matchers.isA;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -59,7 +54,7 @@ class WhereClauseShardingConditionEngineTest {
     private WhereClauseShardingConditionEngine shardingConditionEngine;
     
     @Mock
-    private ShardingRule shardingRule;
+    private ShardingRule rule;
     
     @Mock
     private SelectStatementContext sqlStatementContext;
@@ -67,16 +62,10 @@ class WhereClauseShardingConditionEngineTest {
     @Mock
     private WhereSegment whereSegment;
     
-    @Mock
-    private TablesContext tablesContext;
-    
     @BeforeEach
     void setUp() {
-        shardingConditionEngine = new WhereClauseShardingConditionEngine(
-                ShardingSphereDatabase.create("test_db", DatabaseTypeEngine.getDatabaseType("MySQL")), shardingRule, mock(TimeServiceRule.class));
+        shardingConditionEngine = new WhereClauseShardingConditionEngine(rule, mock(TimestampServiceRule.class));
         when(sqlStatementContext.getWhereSegments()).thenReturn(Collections.singleton(whereSegment));
-        when(sqlStatementContext.getTablesContext()).thenReturn(tablesContext);
-        when(tablesContext.findTableNamesByColumnSegment(anyCollection(), any())).thenReturn(Maps.of("foo_sharding_col", "table_1"));
     }
     
     @Test
@@ -88,10 +77,10 @@ class WhereClauseShardingConditionEngineTest {
         ExpressionSegment andSegment = new LiteralExpressionSegment(0, 0, and);
         BetweenExpression betweenExpression = new BetweenExpression(0, 0, left, betweenSegment, andSegment, false);
         when(whereSegment.getExpr()).thenReturn(betweenExpression);
-        when(shardingRule.findShardingColumn(any(), any())).thenReturn(Optional.of("foo_sharding_col"));
+        when(rule.findShardingColumn(any(), any())).thenReturn(Optional.of("foo_sharding_col"));
         List<ShardingCondition> actual = shardingConditionEngine.createShardingConditions(sqlStatementContext, Collections.emptyList());
         assertThat(actual.get(0).getStartIndex(), is(0));
-        assertTrue(actual.get(0).getValues().get(0) instanceof RangeShardingConditionValue);
+        assertThat(actual.get(0).getValues().get(0), isA(RangeShardingConditionValue.class));
     }
     
     @Test
@@ -102,9 +91,9 @@ class WhereClauseShardingConditionEngineTest {
         right.getItems().add(literalExpressionSegment);
         InExpression inExpression = new InExpression(0, 0, left, right, false);
         when(whereSegment.getExpr()).thenReturn(inExpression);
-        when(shardingRule.findShardingColumn(any(), any())).thenReturn(Optional.of("foo_sharding_col"));
+        when(rule.findShardingColumn(any(), any())).thenReturn(Optional.of("foo_sharding_col"));
         List<ShardingCondition> actual = shardingConditionEngine.createShardingConditions(sqlStatementContext, Collections.emptyList());
         assertThat(actual.get(0).getStartIndex(), is(0));
-        assertTrue(actual.get(0).getValues().get(0) instanceof ListShardingConditionValue);
+        assertThat(actual.get(0).getValues().get(0), isA(ListShardingConditionValue.class));
     }
 }

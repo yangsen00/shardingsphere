@@ -17,7 +17,7 @@
 
 package org.apache.shardingsphere.sharding.exception.syntax;
 
-import org.apache.shardingsphere.infra.util.exception.external.sql.sqlstate.XOpenSQLState;
+import org.apache.shardingsphere.infra.exception.external.sql.sqlstate.XOpenSQLState;
 import org.apache.shardingsphere.sharding.exception.ShardingSQLException;
 
 /**
@@ -28,6 +28,6 @@ public final class InsertSelectTableViolationException extends ShardingSQLExcept
     private static final long serialVersionUID = 1221612068163533037L;
     
     public InsertSelectTableViolationException() {
-        super(XOpenSQLState.CHECK_OPTION_VIOLATION, 44, "The table inserted and the table selected must be the same or bind tables.");
+        super(XOpenSQLState.CHECK_OPTION_VIOLATION, 34, "The table inserted and the table selected must be the same or bind tables.");
     }
 }

@@ -18,12 +18,13 @@
 package org.apache.shardingsphere.infra.executor.sql.execute.result.query.impl.driver.jdbc.type.stream;
 
 import lombok.Getter;
-import org.apache.shardingsphere.infra.executor.exception.UnsupportedDataTypeConversionException;
-import org.apache.shardingsphere.infra.executor.exception.UnsupportedStreamCharsetConversionException;
+import org.apache.shardingsphere.infra.exception.kernel.data.UnsupportedDataTypeConversionException;
+import org.apache.shardingsphere.infra.exception.kernel.data.UnsupportedStreamCharsetConversionException;
 import org.apache.shardingsphere.infra.executor.sql.execute.result.query.impl.driver.jdbc.metadata.JDBCQueryResultMetaData;
 import org.apache.shardingsphere.infra.executor.sql.execute.result.query.type.stream.AbstractStreamQueryResult;
 
 import java.io.InputStream;
+import java.io.Reader;
 import java.math.BigDecimal;
 import java.sql.Array;
 import java.sql.Blob;
@@ -33,19 +34,28 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.ZonedDateTime;
 import java.util.Calendar;
+import java.util.Optional;
 
 /**
  * JDBC query result for stream loading.
  */
+@Getter
 public final class JDBCStreamQueryResult extends AbstractStreamQueryResult {
     
-    @Getter
     private final ResultSet resultSet;
     
+    private final boolean containsJDBCResultSet;
+    
     public JDBCStreamQueryResult(final ResultSet resultSet) throws SQLException {
+        this(resultSet, false);
+    }
+    
+    public JDBCStreamQueryResult(final ResultSet resultSet, final boolean containsJDBCResultSet) throws SQLException {
         super(new JDBCQueryResultMetaData(resultSet.getMetaData()));
         this.resultSet = resultSet;
+        this.containsJDBCResultSet = containsJDBCResultSet;
     }
     
     @Override
@@ -103,11 +113,14 @@ public final class JDBCStreamQueryResult extends AbstractStreamQueryResult {
         if (Array.class == type) {
             return resultSet.getArray(columnIndex);
         }
+        if (ZonedDateTime.class == type) {
+            return resultSet.getObject(columnIndex, type);
+        }
         return resultSet.getObject(columnIndex);
     }
     
     @Override
-    public Object getCalendarValue(final int columnIndex, final Class<?> type, final Calendar calendar) throws SQLException {
+    public Object getCalendarValue(final int columnIndex, final Class<?> type, @SuppressWarnings("UseOfObsoleteDateTimeApi") final Calendar calendar) throws SQLException {
         if (Date.class == type) {
             return resultSet.getDate(columnIndex, calendar);
         }
@@ -136,8 +149,18 @@ public final class JDBCStreamQueryResult extends AbstractStreamQueryResult {
     }
     
     @Override
+    public Reader getCharacterStream(final int columnIndex) throws SQLException {
+        return resultSet.getCharacterStream(columnIndex);
+    }
+    
+    @Override
     public boolean wasNull() throws SQLException {
         return resultSet.wasNull();
+    }
+    
+    @Override
+    public Optional<ResultSet> getJDBCResultSet() {
+        return containsJDBCResultSet ? Optional.of(resultSet) : Optional.empty();
     }
     
     @Override

@@ -43,7 +43,7 @@ public abstract class AbstractShardingDriverTest extends AbstractDriverTest {
     
     private static final List<String> ACTUAL_DATA_SOURCE_NAMES = Arrays.asList("jdbc_0", "jdbc_1", "single_jdbc");
     
-    private static final String CONFIG_FILE = "config/config-sharding.yaml";
+    private static final String CONFIG_FILE = "config/database-sharding.yaml";
     
     @BeforeAll
     static void initShardingSphereDataSource() throws SQLException, IOException {
@@ -58,14 +58,14 @@ public abstract class AbstractShardingDriverTest extends AbstractDriverTest {
     
     private static File getFile() {
         return new File(Objects.requireNonNull(
-                AbstractShardingDriverTest.class.getClassLoader().getResource(CONFIG_FILE), String.format("File `%s` is not existed.", CONFIG_FILE)).getFile());
+                Thread.currentThread().getContextClassLoader().getResource(CONFIG_FILE), String.format("File `%s` is not existed.", CONFIG_FILE)).getFile());
     }
     
     @BeforeEach
     void initTable() {
         try {
             Connection connection = dataSource.getConnection();
-            RunScript.execute(connection, new InputStreamReader(Objects.requireNonNull(AbstractDriverTest.class.getClassLoader().getResourceAsStream("sql/jdbc_data.sql"))));
+            RunScript.execute(connection, new InputStreamReader(Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResourceAsStream("sql/jdbc_data.sql"))));
             connection.close();
         } catch (final SQLException ex) {
             throw new RuntimeException(ex);

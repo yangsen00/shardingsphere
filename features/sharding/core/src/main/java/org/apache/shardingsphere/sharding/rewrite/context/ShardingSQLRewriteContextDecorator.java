@@ -17,37 +17,63 @@
 
 package org.apache.shardingsphere.sharding.rewrite.context;
 
-import lombok.Setter;
+import org.apache.shardingsphere.infra.annotation.HighFrequencyInvocation;
+import org.apache.shardingsphere.infra.binder.context.statement.SQLStatementContext;
 import org.apache.shardingsphere.infra.config.props.ConfigurationProperties;
 import org.apache.shardingsphere.infra.rewrite.context.SQLRewriteContext;
 import org.apache.shardingsphere.infra.rewrite.context.SQLRewriteContextDecorator;
 import org.apache.shardingsphere.infra.rewrite.parameter.rewriter.ParameterRewriter;
+import org.apache.shardingsphere.infra.rewrite.parameter.rewriter.ParameterRewritersBuilder;
+import org.apache.shardingsphere.infra.rewrite.sql.token.common.generator.builder.SQLTokenGeneratorBuilder;
 import org.apache.shardingsphere.infra.route.context.RouteContext;
 import org.apache.shardingsphere.sharding.constant.ShardingOrder;
-import org.apache.shardingsphere.sharding.rewrite.parameter.ShardingParameterRewriterBuilder;
-import org.apache.shardingsphere.sharding.rewrite.token.pojo.ShardingTokenGenerateBuilder;
+import org.apache.shardingsphere.sharding.rewrite.parameter.ShardingParameterRewritersRegistry;
+import org.apache.shardingsphere.sharding.rewrite.token.ShardingTokenGenerateBuilder;
 import org.apache.shardingsphere.sharding.rule.ShardingRule;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.generic.table.SimpleTableSegment;
+import org.apache.shardingsphere.sql.parser.statement.core.statement.attribute.type.CursorSQLStatementAttribute;
+import org.apache.shardingsphere.sql.parser.statement.core.statement.type.ddl.index.AlterIndexStatement;
+import org.apache.shardingsphere.sql.parser.statement.core.statement.type.ddl.index.DropIndexStatement;
 
 import java.util.Collection;
 
 /**
  * SQL rewrite context decorator for sharding.
  */
-@Setter
+@HighFrequencyInvocation
 public final class ShardingSQLRewriteContextDecorator implements SQLRewriteContextDecorator<ShardingRule> {
     
-    @SuppressWarnings("rawtypes")
     @Override
-    public void decorate(final ShardingRule shardingRule, final ConfigurationProperties props, final SQLRewriteContext sqlRewriteContext, final RouteContext routeContext) {
+    public void decorate(final ShardingRule rule, final ConfigurationProperties props, final SQLRewriteContext sqlRewriteContext, final RouteContext routeContext) {
+        SQLStatementContext sqlStatementContext = sqlRewriteContext.getSqlStatementContext();
+        if (!isAlterOrDropIndexStatement(sqlStatementContext) && !isCursorContextAvailableStatement(sqlStatementContext) && !containsShardingTable(rule, sqlStatementContext)) {
+            return;
+        }
         if (!sqlRewriteContext.getParameters().isEmpty()) {
-            Collection<ParameterRewriter> parameterRewriters = new ShardingParameterRewriterBuilder(shardingRule,
-                    routeContext, sqlRewriteContext.getSchemas(), sqlRewriteContext.getSqlStatementContext()).getParameterRewriters();
+            Collection<ParameterRewriter> parameterRewriters = new ParameterRewritersBuilder(sqlStatementContext).build(new ShardingParameterRewritersRegistry(routeContext));
             rewriteParameters(sqlRewriteContext, parameterRewriters);
         }
-        sqlRewriteContext.addSQLTokenGenerators(new ShardingTokenGenerateBuilder(shardingRule, routeContext, sqlRewriteContext.getSqlStatementContext()).getSQLTokenGenerators());
+        SQLTokenGeneratorBuilder sqlTokenGeneratorBuilder = new ShardingTokenGenerateBuilder(rule, routeContext, sqlStatementContext);
+        sqlRewriteContext.addSQLTokenGenerators(sqlTokenGeneratorBuilder.getSQLTokenGenerators());
     }
     
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    private boolean isAlterOrDropIndexStatement(final SQLStatementContext sqlStatementContext) {
+        return sqlStatementContext.getSqlStatement() instanceof AlterIndexStatement || sqlStatementContext.getSqlStatement() instanceof DropIndexStatement;
+    }
+    
+    private boolean isCursorContextAvailableStatement(final SQLStatementContext sqlStatementContext) {
+        return sqlStatementContext.getSqlStatement().getAttributes().findAttribute(CursorSQLStatementAttribute.class).isPresent();
+    }
+    
+    private boolean containsShardingTable(final ShardingRule rule, final SQLStatementContext sqlStatementContext) {
+        for (SimpleTableSegment each : sqlStatementContext.getTablesContext().getSimpleTables()) {
+            if (rule.isShardingTable(each.getTableName().getIdentifier().getValue())) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
     private void rewriteParameters(final SQLRewriteContext sqlRewriteContext, final Collection<ParameterRewriter> parameterRewriters) {
         for (ParameterRewriter each : parameterRewriters) {
             each.rewrite(sqlRewriteContext.getParameterBuilder(), sqlRewriteContext.getSqlStatementContext(), sqlRewriteContext.getParameters());

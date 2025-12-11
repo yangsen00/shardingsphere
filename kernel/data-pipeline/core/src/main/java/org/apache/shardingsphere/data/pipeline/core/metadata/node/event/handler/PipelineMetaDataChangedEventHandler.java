@@ -17,8 +17,9 @@
 
 package org.apache.shardingsphere.data.pipeline.core.metadata.node.event.handler;
 
-import org.apache.shardingsphere.infra.util.spi.annotation.SingletonSPI;
-import org.apache.shardingsphere.mode.repository.cluster.listener.DataChangedEvent;
+import org.apache.shardingsphere.infra.spi.ShardingSphereSPI;
+import org.apache.shardingsphere.infra.spi.annotation.SingletonSPI;
+import org.apache.shardingsphere.mode.event.DataChangedEvent;
 
 import java.util.regex.Pattern;
 
@@ -26,7 +27,7 @@ import java.util.regex.Pattern;
  * Pipeline meta data changed event handler.
  */
 @SingletonSPI
-public interface PipelineMetaDataChangedEventHandler {
+public interface PipelineMetaDataChangedEventHandler extends ShardingSphereSPI {
     
     /**
      * Get key pattern.

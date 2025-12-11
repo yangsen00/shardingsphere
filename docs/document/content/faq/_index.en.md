@@ -7,13 +7,13 @@ chapter = true
 
 ## JDBC
 
-### [JDBC] Found a JtaTransactionManager in spring boot project when integrating with XAtransaction.
+### Found a JtaTransactionManager in spring boot project when integrating with XAtransaction.
 
 Answer:
 
 1. `shardingsphere-transaction-xa-core` include atomikos, it will trigger auto-configuration mechanism in spring-boot, add `@SpringBootApplication(exclude = JtaAutoConfiguration.class)` will solve it.
 
-### [JDBC] The tableName and columnName configured in yaml or properties leading incorrect result when loading Oracle metadata？
+### The tableName and columnName configured in yaml or properties leading incorrect result when loading Oracle metadata？
 
 Answer:
 
@@ -38,7 +38,7 @@ ShardingSphere assembled the SQL using the following code:
  }
 ``` 
 
-### [JDBC] `SQLException: Unable to unwrap to interface com.mysql.jdbc.Connection` exception thrown when using MySQL XA transaction
+### `SQLException: Unable to unwrap to interface com.mysql.jdbc.Connection` exception thrown when using MySQL XA transaction
 
 Answer:
 
@@ -63,7 +63,7 @@ Caused by: java.sql.SQLException: Unable to unwrap to interface com.mysql.jdbc.C
 
 ## Proxy
 
-### [Proxy] In Windows environment, could not find or load main class org.apache.shardingsphere.proxy.Bootstrap, how to solve it?
+### In Windows environment, could not find or load main class org.apache.shardingsphere.proxy.Bootstrap, how to solve it?
 
 Answer:
 
@@ -74,7 +74,7 @@ Open cmd.exe and execute the following command:
 tar zxvf apache-shardingsphere-${RELEASE.VERSION}-shardingsphere-proxy-bin.tar.gz
 ```
 
-### [Proxy] How to add a new logic database dynamically when use ShardingSphere-Proxy?
+### How to add a new logic database dynamically when use ShardingSphere-Proxy?
 
 Answer:
 
@@ -89,7 +89,7 @@ CREATE DATABASE sharding_db;
 DROP DATABASE sharding_db;
 ```
 
-### [Proxy] How to use suitable database tools connecting ShardingSphere-Proxy?
+### How to use suitable database tools connecting ShardingSphere-Proxy?
 
 Answer:
 
@@ -99,7 +99,7 @@ Answer:
    - DataGrip: 2020.1, 2021.1 (turn on "introspect using jdbc metadata" in idea or datagrip).
    - MySQLWorkBench: 8.0.25.
 
-### [Proxy] When using a client to connect to ShardingSphere-Proxy, if ShardingSphere-Proxy does not create a database or does not register a storage unit, the client connection will fail?
+### When using a client to connect to ShardingSphere-Proxy, if ShardingSphere-Proxy does not create a database or does not register a storage unit, the client connection will fail?
 
 Answer:
 
@@ -109,27 +109,33 @@ Answer:
 
 ## Sharding
 
-
-### [Sharding] How to solve `Cloud not resolve placeholder … in string value …` error?
+### How to solve `Cloud not resolve placeholder … in string value …` error?
 
 Answer:
 
-`${...}` or `$->{...}` can be used in inline expression identifiers, but the former one clashes with place holders in Spring property files, so `$->{...}` is recommended to be used in Spring as inline expression identifiers.
+`${...}` or `$->{...}` can be used in inline expression identifiers using the default implementation of the 
+`InlineExpressionParser` SPI, but the former one clashes with place holders in Spring property files, so `$->{...}` is recommended to be used in Spring as inline expression identifiers.
 
-### [Sharding] Why does float number appear in the return result of inline expression?
+### Why does float number appear in the return result of inline expression?
 
 Answer:
 
 The division result of Java integers is also integer, but in Groovy syntax of inline expression, the division result of integers is float number. 
 To obtain integer division result, A/B needs to be modified as A.intdiv(B).
 
-### [Sharding] If sharding database is partial, should tables without sharding database & table configured in sharding rules?
+### If sharding database is partial, should tables without sharding database & table configured in sharding rules?
 
 Answer:
 
-No, ShardingSphere will recognize it automatically.
+A table that does not use sharding is called single table in ShardingSphere, and you can use [LOAD statements](https://shardingsphere.apache.org/document/current/cn/user-manual/shardingsphere-proxy/distsql/syntax/rdl/rule-definition/single-table/load-single-table/) or [SINGLE rule](https://shardingsphere.apache.org/document/current/en/user-manual/shardingsphere-jdbc/yaml-config/rules/single/) to configure the single table that needs to be loaded.
 
-### [Sharding] When generic Long type `SingleKeyTableShardingAlgorithm` is used, why does the `ClassCastException: Integer can not cast to Long` exception appear?
+### Why are binding tables rejected when my table names already end with digits?
+
+Answer:
+
+Binding-table validation assumes that digits at the end of an actual table name are sharding suffixes derived from the logical table (for example `t_order_0`). When the business table name itself ends with digits (for example `AllPatientsV1`), those digits are interpreted as suffixes, so ShardingSphere cannot align the binding tables and will report `Invalid binding table configuration`. To avoid this, reserve the trailing digits exclusively for sharding suffixes (add a separator such as `_` before the suffix) or skip binding-table configuration for tables whose names inherently contain digits.
+
+### When generic Long type `SingleKeyTableShardingAlgorithm` is used, why does the `ClassCastException: Integer can not cast to Long` exception appear?
 
 Answer:
 
@@ -141,7 +147,7 @@ Answer：
 
 When implementing the `doSharding` method, it is not recommended to specify the specific type of `Comparable` in the method declaration, but to convert the type in the implementation of the `doSharding` method. You can refer to the `ModShardingAlgorithm#doSharding` method.
 
-### [Sharding] Why is the default distributed auto-augment key strategy provided by ShardingSphere not continuous and most of them end with even numbers?
+### Why is the default distributed auto-augment key strategy provided by ShardingSphere not continuous and most of them end with even numbers?
 
 Answer:
 
@@ -149,7 +155,7 @@ ShardingSphere uses snowflake algorithms as the default distributed auto-augment
 But the last four numbers of snowflake algorithm are incremental value within one millisecond. Thus, if concurrency degree in one millisecond is not high,  the last four numbers are likely to be zero, which explains why the rate of even end number is higher.
 In 3.1.0 version, the problem of ending with even numbers has been totally solved, please refer to: https://github.com/apache/shardingsphere/issues/1617
 
-### [Sharding] How to allow range query with using inline sharding strategy (BETWEEN AND, \>, \<, \>=, \<=)?
+### How to allow range query with using inline sharding strategy (BETWEEN AND, \>, \<, \>=, \<=)?
 
 Answer:
 
@@ -158,15 +164,15 @@ Answer:
 - Version 4.x: `allow.range.query.with.inline.sharding` to `true` (Default value is `false`).
 - Version 5.x: `allow-range-query-with-inline-sharding` to `true` in InlineShardingStrategy (Default value is `false`).
 
-### [Sharding] Why does my custom distributed primary key do not work after implementing `KeyGenerateAlgorithm` interface and configuring `type` property?
+### Why does my custom distributed primary key do not work after implementing `KeyGenerateAlgorithm` interface and configuring `type` property?
 
 Answer:
 
 [Service Provider Interface (SPI)](https://docs.oracle.com/javase/tutorial/sound/SPI-intro.html) is a kind of API for the third party to implement or expand. Except implementing interface, you also need to create a corresponding file in `META-INF/services` to make the JVM load these SPI implementations.
 More detail for SPI usage, please search by yourself.
-Other ShardingSphere [functionality implementation](/en/concepts/pluggable/) will take effect in the same way.
+Other ShardingSphere functionality implementation will take effect in the same way.
 
-### [Sharding] In addition to internal distributed primary key, does ShardingSphere support other native auto-increment keys?
+### In addition to internal distributed primary key, does ShardingSphere support other native auto-increment keys?
 
 Answer:
 
@@ -174,9 +180,54 @@ Yes. But there is restriction to the use of native auto-increment keys, which me
 Since ShardingSphere does not have the database table structure and native auto-increment key is not included in original SQL, it cannot parse that field to the sharding field. If the auto-increment key is not sharding key, it can be returned normally and is needless to be cared. But if the auto-increment key is also used as sharding key, ShardingSphere cannot parse its sharding value, which will make SQL routed to multiple tables and influence the rightness of the application.
 The premise for returning native auto-increment key is that INSERT SQL is eventually routed to one table. Therefore, auto-increment key will return zero when INSERT SQL returns multiple tables.
 
+## Single table
+
+### Table or view `%s` does not exist. How to solve the exception?
+
+Answer:
+
+In versions before ShardingSphere 5.4.0, single tables used automatic loading. This way has many problems in actual use:
+
+1. After a large number of data sources are registered in the logical database, too many automatically loaded single tables will cause ShardingSphere-Proxy/JDBC to start slowly;
+2. When users use DistSQL, they will operate in the order of: **Register storage unit -> Create sharding, encryption, read-write separation and other rules -> Create table**. Due to the existence of the single-table automatic loading mechanism, the database will be accessed multiple times for loading during the operation, and when multiple rules are mixed and used, the single-table metadata will be confused;
+3. Automatically load single tables from all data sources. Users cannot exclude single tables or abandoned tables that they do not want to be managed by ShardingSphere.
+
+In order to solve the above problems, starting from ShardingSphere 5.4.0 version, the loading method of single tables has been adjusted. Users need to manually load a single table in the database through YAML configuration or DistSQL.
+It should be noted that when using the DistSQL LOAD statement to load a single table, you need to ensure that all data sources are registered. Therefore, after the rules are created, the single table LOAD operation is performed based on the logical data source (if there is no logical data source, use the physical data source).
+
+* YAML loading single table example:
+
+```yaml
+rules:
+   - !SINGLE
+     tables:
+       - "*.*"
+   - !READWRITE_SPLITTING
+      dataSourceGroups:
+       readwrite_ds:
+         writeDataSourceName: write_ds
+         readDataSourceNames:
+           - read_ds_0
+           - read_ds_1
+         loadBalancerName: random
+     loadBalancers:
+       random:
+         type: RANDOM
+```
+
+For more YAML configuration of loading single table, please refer to [Single](/en/user-manual/shardingsphere-jdbc/yaml-config/rules/single/).
+
+* DistSQL loading single table example:
+
+```sql
+LOAD SINGLE TABLE *.*;
+```
+
+For more LOAD single table DistSQL, please refer to [Load Single Table](/en/user-manual/shardingsphere-proxy/distsql/syntax/rdl/rule-definition/single-table/load-single-table/).
+
 ## DistSQL
 
-### [DistSQL] How to set custom JDBC connection properties or connection pool properties when adding a data source using DistSQL?
+### How to set custom JDBC connection properties or connection pool properties when adding a data source using DistSQL?
 
 Answer:
 
@@ -184,7 +235,7 @@ Answer:
 2. ShardingSphere presets necessary connection pool properties, such as `maxPoolSize`, `idleTimeout`, etc. If you need to add or overwrite the properties, please specify it with `PROPERTIES` in the `dataSource`.
 3. Please refer to [Related introduction](/en/user-manual/shardingsphere-proxy/distsql/syntax/rdl/storage-unit-definition/) for above rules.
 
-### [DistSQL] How to solve ` Storage unit [xxx] is still used by [SingleRule].` exception when dropping a data source using DistSQL?
+### How to solve ` Storage unit [xxx] is still used by [SingleRule].` exception when dropping a data source using DistSQL?
 
 Answer：
 
@@ -194,7 +245,7 @@ Answer：
 UNREGISTER STORAGE UNIT storageUnitName [, storageUnitName] ... [ignore single tables]
 ```
 
-### [DistSQL] How to solve ` Failed to get driver instance for jdbcURL=xxx.` exception when adding a data source using DistSQL?
+### How to solve ` Failed to get driver instance for jdbcURL=xxx.` exception when adding a data source using DistSQL?
 
 Answer：
 
@@ -205,26 +256,26 @@ REGISTER STORAGE UNIT storageUnit [..., storageUnit]
 
 ## Other
 
-### [Other] How to debug when SQL can not be executed rightly in ShardingSphere?
+### How to debug when SQL can not be executed rightly in ShardingSphere?
 
 Answer:
 
 `sql.show` configuration is provided in ShardingSphere-Proxy and post-1.5.0 version of ShardingSphere-JDBC, enabling the context parsing, rewritten SQL and the routed data source printed to info log. `sql.show` configuration is off in default, and users can turn it on in configurations.
 A Tip: Property `sql.show` has changed to `sql-show` in version 5.x.
 
-### [Other] Why do some compiling errors appear? Why did not the IDEA index the generated codes?
+### Why do some compiling errors appear? Why did not the IDEA index the generated codes?
 
 Answer:
 
 ShardingSphere uses lombok to enable minimal coding. For more details about using and installment, please refer to the official website of [lombok](https://projectlombok.org/download.html).
 The codes under the package `org.apache.shardingsphere.sql.parser.autogen` are generated by ANTLR. You may execute the following command to generate codes:
 ```bash
-./mvnw -Dcheckstyle.skip=true -Dspotbugs.skip=true -Drat.skip=true -Dmaven.javadoc.skip=true -Djacoco.skip=true -DskipITs -DskipTests install -T1C 
+./mvnw -DskipITs -DskipTests install -T1C
 ```
 The generated codes such as `org.apache.shardingsphere.sql.parser.autogen.PostgreSQLStatementParser` may be too large to be indexed by the IDEA.
 You may configure the IDEA's property `idea.max.intellisense.filesize=10000`.
 
-### [Other] In SQLSever and PostgreSQL, why does the aggregation column without alias throw exception?
+### In SQLSever and PostgreSQL, why does the aggregation column without alias throw exception?
 
 Answer:
 
@@ -238,7 +289,7 @@ The right SQL should be written as:
 SELECT SUM(num) AS sum_num, SUM(num2) AS sum_num2 FROM tablexxx;
 ```
 
-### [Other] Why does Oracle database throw “Order by value must implements Comparable” exception when using Timestamp Order By?
+### Why does Oracle database throw “Order by value must implements Comparable” exception when using Timestamp Order By?
 
 Answer:
 
@@ -256,7 +307,7 @@ Reasons:
         return result;
     }
 ```
-After using resultSet.getObject(int index), for TimeStamp oracle, the system will decide whether to return java.sql.TimeStamp or define oralce.sql.TIMESTAMP according to the property of  oracle.jdbc.J2EE13Compliant. See oracle.jdbc.driver.TimestampAccessor#getObject(int var1) method in ojdbc codes for more detail:
+After using resultSet.getObject(int index), for TimeStamp oracle, the system will decide whether to return java.sql.TimeStamp or define oracle.sql.TIMESTAMP according to the property of  oracle.jdbc.J2EE13Compliant. See oracle.jdbc.driver.TimestampAccessor#getObject(int var1) method in ojdbc codes for more detail:
 ```java
     Object getObject(int var1) throws SQLException {
         Object var2 = null;
@@ -283,7 +334,7 @@ After using resultSet.getObject(int index), for TimeStamp oracle, the system wil
     }
 ```
 
-### [Other] In Windows environment,when cloning ShardingSphere source code through Git, why prompt filename too long and how to solve it?
+### In Windows environment,when cloning ShardingSphere source code through Git, why prompt filename too long and how to solve it?
 
 Answer:
 
@@ -301,13 +352,13 @@ Reference material:
 https://docs.microsoft.com/zh-cn/windows/desktop/FileIO/naming-a-file
 https://ourcodeworld.com/articles/read/109/how-to-solve-filename-too-long-error-in-git-powershell-and-github-application-for-windows
 
-### [Other] How to solve `Type is required` error?
+### How to solve `Type is required` error?
 
 Answer:
 
-In Apache ShardingSphere, many functionality implementation are uploaded through [SPI](/en/concepts/pluggable/), such as Distributed Primary Key. These functions load SPI implementation by configuring the `type`, so the `type` must be specified in the configuration file.
+In Apache ShardingSphere, many functionality implementation are uploaded through SPI, such as Distributed Primary Key. These functions load SPI implementation by configuring the `type`, so the `type` must be specified in the configuration file.
 
-### [Other] How to speed up the metadata loading when service starts up?
+### How to speed up the metadata loading when service starts up?
 
 Answer:
 
@@ -316,14 +367,14 @@ Answer:
 - `max.connections.size.per.query`(Default value is 1) higher referring to connection pool you adopt(Version >= 3.0.0.M3 & Version < 5.0.0).
 - `max-connections-size-per-query`(Default value is 1) higher referring to connection pool you adopt(Version >= 5.0.0).
 
-### [Other] The ANTLR plugin generates codes in the same level directory as src, which is easy to commit by mistake. How to avoid it?
+### The ANTLR plugin generates codes in the same level directory as src, which is easy to commit by mistake. How to avoid it?
 
 Answer:
 
 Goto [Settings -> Languages & Frameworks -> ANTLR v4 default project settings](jetbrains://idea/settings?name=Languages+%26+Frameworks--ANTLR+v4+default+project+settings) and configure the output directory of the generated code as `target/gen` as shown:
 ![Configure ANTLR plugin](https://shardingsphere.apache.org/document/current/img/faq/configure-antlr-plugin.png)
 
-### [Other] Why is the database sharding result not correct when using `Proxool`?
+### Why is the database sharding result not correct when using `Proxool`?
 
 Answer:
 

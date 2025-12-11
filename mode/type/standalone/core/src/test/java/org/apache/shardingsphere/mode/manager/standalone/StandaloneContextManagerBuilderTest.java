@@ -17,49 +17,46 @@
 
 package org.apache.shardingsphere.mode.manager.standalone;
 
-import org.apache.shardingsphere.infra.config.database.DatabaseConfiguration;
-import org.apache.shardingsphere.infra.config.database.impl.DataSourceProvidedDatabaseConfiguration;
 import org.apache.shardingsphere.infra.config.mode.ModeConfiguration;
-import org.apache.shardingsphere.infra.config.rule.RuleConfiguration;
 import org.apache.shardingsphere.infra.instance.metadata.InstanceMetaData;
-import org.apache.shardingsphere.infra.instance.metadata.proxy.ProxyInstanceMetaData;
-import org.apache.shardingsphere.metadata.persist.node.DatabaseMetaDataNode;
-import org.apache.shardingsphere.metadata.persist.node.GlobalNode;
+import org.apache.shardingsphere.infra.instance.metadata.jdbc.JDBCInstanceMetaData;
+import org.apache.shardingsphere.infra.spi.type.typed.TypedSPILoader;
+import org.apache.shardingsphere.infra.util.eventbus.EventBusContext;
 import org.apache.shardingsphere.mode.manager.ContextManager;
-import org.apache.shardingsphere.mode.manager.ContextManagerBuilderParameter;
+import org.apache.shardingsphere.mode.manager.builder.ContextManagerBuilder;
+import org.apache.shardingsphere.mode.manager.builder.ContextManagerBuilderParameter;
 import org.apache.shardingsphere.mode.repository.standalone.StandalonePersistRepositoryConfiguration;
-import org.apache.shardingsphere.mode.spi.PersistRepository;
-import org.apache.shardingsphere.test.fixture.jdbc.MockedDataSource;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Properties;
-import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 
 class StandaloneContextManagerBuilderTest {
     
     @Test
-    void assertBuild() throws SQLException {
-        ContextManager actual = new StandaloneContextManagerBuilder().build(createContextManagerBuilderParameter());
-        assertNotNull(actual.getMetaDataContexts().getMetaData().getDatabase("foo_db"));
-        PersistRepository repository = actual.getMetaDataContexts().getPersistService().getRepository();
-        assertNotNull(repository.getDirectly(GlobalNode.getGlobalRuleNode()));
-        assertNotNull(repository.getDirectly(DatabaseMetaDataNode.getMetaDataDataSourcePath("foo_db", "0")));
-        assertNotNull(repository.getDirectly(DatabaseMetaDataNode.getRulePath("foo_db", "0")));
+    void assertBuildWithType() throws SQLException {
+        assertBuild(TypedSPILoader.getService(ContextManagerBuilder.class, "Standalone"));
     }
     
-    private ContextManagerBuilderParameter createContextManagerBuilderParameter() {
-        ModeConfiguration modeConfig = new ModeConfiguration("Standalone", new StandalonePersistRepositoryConfiguration("FIXTURE", new Properties()));
-        Map<String, DatabaseConfiguration> databaseConfigs = Collections.singletonMap(
-                "foo_db", new DataSourceProvidedDatabaseConfiguration(Collections.singletonMap("foo_ds", new MockedDataSource()), Collections.singleton(mock(RuleConfiguration.class))));
-        Collection<RuleConfiguration> globalRuleConfigs = Collections.singleton(mock(RuleConfiguration.class));
-        InstanceMetaData instanceMetaData = new ProxyInstanceMetaData(UUID.randomUUID().toString(), 3307);
-        return new ContextManagerBuilderParameter(modeConfig, databaseConfigs, globalRuleConfigs, new Properties(), Collections.emptyList(), instanceMetaData, false);
+    @Test
+    void assertBuildWithDefault() throws SQLException {
+        assertBuild(TypedSPILoader.getService(ContextManagerBuilder.class, null));
+    }
+    
+    @SuppressWarnings("resource")
+    void assertBuild(final ContextManagerBuilder builder) throws SQLException {
+        InstanceMetaData instanceMetaData = new JDBCInstanceMetaData("foo", "foo_db");
+        ContextManager actual = builder.build(new ContextManagerBuilderParameter(createModeConfiguration(),
+                Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList(), new Properties(), Collections.emptyList(), instanceMetaData), mock(EventBusContext.class));
+        assertThat(actual.getComputeNodeInstanceContext().getInstance().getMetaData(), is(instanceMetaData));
+    }
+    
+    private static ModeConfiguration createModeConfiguration() {
+        return new ModeConfiguration("STANDALONE", new StandalonePersistRepositoryConfiguration("FIXTURE", new Properties()));
     }
 }

@@ -18,17 +18,17 @@
 package org.apache.shardingsphere.sharding.route.engine.condition.generator.impl;
 
 import com.google.common.collect.Range;
-import org.apache.shardingsphere.sharding.route.engine.condition.Column;
+import org.apache.shardingsphere.infra.metadata.database.schema.HashColumn;
 import org.apache.shardingsphere.sharding.route.engine.condition.ExpressionConditionUtils;
 import org.apache.shardingsphere.sharding.route.engine.condition.generator.ConditionValue;
 import org.apache.shardingsphere.sharding.route.engine.condition.generator.ConditionValueGenerator;
 import org.apache.shardingsphere.sharding.route.engine.condition.value.ListShardingConditionValue;
 import org.apache.shardingsphere.sharding.route.engine.condition.value.RangeShardingConditionValue;
 import org.apache.shardingsphere.sharding.route.engine.condition.value.ShardingConditionValue;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.dml.column.ColumnSegment;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.dml.expr.BinaryOperationExpression;
-import org.apache.shardingsphere.sql.parser.sql.common.segment.dml.expr.ExpressionSegment;
-import org.apache.shardingsphere.timeservice.core.rule.TimeServiceRule;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.dml.column.ColumnSegment;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.dml.expr.BinaryOperationExpression;
+import org.apache.shardingsphere.sql.parser.statement.core.segment.dml.expr.ExpressionSegment;
+import org.apache.shardingsphere.timeservice.core.rule.TimestampServiceRule;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,27 +53,33 @@ public final class ConditionValueCompareOperatorGenerator implements ConditionVa
     
     private static final String AT_LEAST = ">=";
     
-    private static final Collection<String> OPERATORS = new HashSet<>(Arrays.asList(EQUAL, GREATER_THAN, LESS_THAN, AT_LEAST, AT_MOST));
+    private static final String IS = "IS";
+    
+    private static final Collection<String> OPERATORS = new HashSet<>(Arrays.asList(EQUAL, GREATER_THAN, LESS_THAN, AT_LEAST, AT_MOST, IS));
     
     @Override
-    public Optional<ShardingConditionValue> generate(final BinaryOperationExpression predicate, final Column column, final List<Object> params, final TimeServiceRule timeServiceRule) {
-        String operator = predicate.getOperator();
+    public Optional<ShardingConditionValue> generate(final BinaryOperationExpression predicate, final HashColumn column, final List<Object> params,
+                                                     final TimestampServiceRule timestampServiceRule) {
+        String operator = predicate.getOperator().toUpperCase();
         if (!isSupportedOperator(operator)) {
             return Optional.empty();
         }
         ExpressionSegment valueExpression = predicate.getLeft() instanceof ColumnSegment ? predicate.getRight() : predicate.getLeft();
         ConditionValue conditionValue = new ConditionValue(valueExpression, params);
+        if (conditionValue.isNull()) {
+            return generate(null, column, operator, conditionValue.getParameterMarkerIndex().orElse(-1));
+        }
         Optional<Comparable<?>> value = conditionValue.getValue();
         if (value.isPresent()) {
             return generate(value.get(), column, operator, conditionValue.getParameterMarkerIndex().orElse(-1));
         }
         if (ExpressionConditionUtils.isNowExpression(valueExpression)) {
-            return generate(timeServiceRule.getDatetime(), column, operator, -1);
+            return generate(timestampServiceRule.getTimestamp(), column, operator, -1);
         }
         return Optional.empty();
     }
     
-    private Optional<ShardingConditionValue> generate(final Comparable<?> comparable, final Column column, final String operator, final int parameterMarkerIndex) {
+    private Optional<ShardingConditionValue> generate(final Comparable<?> comparable, final HashColumn column, final String operator, final int parameterMarkerIndex) {
         String columnName = column.getName();
         String tableName = column.getTableName();
         List<Integer> parameterMarkerIndexes = parameterMarkerIndex > -1 ? Collections.singletonList(parameterMarkerIndex) : Collections.emptyList();
@@ -81,13 +87,17 @@ public final class ConditionValueCompareOperatorGenerator implements ConditionVa
             case EQUAL:
                 return Optional.of(new ListShardingConditionValue<>(columnName, tableName, new ArrayList<>(Collections.singleton(comparable)), parameterMarkerIndexes));
             case GREATER_THAN:
-                return Optional.of(new RangeShardingConditionValue<>(columnName, tableName, Range.greaterThan(comparable), parameterMarkerIndexes));
+                return null == comparable ? Optional.empty() : Optional.of(new RangeShardingConditionValue<>(columnName, tableName, Range.greaterThan(comparable), parameterMarkerIndexes));
             case LESS_THAN:
-                return Optional.of(new RangeShardingConditionValue<>(columnName, tableName, Range.lessThan(comparable), parameterMarkerIndexes));
+                return null == comparable ? Optional.empty() : Optional.of(new RangeShardingConditionValue<>(columnName, tableName, Range.lessThan(comparable), parameterMarkerIndexes));
             case AT_MOST:
-                return Optional.of(new RangeShardingConditionValue<>(columnName, tableName, Range.atMost(comparable), parameterMarkerIndexes));
+                return null == comparable ? Optional.empty() : Optional.of(new RangeShardingConditionValue<>(columnName, tableName, Range.atMost(comparable), parameterMarkerIndexes));
             case AT_LEAST:
-                return Optional.of(new RangeShardingConditionValue<>(columnName, tableName, Range.atLeast(comparable), parameterMarkerIndexes));
+                return null == comparable ? Optional.empty() : Optional.of(new RangeShardingConditionValue<>(columnName, tableName, Range.atLeast(comparable), parameterMarkerIndexes));
+            case IS:
+                return "null".equalsIgnoreCase(String.valueOf(comparable))
+                        ? Optional.of(new ListShardingConditionValue<>(columnName, tableName, new ArrayList<>(Collections.singleton(null)), parameterMarkerIndexes))
+                        : Optional.empty();
             default:
                 return Optional.empty();
         }

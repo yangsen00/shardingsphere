@@ -17,7 +17,7 @@
 
 package org.apache.shardingsphere.sharding.exception.data;
 
-import org.apache.shardingsphere.infra.util.exception.external.sql.sqlstate.XOpenSQLState;
+import org.apache.shardingsphere.infra.exception.external.sql.sqlstate.XOpenSQLState;
 import org.apache.shardingsphere.sharding.exception.ShardingSQLException;
 
 /**
@@ -28,6 +28,6 @@ public final class NotImplementComparableValueException extends ShardingSQLExcep
     private static final long serialVersionUID = 1442602803378775261L;
     
     public NotImplementComparableValueException(final String segmentType, final Object value) {
-        super(XOpenSQLState.CHECK_OPTION_VIOLATION, 24, "%s value `%s` must implements Comparable.", segmentType, value);
+        super(XOpenSQLState.CHECK_OPTION_VIOLATION, 24, "%s value '%s' must implements Comparable.", segmentType, value);
     }
 }

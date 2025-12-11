@@ -17,25 +17,25 @@
 
 package org.apache.shardingsphere.proxy.backend.connector.jdbc.executor.callback.impl;
 
-import org.apache.shardingsphere.infra.database.type.DatabaseType;
-import org.apache.shardingsphere.proxy.backend.connector.DatabaseConnector;
+import org.apache.shardingsphere.database.connector.core.type.DatabaseType;
+import org.apache.shardingsphere.infra.metadata.database.resource.ResourceMetaData;
+import org.apache.shardingsphere.proxy.backend.connector.DatabaseProxyConnector;
 import org.apache.shardingsphere.proxy.backend.connector.jdbc.executor.callback.ProxyJDBCExecutorCallback;
-import org.apache.shardingsphere.sql.parser.sql.common.statement.SQLStatement;
+import org.apache.shardingsphere.sql.parser.statement.core.statement.SQLStatement;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Map;
 
 /**
  * Prepared statement executor callback for proxy.
  */
 public final class ProxyPreparedStatementExecutorCallback extends ProxyJDBCExecutorCallback {
     
-    public ProxyPreparedStatementExecutorCallback(final DatabaseType protocolType, final Map<String, DatabaseType> storageTypes, final SQLStatement sqlStatement,
-                                                  final DatabaseConnector databaseConnector, final boolean isReturnGeneratedKeys,
+    public ProxyPreparedStatementExecutorCallback(final DatabaseType protocolType, final ResourceMetaData resourceMetaData, final SQLStatement sqlStatement,
+                                                  final DatabaseProxyConnector databaseProxyConnector, final boolean isReturnGeneratedKeys,
                                                   final boolean isExceptionThrown, final boolean fetchMetaData) {
-        super(protocolType, storageTypes, sqlStatement, databaseConnector, isReturnGeneratedKeys, isExceptionThrown, fetchMetaData);
+        super(protocolType, resourceMetaData, sqlStatement, databaseProxyConnector, isReturnGeneratedKeys, isExceptionThrown, fetchMetaData);
     }
     
     @Override

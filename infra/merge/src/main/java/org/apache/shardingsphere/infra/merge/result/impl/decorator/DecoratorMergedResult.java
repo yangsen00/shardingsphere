@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.shardingsphere.infra.merge.result.MergedResult;
 
 import java.io.InputStream;
+import java.io.Reader;
 import java.sql.SQLException;
 import java.util.Calendar;
 
@@ -35,18 +36,28 @@ public abstract class DecoratorMergedResult implements MergedResult {
     private final MergedResult mergedResult;
     
     @Override
-    public final Object getValue(final int columnIndex, final Class<?> type) throws SQLException {
+    public boolean next() throws SQLException {
+        return mergedResult.next();
+    }
+    
+    @Override
+    public Object getValue(final int columnIndex, final Class<?> type) throws SQLException {
         return mergedResult.getValue(columnIndex, type);
     }
     
     @Override
-    public final Object getCalendarValue(final int columnIndex, final Class<?> type, final Calendar calendar) throws SQLException {
+    public final Object getCalendarValue(final int columnIndex, final Class<?> type, @SuppressWarnings("UseOfObsoleteDateTimeApi") final Calendar calendar) throws SQLException {
         return mergedResult.getCalendarValue(columnIndex, type, calendar);
     }
     
     @Override
     public final InputStream getInputStream(final int columnIndex, final String type) throws SQLException {
         return mergedResult.getInputStream(columnIndex, type);
+    }
+    
+    @Override
+    public Reader getCharacterStream(final int columnIndex) throws SQLException {
+        return mergedResult.getCharacterStream(columnIndex);
     }
     
     @Override

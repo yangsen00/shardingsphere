@@ -18,8 +18,8 @@
 package org.apache.shardingsphere.sharding.algorithm.sharding.range;
 
 import com.google.common.collect.Range;
-import org.apache.shardingsphere.infra.util.exception.ShardingSpherePreconditions;
-import org.apache.shardingsphere.infra.util.exception.external.sql.type.generic.UnsupportedSQLOperationException;
+import org.apache.shardingsphere.infra.exception.ShardingSpherePreconditions;
+import org.apache.shardingsphere.infra.exception.generic.UnsupportedSQLOperationException;
 import org.apache.shardingsphere.sharding.algorithm.sharding.ShardingAutoTableAlgorithmUtils;
 import org.apache.shardingsphere.sharding.api.sharding.ShardingAutoTableAlgorithm;
 import org.apache.shardingsphere.sharding.api.sharding.standard.PreciseShardingValue;
@@ -56,7 +56,7 @@ public abstract class AbstractRangeShardingAlgorithm implements StandardSharding
     
     @Override
     public final Collection<String> doSharding(final Collection<String> availableTargetNames, final RangeShardingValue<Comparable<?>> shardingValue) {
-        Collection<String> result = new LinkedHashSet<>(availableTargetNames.size());
+        Collection<String> result = new LinkedHashSet<>(availableTargetNames.size(), 1F);
         int firstPartition = getFirstPartition(shardingValue.getValueRange());
         int lastPartition = getLastPartition(shardingValue.getValueRange());
         for (int partition = firstPartition; partition <= lastPartition; partition++) {

@@ -17,7 +17,7 @@
 
 package org.apache.shardingsphere.sharding.exception.syntax;
 
-import org.apache.shardingsphere.infra.util.exception.external.sql.sqlstate.XOpenSQLState;
+import org.apache.shardingsphere.infra.exception.external.sql.sqlstate.XOpenSQLState;
 import org.apache.shardingsphere.sharding.exception.ShardingSQLException;
 
 /**
@@ -28,6 +28,6 @@ public final class UnsupportedUpdatingShardingValueException extends ShardingSQL
     private static final long serialVersionUID = 2552228890146113383L;
     
     public UnsupportedUpdatingShardingValueException(final String tableName) {
-        super(XOpenSQLState.CHECK_OPTION_VIOLATION, 41, "Can not update sharding value for table `%s`.", tableName);
+        super(XOpenSQLState.CHECK_OPTION_VIOLATION, 31, "Can not update sharding value for table '%s'.", tableName);
     }
 }

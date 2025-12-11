@@ -17,8 +17,8 @@
 
 package org.apache.shardingsphere.transaction.base.seata.at;
 
-import io.seata.core.context.RootContext;
-import org.apache.shardingsphere.infra.database.metadata.DataSourceMetaData;
+import org.apache.seata.core.context.RootContext;
+import org.apache.shardingsphere.database.connector.core.jdbcurl.parser.ConnectionProperties;
 import org.apache.shardingsphere.infra.executor.sql.hook.SQLExecutionHook;
 
 import java.util.List;
@@ -31,7 +31,7 @@ public final class SeataTransactionalSQLExecutionHook implements SQLExecutionHoo
     private boolean seataBranch;
     
     @Override
-    public void start(final String dataSourceName, final String sql, final List<Object> params, final DataSourceMetaData dataSourceMetaData, final boolean isTrunkThread) {
+    public void start(final String dataSourceName, final String sql, final List<Object> params, final ConnectionProperties connectionProps, final boolean isTrunkThread) {
         if (isTrunkThread) {
             if (RootContext.inGlobalTransaction()) {
                 SeataXIDContext.set(RootContext.getXID());

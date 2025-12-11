@@ -30,9 +30,9 @@ ShardingSphere-Proxy 对系统库/表（如 information_schema、pg_catalog）�
 
 2. 规则配置
 
-编辑 `%SHARDINGSPHERE_PROXY_HOME%/conf/server.yaml`。
+编辑 `%SHARDINGSPHERE_PROXY_HOME%/conf/global.yaml`。
 
-编辑 `%SHARDINGSPHERE_PROXY_HOME%/conf/config-xxx.yaml`。
+编辑 `%SHARDINGSPHERE_PROXY_HOME%/conf/database-xxx.yaml`。
 
 > %SHARDINGSPHERE_PROXY_HOME% 为 Proxy 解压后的路径，例：`/opt/shardingsphere-proxy-bin/`
 
@@ -59,14 +59,6 @@ sh %SHARDINGSPHERE_PROXY_HOME%/bin/start.sh
 ```bash
 sh %SHARDINGSPHERE_PROXY_HOME%/bin/start.sh ${proxy_port} ${proxy_conf_directory}
 ```
-
-* 强制启动
-
-```bash
-sh %SHARDINGSPHERE_PROXY_HOME%/bin/start.sh -f
-```
-
-使用 `-f` 参数强制启动 Proxy，该参数会忽略启动期间异常的数据源，强行启动 Proxy，用户可以在 Proxy 启动完成后，通过 DistSQL 移除异常数据源。
 
 5. 使用 ShardingSphere-Proxy
 

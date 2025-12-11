@@ -17,18 +17,18 @@
 
 package org.apache.shardingsphere.globalclock.distsql.parser.core;
 
-import org.antlr.v4.runtime.tree.ParseTree;
+import org.apache.shardingsphere.database.connector.core.metadata.database.enums.QuoteCharacter;
 import org.apache.shardingsphere.distsql.parser.autogen.GlobalClockDistSQLStatementBaseVisitor;
 import org.apache.shardingsphere.distsql.parser.autogen.GlobalClockDistSQLStatementParser.AlterGlobalClockRuleContext;
 import org.apache.shardingsphere.distsql.parser.autogen.GlobalClockDistSQLStatementParser.GlobalClockRuleDefinitionContext;
 import org.apache.shardingsphere.distsql.parser.autogen.GlobalClockDistSQLStatementParser.PropertiesDefinitionContext;
 import org.apache.shardingsphere.distsql.parser.autogen.GlobalClockDistSQLStatementParser.PropertyContext;
 import org.apache.shardingsphere.distsql.parser.autogen.GlobalClockDistSQLStatementParser.ShowGlobalClockRuleContext;
-import org.apache.shardingsphere.globalclock.distsql.parser.statement.queryable.ShowGlobalClockRuleStatement;
-import org.apache.shardingsphere.globalclock.distsql.parser.statement.updatable.AlterGlobalClockRuleStatement;
+import org.apache.shardingsphere.globalclock.distsql.statement.queryable.ShowGlobalClockRuleStatement;
+import org.apache.shardingsphere.globalclock.distsql.statement.updatable.AlterGlobalClockRuleStatement;
 import org.apache.shardingsphere.sql.parser.api.ASTNode;
 import org.apache.shardingsphere.sql.parser.api.visitor.SQLVisitor;
-import org.apache.shardingsphere.sql.parser.sql.common.value.identifier.IdentifierValue;
+import org.apache.shardingsphere.sql.parser.statement.core.util.IdentifierValueUtils;
 
 import java.util.Properties;
 
@@ -45,12 +45,9 @@ public final class GlobalClockDistSQLStatementVisitor extends GlobalClockDistSQL
     @Override
     public ASTNode visitAlterGlobalClockRule(final AlterGlobalClockRuleContext ctx) {
         GlobalClockRuleDefinitionContext ruleDefinitionContext = ctx.globalClockRuleDefinition();
-        return new AlterGlobalClockRuleStatement(getIdentifierValue(ruleDefinitionContext.typeDefinition().typeName()), getIdentifierValue(ruleDefinitionContext.providerDefinition().providerName()),
-                Boolean.parseBoolean(getIdentifierValue(ruleDefinitionContext.enabledDefinition().enabled())), getProperties(ruleDefinitionContext.propertiesDefinition()));
-    }
-    
-    private String getIdentifierValue(final ParseTree context) {
-        return null == context ? null : new IdentifierValue(context.getText()).getValue();
+        return new AlterGlobalClockRuleStatement(IdentifierValueUtils.getValue(ruleDefinitionContext.typeDefinition().typeName()),
+                IdentifierValueUtils.getValue(ruleDefinitionContext.providerDefinition().providerName()),
+                Boolean.parseBoolean(IdentifierValueUtils.getValue(ruleDefinitionContext.enabledDefinition().enabled())), getProperties(ruleDefinitionContext.propertiesDefinition()));
     }
     
     private Properties getProperties(final PropertiesDefinitionContext ctx) {
@@ -59,7 +56,7 @@ public final class GlobalClockDistSQLStatementVisitor extends GlobalClockDistSQL
             return result;
         }
         for (PropertyContext each : ctx.properties().property()) {
-            result.setProperty(IdentifierValue.getQuotedContent(each.key.getText()), IdentifierValue.getQuotedContent(each.value.getText()));
+            result.setProperty(QuoteCharacter.unwrapAndTrimText(each.key.getText()), QuoteCharacter.unwrapAndTrimText(each.value.getText()));
         }
         return result;
     }

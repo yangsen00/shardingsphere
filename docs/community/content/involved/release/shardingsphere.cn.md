@@ -104,7 +104,7 @@ Please specify how long the key should be valid.
      <n>w = key expires in n weeks
      <n>m = key expires in n months
      <n>y = key expires in n years
-Key is valid for? (0) 
+Key is valid for? (0)
 Key does not expire at all
 Is this correct? (y/N) y
 
@@ -198,6 +198,10 @@ GPG 签名文件和哈希校验文件的下载连接应该使用这个前缀：`
 
 更新 `README.md` 和 `README_ZH.md` 里的 `${RELEASE.VERSION}` 和 `${NEXT.RELEASE.VERSION}`。
 
+### 6. 修改 ShardingSphereDriver
+
+更新 `ShardingSphereDriver.java` 里的 `MAJOR_DRIVER_VERSION` 和 `MINOR_DRIVER_VERSION`。
+
 ## 发布 Apache Maven 中央仓库
 
 ### 1. 设置 settings-security.xml 和 settings.xml 文件
@@ -229,10 +233,10 @@ export GPG_TTY=$(tty)
 ```
 
 ```shell
-mvn release:prepare -Prelease -Darguments="-DskipTests -Dspotless.apply.skip=true" -DautoVersionSubmodules=true -DdryRun=true -Dusername=${Github用户名}
+./mvnw release:prepare -P-dev,release,all -Darguments="-DskipTests" -DautoVersionSubmodules=true -DdryRun=true -Dusername=${Github用户名}
 ```
 
--Prelease：选择 release 的 profile，这个 profile 会打包所有源码、jar 文件以及 ShardingSphere-Proxy 的可执行二进制包。
+-P-dev,release,all：选择 release 的 profile，这个 profile 会打包默认依赖源码、jar 文件以及 ShardingSphere-Proxy 的可执行二进制包。
 
 -DautoVersionSubmodules=true：作用是发布过程中版本号只需要输入一次，不必为每个子模块都输入一次。
 
@@ -243,11 +247,11 @@ mvn release:prepare -Prelease -Darguments="-DskipTests -Dspotless.apply.skip=tru
 首先清理发布预校验本地信息。
 
 ```shell
-mvn release:clean
+./mvnw release:clean
 ```
 
 ```shell
-mvn release:prepare -Prelease -Darguments="-DskipTests -Dspotless.apply.skip=true" -DautoVersionSubmodules=true -DpushChanges=false -Dusername=${Github 用户名}
+./mvnw release:prepare -P-dev,release,all -Darguments="-DskipTests" -DautoVersionSubmodules=true -DpushChanges=false -Dusername=${Github 用户名}
 ```
 
 和上一步演练的命令基本相同，去掉了 -DdryRun=true 参数。
@@ -266,7 +270,7 @@ git push origin ${RELEASE.VERSION}
 使用稳定的网络环境，本过程可能持续`1`个小时以上。
 
 ```shell
-mvn release:perform -Prelease -Darguments="-DskipTests -Dspotless.apply.skip=true" -DautoVersionSubmodules=true -DlocalCheckout=true -Dusername=${Github 用户名}
+./mvnw release:perform -Prelease,-dev,all -Darguments="-DskipTests" -DautoVersionSubmodules=true -DlocalCheckout=true -Dusername=${Github 用户名}
 ```
 
 -DlocalCheckout=true：从本地 checkout 代替从远程仓库拉取代码。
@@ -473,13 +477,13 @@ The vote will be open for at least 72 hours or until necessary number of votes a
 
 Please vote accordingly:
 
-[ ] +1 approve 
+[ ] +1 approve
 
 [ ] +0 no opinion
- 
+
 [ ] -1 disapprove with the reason
 
-PMC vote is +1 binding, all others is +1 non-binding.
+PMC vote is "+1 binding", all others is "+1 non-binding".
 
 Checklist for reference:
 
@@ -496,7 +500,7 @@ Checklist for reference:
 [ ] No compiled archives bundled in source archive.
 ```
 
-> 注意：`Release Commit ID` 使用发布分支上与 `prepare release ${RELEASE.VERSION}` 日志对应的 commit id。 
+> 注意：`Release Commit ID` 使用发布分支上与 `prepare release ${RELEASE.VERSION}` 日志对应的 commit id。
 
 2. 宣布投票结果模板：
 
@@ -509,7 +513,7 @@ Checklist for reference:
 正文：
 
 ```
-We’ve received 3 +1 binding votes and one +1 non-binding vote:
+We’ve received 3 "+1 binding" votes and one "+1 non-binding" vote:
 
 +1 binding, xxx
 +1 binding, xxx
@@ -517,7 +521,7 @@ We’ve received 3 +1 binding votes and one +1 non-binding vote:
 
 +1 non-binding, xxx
 
-Thank you everyone for taking the time to review the release and help us. 
+Thank you everyone for taking the time to review the release and help us.
 I will process to publish the release and send ANNOUNCE.
 ```
 
@@ -525,7 +529,7 @@ I will process to publish the release and send ANNOUNCE.
 
 ### 1. 将源码、二进制包以及 KEYS 从 svn 的 dev 目录移动到 release 目录
 
-需要 PMC 帮忙操作。
+> 注意：该步骤需要 PMC 帮忙操作。
 
 将发布内容移动到发布区：
 ```shell
@@ -564,12 +568,34 @@ docker login
 ```shell
 cd ~/shardingsphere
 git checkout ${RELEASE.VERSION}
-./mvnw -pl distribution/proxy -B -Prelease,docker.buildx.push clean package
+./mvnw -pl distribution/proxy -B -P-dev,release,all,docker.buildx.push clean package
 ```
 
 3.4 确认发布成功
 
 查看 [Docker Hub](https://hub.docker.com/r/apache/shardingsphere-proxy/) 是否有发布的镜像，确保镜像同时支持 `linux/amd64` 和 `linux/arm64`。
+
+```shell
+docker logout
+```
+
+3.5 登录 GitHub Packages Container Registry
+
+```shell
+docker login ghcr.io/apache/shardingsphere
+```
+
+3.6 构建并推送 ShardingSphere Agent Docker image
+
+```shell
+cd ~/shardingsphere
+git checkout ${RELEASE.VERSION}
+./mvnw -am -pl distribution/agent -P-dev,release,all,docker.buildx.push -T 1C -DskipTests clean package
+```
+
+3.7 确认发布成功
+
+查看 [GitHub Packages](https://github.com/apache/shardingsphere/pkgs/container/shardingsphere-agent) 是否有发布的镜像，确保镜像同时支持 `linux/amd64` 和 `linux/arm64`。
 
 ```shell
 docker logout
@@ -582,6 +608,8 @@ docker logout
 编辑版本号及版本说明，选择 `Set as the latest release`，并点击 `Publish release`。
 
 ### 5. 从发布区移除上一版本内容
+
+> 注意：该步骤需要 PMC 帮忙操作。
 
 [**发布区**](https://dist.apache.org/repos/dist/release/shardingsphere/) 中仅保留一个最新的版本。
 确认 [Archive repository](https://archive.apache.org/dist/shardingsphere/) 中存在上一版本后，从 [**发布区**](https://dist.apache.org/repos/dist/release/shardingsphere/) 删除上一版本：
@@ -597,8 +625,8 @@ svn del -m "Archiving release ${PREVIOUS.RELEASE.VERSION}" https://dist.apache.o
 参考：[Release Download Pages for Projects](https://infra.apache.org/release-download-pages.html)。
 
 ### 6. 官网首页增加发布版本文档入口
-
-参考 commit：https://github.com/apache/shardingsphere-doc/commit/9fdf438d1170129d2690b5dee316403984579430
+更新 `shardingsphere-doc` 仓库下 index.html、index_zh.html、learning.html、legacy.html、legacy_zh.html 几处文件中的版本号为当前版本。[参考提交](https://github.com/apache/shardingsphere-doc/commit/9fdf438d1170129d2690b5dee316403984579430)
+更新 `shardingsphere` 仓库下的 language.html(docs/document/themes/hugo-theme-learn/layouts/partials/language.html)，增加当前版本号用于页面导航。[参考提交](https://github.com/apache/shardingsphere/pull/29017/files)
 
 ### 7. 更新示例版本
 

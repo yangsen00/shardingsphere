@@ -17,10 +17,11 @@
 
 package org.apache.shardingsphere.infra.parser.sql;
 
-import org.apache.shardingsphere.sql.parser.api.CacheOption;
-import org.apache.shardingsphere.sql.parser.api.SQLParserEngine;
-import org.apache.shardingsphere.sql.parser.api.SQLStatementVisitorEngine;
-import org.apache.shardingsphere.sql.parser.sql.common.statement.SQLStatement;
+import org.apache.shardingsphere.database.connector.core.type.DatabaseType;
+import org.apache.shardingsphere.sql.parser.engine.api.CacheOption;
+import org.apache.shardingsphere.sql.parser.engine.api.SQLParserEngine;
+import org.apache.shardingsphere.sql.parser.engine.api.SQLStatementVisitorEngine;
+import org.apache.shardingsphere.sql.parser.statement.core.statement.SQLStatement;
 
 /**
  * SQL statement parser executor.
@@ -31,9 +32,18 @@ public final class SQLStatementParserExecutor {
     
     private final SQLStatementVisitorEngine visitorEngine;
     
-    public SQLStatementParserExecutor(final String databaseType, final CacheOption parseTreeCacheOption, final boolean isParseComment) {
+    public SQLStatementParserExecutor(final DatabaseType databaseType, final CacheOption parseTreeCacheOption) {
         parserEngine = new SQLParserEngine(databaseType, parseTreeCacheOption);
-        visitorEngine = new SQLStatementVisitorEngine(databaseType, isParseComment);
+        visitorEngine = new SQLStatementVisitorEngine(databaseType);
+    }
+    
+    /**
+     * Update cache option.
+     *
+     * @param parseTreeCacheOption parse tree cache option
+     */
+    public void updateCacheOption(final CacheOption parseTreeCacheOption) {
+        parserEngine.updateCacheOption(parseTreeCacheOption);
     }
     
     /**

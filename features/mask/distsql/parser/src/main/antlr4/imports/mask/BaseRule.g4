@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 grammar BaseRule;
 
 import Symbol, Keyword, Literals;
@@ -39,11 +39,6 @@ buildInMaskAlgorithmType
     | MASK_FROM_X_TO_Y
     | MASK_BEFORE_SPECIAL_CHARS
     | MASK_AFTER_SPECIAL_CHARS
-    | PERSONAL_IDENTITY_NUMBER_RANDOM_REPLACE
-    | MILITARY_IDENTITY_NUMBER_RANDOM_REPLACE
-    | LANDLINE_NUMBER_RANDOM_REPLACE
-    | TELEPHONE_RANDOM_REPLACE
-    | UNIFIED_CREDIT_CODE_RANDOM_REPLACE
     | GENERIC_TABLE_RANDOM_REPLACE
     ;
 

@@ -16,10 +16,16 @@ AlterReadwriteSplittingRule ::=
   'ALTER' 'READWRITE_SPLITTING' 'RULE' readwriteSplittingDefinition (',' readwriteSplittingDefinition)*
 
 readwriteSplittingDefinition ::=
-  ruleName '(' 'WRITE_STORAGE_UNIT' '=' writeStorageUnitName ',' 'READ_STORAGE_UNITS' '(' storageUnitName (',' storageUnitName)* ')' (',' loadBalancerDefinition)? ')'
+  ruleName '(' dataSourceDefinition (',' transactionalReadQueryStrategyDefinition)? (',' loadBalancerDefinition)? ')'
+
+dataSourceDefinition ::=
+    'WRITE_STORAGE_UNIT' '=' writeStorageUnitName ',' 'READ_STORAGE_UNITS' '(' storageUnitName (',' storageUnitName)* ')' 
+
+transactionalReadQueryStrategyDefinition ::=
+    'TRANSACTIONAL_READ_QUERY_STRATEGY' '=' transactionalReadQueryStrategyType
 
 loadBalancerDefinition ::=
-    'TYPE' '(' 'NAME' '=' loadBalancerType (',' propertiesDefinition)? ')'
+    'TYPE' '(' 'NAME' '=' algorithmType (',' propertiesDefinition)? ')'
 
 ruleName ::=
   identifier
@@ -30,10 +36,10 @@ writeStorageUnitName ::=
 storageUnitName ::=
   identifier
 
-resourceName ::=
-  identifier
-    
-loadBalancerType ::=
+transactionalReadQueryStrategyType ::=
+  string
+
+algorithmType ::=
   string
 
 propertiesDefinition ::=
@@ -53,7 +59,8 @@ value ::=
 
 ### 补充说明
 
-- `loadBalancerType` 指定负载均衡算法类型，请参考[负载均衡算法]((/cn/user-manual/common-config/builtin-algorithm/load-balance/))；
+- `transactionalReadQueryStrategyType` 指定事务内读请求路由策略，请参考[YAML 配置](/cn/user-manual/shardingsphere-jdbc/yaml-config/rules/readwrite-splitting/)；
+- `algorithmType` 指定负载均衡算法类型，请参考[负载均衡算法](/cn/user-manual/common-config/builtin-algorithm/load-balance/)。
 
 ### 示例
 

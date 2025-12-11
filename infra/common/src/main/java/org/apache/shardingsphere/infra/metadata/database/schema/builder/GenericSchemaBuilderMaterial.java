@@ -20,10 +20,9 @@ package org.apache.shardingsphere.infra.metadata.database.schema.builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.shardingsphere.infra.config.props.ConfigurationProperties;
-import org.apache.shardingsphere.infra.database.type.DatabaseType;
+import org.apache.shardingsphere.infra.metadata.database.resource.unit.StorageUnit;
 import org.apache.shardingsphere.infra.rule.ShardingSphereRule;
 
-import javax.sql.DataSource;
 import java.util.Collection;
 import java.util.Map;
 
@@ -34,11 +33,7 @@ import java.util.Map;
 @Getter
 public final class GenericSchemaBuilderMaterial {
     
-    private final DatabaseType protocolType;
-    
-    private final Map<String, DatabaseType> storageTypes;
-    
-    private final Map<String, DataSource> dataSourceMap;
+    private final Map<String, StorageUnit> storageUnits;
     
     private final Collection<ShardingSphereRule> rules;
     

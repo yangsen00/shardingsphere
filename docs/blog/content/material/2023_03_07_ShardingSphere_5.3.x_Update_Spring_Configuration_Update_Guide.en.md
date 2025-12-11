@@ -149,13 +149,13 @@ dataSources:
   ds_0:
     dataSourceClassName: com.zaxxer.hikari.HikariDataSource
     driverClassName: com.mysql.jdbc.Driver
-    jdbcUrl: jdbc:mysql://127.0.0.1:3306/demo_ds_0?serverTimezone=UTC&useSSL=false
+    standardJdbcUrl: jdbc:mysql://127.0.0.1:3306/demo_ds_0?serverTimezone=UTC&useSSL=false
     username: root
     password:
   ds_1:
     dataSourceClassName: com.zaxxer.hikari.HikariDataSource
     driverClassName: com.mysql.jdbc.Driver
-    jdbcUrl: jdbc:mysql://127.0.0.1:3306/demo_ds_1?serverTimezone=UTC&useSSL=false
+    standardJdbcUrl: jdbc:mysql://127.0.0.1:3306/demo_ds_1?serverTimezone=UTC&useSSL=false
     username: root
     password:
 
@@ -240,14 +240,14 @@ spring:
 
     <bean id="ds_0" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
         <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
-        <property name="jdbcUrl" value="jdbc:mysql://127.0.0.1:3306/demo_ds_0?serverTimezone=UTC&amp;useSSL=false&amp;useUnicode=true&amp;characterEncoding=UTF-8"/>
+        <property name="standardJdbcUrl" value="jdbc:mysql://127.0.0.1:3306/demo_ds_0?serverTimezone=UTC&amp;useSSL=false&amp;useUnicode=true&amp;characterEncoding=UTF-8"/>
         <property name="username" value="root"/>
         <property name="password" value=""/>
     </bean>
     
     <bean id="ds_1" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
         <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
-        <property name="jdbcUrl" value="jdbc:mysql://127.0.0.1:3306/demo_ds_1?serverTimezone=UTC&amp;useSSL=false&amp;useUnicode=true&amp;characterEncoding=UTF-8"/>
+        <property name="standardJdbcUrl" value="jdbc:mysql://127.0.0.1:3306/demo_ds_1?serverTimezone=UTC&amp;useSSL=false&amp;useUnicode=true&amp;characterEncoding=UTF-8"/>
         <property name="username" value="root"/>
         <property name="password" value=""/>
     </bean>
@@ -298,7 +298,7 @@ The original ShardingSphere configuration in `spring-sharding.xml` has been repl
        xsi:schemaLocation="http://www.springframework.org/schema/beans 
                            http://www.springframework.org/schema/beans/spring-beans.xsd">
     
-    <bean id="shardingDataSource" class="org.springframework.jdbc.datasource.SimpleDriverDataSource">
+    <bean id="shardingDataSource" class="com.zaxxer.hikari.HikariDataSource">
         <property name="driverClass" value="org.apache.shardingsphere.driver.ShardingSphereDriver" />
         <property name="url" value="jdbc:shardingsphere:classpath:sharding.yaml" />
     </bean>

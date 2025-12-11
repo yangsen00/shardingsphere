@@ -456,11 +456,11 @@
             <shorthand-projection start-index="7" stop-index="7" />
         </projections>
         <from>
-            <subquery-table alias="row_">
+            <subquery-table alias="row_" start-index="14" stop-index="314" literal-start-index="14" literal-stop-index="315">
                 <subquery>
                     <select>
                         <projections start-index="22" stop-index="160">
-                            <top-projection alias="rownum_" start-index="22" stop-index="72">
+                            <top-projection alias="rownum_" start-index="22" stop-index="83">
                                 <top-value value="3" parameter-index="0" start-index="27" stop-index="27" />
                             </top-projection>
                             <column-projection name="item_id" start-index="86" stop-index="94">
@@ -579,11 +579,11 @@
             <shorthand-projection start-index="7" stop-index="7" />
         </projections>
         <from>
-            <subquery-table alias="row_">
+            <subquery-table alias="row_" start-index="14" stop-index="332" literal-start-index="14" literal-stop-index="333">
                 <subquery>
                     <select>
                         <projections start-index="22" stop-index="178">
-                            <top-projection alias="rownum_" start-index="22" stop-index="90">
+                            <top-projection alias="rownum_" start-index="22" stop-index="101">
                                 <top-value value="3" parameter-index="0" start-index="27" stop-index="27" />
                             </top-projection>
                             <column-projection name="item_id" start-index="104" stop-index="112">
@@ -919,11 +919,11 @@
             <shorthand-projection start-index="7" stop-index="7" />
         </projections>
         <from>
-            <subquery-table alias="row_">
+            <subquery-table alias="row_" start-index="14" stop-index="314" literal-start-index="14" literal-stop-index="315">
                 <subquery>
                     <select>
                         <projections start-index="22" stop-index="160">
-                            <top-projection alias="rownum_" start-index="22" stop-index="72">
+                            <top-projection alias="rownum_" start-index="22" stop-index="83">
                                 <top-value value="3" parameter-index="0" start-index="27" stop-index="27" />
                             </top-projection>
                             <column-projection name="item_id" start-index="86" stop-index="94">
@@ -1058,11 +1058,11 @@
             <shorthand-projection start-index="7" stop-index="7" />
         </projections>
         <from>
-            <subquery-table alias="row_">
+            <subquery-table alias="row_" start-index="14" stop-index="332" literal-start-index="14" literal-stop-index="333">
                 <subquery>
                     <select>
                         <projections start-index="22" stop-index="178">
-                            <top-projection alias="rownum_" start-index="22" stop-index="90">
+                            <top-projection alias="rownum_" start-index="22" stop-index="101">
                                 <top-value value="3" parameter-index="0" start-index="27" stop-index="27" />
                             </top-projection>
                             <column-projection name="item_id" start-index="104" stop-index="112">
@@ -1197,11 +1197,11 @@
             <shorthand-projection start-index="7" stop-index="7" />
         </projections>
         <from>
-            <subquery-table alias="row_">
+            <subquery-table alias="row_" start-index="14" stop-index="314" literal-start-index="14" literal-stop-index="315">
                 <subquery>
                     <select>
                         <projections start-index="22" stop-index="160">
-                            <top-projection alias="rownum_" start-index="22" stop-index="72">
+                            <top-projection alias="rownum_" start-index="22" stop-index="83">
                                 <top-value value="3" parameter-index="0" start-index="27" stop-index="27" />
                             </top-projection>
                             <column-projection name="item_id" start-index="86" stop-index="94">
@@ -1336,11 +1336,11 @@
             <shorthand-projection start-index="7" stop-index="7" />
         </projections>
         <from>
-            <subquery-table alias="row_">
+            <subquery-table alias="row_" start-index="14" stop-index="332" literal-start-index="14" literal-stop-index="333">
                 <subquery>
                     <select>
                         <projections start-index="22" stop-index="178">
-                            <top-projection alias="rownum_" start-index="22" stop-index="90">
+                            <top-projection alias="rownum_" start-index="22" stop-index="101">
                                 <top-value value="3" parameter-index="0" start-index="27" stop-index="27" />
                             </top-projection>
                             <column-projection name="item_id" start-index="104" stop-index="112">
@@ -1475,7 +1475,7 @@
             <shorthand-projection stop-index="7" start-index="7" />
         </projections>
         <from>
-            <subquery-table>
+            <subquery-table start-index="14" stop-index="363">
                 <subquery start-index="14" stop_index="363">
                     <select>
                         <projections start-index="22" stop-index="43">
@@ -1485,7 +1485,7 @@
                             <column-projection start-index="30" stop-index="43" name="rownum" alias="rownum_" />
                         </projections>
                         <from>
-                            <subquery-table start-index="50" stop-index="339" alias="row_">
+                            <subquery-table alias="row_" start-index="50" stop-index="344" >
                                 <subquery>
                                     <select>
                                         <projections start-index="58" stop-index="139" >
@@ -1625,9 +1625,9 @@
             <shorthand-projection stop-index="7" start-index="7" />
         </projections>
         <from>
-            <subquery-table alias="tt">
+            <subquery-table alias="tt" start-index="14" stop-index="366">
                 <subquery start-index="14" stop_index="363">
-                    <select>
+                    <select parameters="7">
                         <projections start-index="22" stop-index="43">
                             <shorthand-projection start-index="22" stop-index="27">
                                 <owner start-index="22" stop-index="25" name="row_" />
@@ -1635,9 +1635,9 @@
                             <column-projection start-index="30" stop-index="43" name="rownum" alias="rownum_" />
                         </projections>
                         <from>
-                            <subquery-table start-index="50" stop-index="339" alias="row_">
+                            <subquery-table alias="row_" start-index="50" stop-index="344" >
                                 <subquery>
-                                    <select>
+                                    <select parameters="1, 2, 9">
                                         <projections start-index="58" stop-index="139" >
                                             <column-projection start-index="58" stop-index="85" name="order_id" alias="order_id">
                                                 <owner start-index="58" stop-index="64" name="order0_" />
@@ -1791,7 +1791,7 @@
             <shorthand-projection stop-index="7" start-index="7" />
         </projections>
         <from>
-            <subquery-table alias="tt">
+            <subquery-table alias="tt" start-index="14" stop-index="366">
                 <subquery start-index="14" stop_index="363">
                     <select>
                         <projections start-index="22" stop-index="43">
@@ -1801,7 +1801,7 @@
                             <column-projection start-index="30" stop-index="43" name="rownum" alias="rownum_" />
                         </projections>
                         <from>
-                            <subquery-table start-index="50" stop-index="339" alias="row_">
+                            <subquery-table alias="row_" start-index="50" stop-index="344" >
                                 <subquery>
                                     <select>
                                         <projections start-index="58" stop-index="139" >
@@ -1991,7 +1991,7 @@
         </order-by>
         <row-count value="5" start-index="52" stop-index="52" />
     </select>
-    
+
     <select sql-case-id="select_pagination_with_offset_fetch" parameters="20">
         <from>
             <simple-table name="t_order" start-index="14" stop-index="20" />
@@ -2004,7 +2004,7 @@
         </order-by>
         <limit literal-start-index="40" literal-stop-index="75" start-index="40" stop-index="74">
             <offset value="0" start-index="47" stop-index="47" literal-start-index="47" literal-stop-index="47" />
-            <row-count value="20" parameter-index="1" literal-start-index="64" literal-stop-index="65" start-index="64" stop-index="64" />
+            <row-count value="20" parameter-index="0" literal-start-index="64" literal-stop-index="65" start-index="64" stop-index="64" />
         </limit>
     </select>
 
@@ -2046,4 +2046,65 @@
             <row-count value="3" start-index="37" stop-index="37" />
         </limit>
     </select>
+
+    <select sql-case-id="select_pagination_with_first">
+        <limit start-index="7" stop-index="13">
+            <row-count value="1" start-index="13" stop-index="13"/>
+        </limit>
+        <projections start-index="15" stop-index="17">
+            <expression-projection text="1" alias="a" start-index="15" stop-index="17"/>
+        </projections>
+        <from start-index="19" stop-index="30">
+            <simple-table name="t_order" start-index="24" stop-index="30"/>
+        </from>
+    </select>
+
+    <select sql-case-id="select_pagination_with_first_skip">
+        <limit start-index="7" stop-index="20">
+            <row-count value="1" start-index="13" stop-index="13" />
+            <offset value="1" start-index="20" stop-index="20" />
+        </limit>
+        <projections start-index="22" stop-index="24">
+            <expression-projection text="1" alias="a" start-index="22" stop-index="24" />
+        </projections>
+        <from start-index="26" stop-index="37">
+            <simple-table name="t_order" start-index="31" stop-index="37"/>
+        </from>
+    </select>
+
+    <select sql-case-id="select_pagination_with_skip">
+        <limit start-index="7" stop-index="12">
+            <offset value="1" start-index="12" stop-index="12" />
+        </limit>
+        <projections start-index="14" stop-index="16">
+            <expression-projection text="1" alias="a" start-index="14" stop-index="16" />
+        </projections>
+        <from start-index="18" stop-index="29">
+            <simple-table name="t_order" start-index="23" stop-index="29"/>
+        </from>
+    </select>
+
+<!--        <select sql-case-id="select_pagination_with_first_and_expr_value">-->
+<!--            <limit start-index="7" stop-index="17">-->
+<!--                <row-count value="1" start-index="13" stop-index="17"/>-->
+<!--            </limit>-->
+<!--            <projections start-index="19" stop-index="21">-->
+<!--                <expression-projection text="1" alias="a" start-index="15" stop-index="17"/>-->
+<!--            </projections>-->
+<!--            <from start-index="23" stop-index="34">-->
+<!--                <simple-table name="t_order" start-index="28" stop-index="34"/>-->
+<!--            </from>-->
+<!--        </select>-->
+
+<!--        <select sql-case-id="select_pagination_with_skip_and_expr_value">-->
+<!--            <limit start-index="7" stop-index="16">-->
+<!--                <offset value="(2+2)" start-index="12" stop-index="16" />-->
+<!--            </limit>-->
+<!--            <projections start-index="18" stop-index="20">-->
+<!--                <expression-projection text="1" alias="a" start-index="18" stop-index="20" />-->
+<!--            </projections>-->
+<!--            <from start-index="22" stop-index="33">-->
+<!--                <simple-table name="t_order" start-index="27" stop-index="33"/>-->
+<!--            </from>-->
+<!--        </select>-->
 </sql-parser-test-cases>

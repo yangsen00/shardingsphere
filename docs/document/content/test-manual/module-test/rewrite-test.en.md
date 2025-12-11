@@ -9,7 +9,7 @@ Facing logic databases and tables cannot be executed directly in actual database
 
 ### Test
 
-The rewrite tests are in the test folder under `sharding-core/sharding-core-rewrite` . Followings are the main part for rewrite tests:
+The rewrite tests are in the test folder under `test/it/rewriter` . Followings are the main part for rewrite tests:
 
   - test engine
   - environment configuration
@@ -23,7 +23,7 @@ Environment configuration is the yaml file under test type under `test\resources
 dataSources:
   db: !!com.zaxxer.hikari.HikariDataSource
     driverClassName: org.h2.Driver
-    jdbcUrl: jdbc:h2:mem:db;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false;MODE=MYSQL
+    standardJdbcUrl: jdbc:h2:mem:db;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false;MODE=MYSQL
     username: sa
     password:
 

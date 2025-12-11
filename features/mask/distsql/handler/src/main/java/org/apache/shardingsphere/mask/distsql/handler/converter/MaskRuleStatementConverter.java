@@ -19,17 +19,18 @@ package org.apache.shardingsphere.mask.distsql.handler.converter;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.apache.shardingsphere.infra.config.algorithm.AlgorithmConfiguration;
-import org.apache.shardingsphere.mask.api.config.MaskRuleConfiguration;
-import org.apache.shardingsphere.mask.api.config.rule.MaskColumnRuleConfiguration;
-import org.apache.shardingsphere.mask.api.config.rule.MaskTableRuleConfiguration;
-import org.apache.shardingsphere.mask.distsql.parser.segment.MaskColumnSegment;
-import org.apache.shardingsphere.mask.distsql.parser.segment.MaskRuleSegment;
+import org.apache.shardingsphere.infra.algorithm.core.config.AlgorithmConfiguration;
+import org.apache.shardingsphere.mask.config.MaskRuleConfiguration;
+import org.apache.shardingsphere.mask.config.rule.MaskColumnRuleConfiguration;
+import org.apache.shardingsphere.mask.config.rule.MaskTableRuleConfiguration;
+import org.apache.shardingsphere.mask.distsql.segment.MaskColumnSegment;
+import org.apache.shardingsphere.mask.distsql.segment.MaskRuleSegment;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Mask rule statement converter.
@@ -54,24 +55,21 @@ public final class MaskRuleStatementConverter {
     }
     
     private static MaskTableRuleConfiguration createMaskTableRuleConfiguration(final MaskRuleSegment ruleSegment) {
-        Collection<MaskColumnRuleConfiguration> columns = new LinkedList<>();
-        for (MaskColumnSegment each : ruleSegment.getColumns()) {
-            columns.add(createMaskColumnRuleConfiguration(ruleSegment.getTableName(), each));
-        }
+        Collection<MaskColumnRuleConfiguration> columns = ruleSegment.getColumns().stream()
+                .map(each -> createMaskColumnRuleConfiguration(ruleSegment.getTableName(), each)).collect(Collectors.toList());
         return new MaskTableRuleConfiguration(ruleSegment.getTableName(), columns);
     }
     
+    private static MaskColumnRuleConfiguration createMaskColumnRuleConfiguration(final String tableName, final MaskColumnSegment columnSegment) {
+        return new MaskColumnRuleConfiguration(columnSegment.getName(), getAlgorithmName(tableName, columnSegment));
+    }
+    
     private static Map<String, AlgorithmConfiguration> createMaskAlgorithmConfigurations(final MaskRuleSegment ruleSegment) {
-        Map<String, AlgorithmConfiguration> result = new HashMap<>(ruleSegment.getColumns().size(), 1);
+        Map<String, AlgorithmConfiguration> result = new HashMap<>(ruleSegment.getColumns().size(), 1F);
         for (MaskColumnSegment each : ruleSegment.getColumns()) {
             result.put(getAlgorithmName(ruleSegment.getTableName(), each), new AlgorithmConfiguration(each.getAlgorithm().getName(), each.getAlgorithm().getProps()));
         }
         return result;
-    }
-    
-    private static MaskColumnRuleConfiguration createMaskColumnRuleConfiguration(final String tableName, final MaskColumnSegment columnSegment) {
-        String maskColumnRuleName = getAlgorithmName(tableName, columnSegment);
-        return new MaskColumnRuleConfiguration(columnSegment.getName(), maskColumnRuleName);
     }
     
     private static String getAlgorithmName(final String tableName, final MaskColumnSegment columnSegment) {

@@ -17,7 +17,7 @@
 
 package org.apache.shardingsphere.sharding.exception.metadata;
 
-import org.apache.shardingsphere.infra.util.exception.external.sql.sqlstate.XOpenSQLState;
+import org.apache.shardingsphere.infra.exception.external.sql.sqlstate.XOpenSQLState;
 import org.apache.shardingsphere.sharding.exception.ShardingSQLException;
 
 /**
@@ -28,6 +28,6 @@ public final class DataNodeGenerateException extends ShardingSQLException {
     private static final long serialVersionUID = -1000865538051567910L;
     
     public DataNodeGenerateException(final String dataNode) {
-        super(XOpenSQLState.NOT_FOUND, 2, "Can not find data source in sharding rule, invalid actual data node `%s`.", dataNode);
+        super(XOpenSQLState.NOT_FOUND, 2, "Can not find data source in sharding rule, invalid actual data node '%s'.", dataNode);
     }
 }
