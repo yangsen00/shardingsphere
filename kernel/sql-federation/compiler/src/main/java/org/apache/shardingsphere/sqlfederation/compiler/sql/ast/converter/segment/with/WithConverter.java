@@ -42,11 +42,11 @@ import java.util.stream.Collectors;
 public final class WithConverter {
     
     /**
-     * Convert with segment to sql node list.
+     * Convert with segment to SQL node list.
      *
      * @param withSegment with segment
-     * @param sqlNode sql node
-     * @return sql node list
+     * @param sqlNode SQL node
+     * @return SQL node list
      */
     public static Optional<SqlNode> convert(final WithSegment withSegment, final SqlNode sqlNode) {
         return Optional.of(new SqlWith(SqlParserPos.ZERO, convertWithItem(withSegment.getCommonTableExpressions()), sqlNode));
@@ -63,6 +63,6 @@ public final class WithConverter {
     }
     
     private static SqlNodeList convertColumns(final Collection<ColumnSegment> columnSegments) {
-        return new SqlNodeList(columnSegments.stream().map(each -> ColumnConverter.convert(each).orElseThrow(IllegalStateException::new)).collect(Collectors.toList()), SqlParserPos.ZERO);
+        return new SqlNodeList(columnSegments.stream().map(ColumnConverter::convert).collect(Collectors.toList()), SqlParserPos.ZERO);
     }
 }

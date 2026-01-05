@@ -23,8 +23,6 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.shardingsphere.sql.parser.statement.core.segment.dml.expr.QuantifySubqueryExpression;
 import org.apache.shardingsphere.sqlfederation.compiler.sql.ast.converter.statement.type.SelectStatementConverter;
 
-import java.util.Optional;
-
 /**
  * Quantify subquery expression converter.
  */
@@ -32,12 +30,12 @@ import java.util.Optional;
 public final class QuantifySubqueryExpressionConverter {
     
     /**
-     * Convert quantify subquery expression to sql node.
+     * Convert quantify subquery expression to SQL node.
      *
      * @param expression quantify subquery expression
-     * @return sql node
+     * @return SQL node
      */
-    public static Optional<SqlNode> convert(final QuantifySubqueryExpression expression) {
-        return null == expression ? Optional.empty() : Optional.of(new SelectStatementConverter().convert(expression.getSubquery().getSelect()));
+    public static SqlNode convert(final QuantifySubqueryExpression expression) {
+        return new SelectStatementConverter().convert(expression.getSubquery().getSelect());
     }
 }
