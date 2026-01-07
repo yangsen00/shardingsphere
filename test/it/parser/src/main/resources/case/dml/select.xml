@@ -143,6 +143,20 @@
             </expression-projection>
         </projections>
     </select>
+
+    <select sql-case-id="select_collate_clause_doris">
+        <projections start-index="7" stop-index="29">
+            <expression-projection text="'a' COLLATE utf8mb4_bin" start-index="7" stop-index="29">
+                <expr>
+                    <collate-expression start-index="7" stop-index="29">
+                        <collate-name>
+                            <literal-expression start-index="11" stop-index="29" value="utf8mb4_bin" />
+                        </collate-name>
+                    </collate-expression>
+                </expr>
+            </expression-projection>
+        </projections>
+    </select>
     
     <select sql-case-id="select_with_default_str">
         <projections start-index="7" stop-index="7">
@@ -9870,6 +9884,38 @@
         </from>
     </select>
 
+    <select sql-case-id="select_with_force_index_for_order_by">
+        <projections start-index="7" stop-index="7">
+            <shorthand-projection start-index="7" stop-index="7" />
+        </projections>
+        <from>
+            <simple-table name="t1" start-index="14" stop-index="15">
+                <index-hint origin-text="FORCE INDEX FOR ORDER BY (idx1)" start-index="17" stop-index="47">
+                    <hint-index-name name="idx1" start-index="43" stop-index="46" />
+                </index-hint>
+            </simple-table>
+        </from>
+        <order-by>
+            <column-item name="id" start-index="58" stop-index="59" />
+        </order-by>
+    </select>
+
+    <select sql-case-id="select_with_force_index_for_group_by">
+        <projections start-index="7" stop-index="7">
+            <shorthand-projection start-index="7" stop-index="7" />
+        </projections>
+        <from>
+            <simple-table name="t1" start-index="14" stop-index="15">
+                <index-hint origin-text="FORCE INDEX FOR GROUP BY (idx1)" start-index="17" stop-index="47">
+                    <hint-index-name name="idx1" start-index="43" stop-index="46" />
+                </index-hint>
+            </simple-table>
+        </from>
+        <group-by>
+            <column-item name="id" start-index="58" stop-index="59" />
+        </group-by>
+    </select>
+
     <select sql-case-id="select_with_reserved_word_with_table_ref">
         <projections start-index="7" stop-index="19">
             <column-projection name="condition" start-index="7" stop-index="19" >
@@ -11801,5 +11847,35 @@
         <from start-index="20" stop-index="68">
             <simple-table alias="T_ORDER" name="T_ORDER" start-index="20" stop-index="68"/>
         </from>
+    </select>
+
+    <select sql-case-id="select_date_literal_doris">
+        <projections start-index="7" stop-index="23">
+            <expression-projection text="DATE'2020-01-01'" start-index="7" stop-index="23">
+                <expr>
+                    <common-expression text="DATE'2020-01-01'" start-index="7" stop-index="23" />
+                </expr>
+            </expression-projection>
+        </projections>
+    </select>
+
+    <select sql-case-id="select_hex_literal_doris">
+        <projections start-index="7" stop-index="11">
+            <expression-projection text="0x1AF" start-index="7" stop-index="11">
+                <expr>
+                    <common-expression text="0x1AF" start-index="7" stop-index="11" />
+                </expr>
+            </expression-projection>
+        </projections>
+    </select>
+
+    <select sql-case-id="select_bit_literal_doris">
+        <projections start-index="7" stop-index="13">
+            <expression-projection text="b'1010'" start-index="7" stop-index="13">
+                <expr>
+                    <common-expression text="b'1010'" start-index="7" stop-index="13" />
+                </expr>
+            </expression-projection>
+        </projections>
     </select>
 </sql-parser-test-cases>
